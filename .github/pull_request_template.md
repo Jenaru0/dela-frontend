@@ -9,6 +9,7 @@ assignees: ''
 ## 📋 Resumen de Cambios
 
 ### Tipo de Cambio
+
 - [ ] 🎉 Nueva funcionalidad (feature)
 - [ ] 🐛 Corrección de error (fix)
 - [ ] 📚 Documentación (docs)
@@ -18,9 +19,11 @@ assignees: ''
 - [ ] 🔧 Mantenimiento (chore)
 
 ### Descripción
+
 <!-- Describe los cambios realizados -->
 
 ### Requerimientos Funcionales Relacionados
+
 - [ ] RF01: Catálogo de productos
 - [ ] RF02: Búsqueda y filtros
 - [ ] RF03: Autenticación de usuarios
@@ -33,6 +36,7 @@ assignees: ''
 ## 🧪 Testing
 
 ### Checklist de Testing
+
 - [ ] Tests unitarios pasando
 - [ ] Tests de integración pasando
 - [ ] Tests e2e (si aplica)
@@ -41,19 +45,23 @@ assignees: ''
 - [ ] Linting sin warnings
 
 ### Cobertura de Tests
-- Cobertura actual: ___%
-- Líneas añadidas: ___
-- Líneas cubiertas: ___
+
+- Cobertura actual: \_\_\_%
+- Líneas añadidas: \_\_\_
+- Líneas cubiertas: \_\_\_
 
 ## 📱 Screenshots/Videos
 
 ### Antes
+
 <!-- Capturas del estado anterior -->
 
-### Después  
+### Después
+
 <!-- Capturas del estado nuevo -->
 
 ### Responsive
+
 - [ ] Desktop (1920x1080)
 - [ ] Tablet (768x1024)
 - [ ] Mobile (375x667)
@@ -61,6 +69,7 @@ assignees: ''
 ## 🔍 Checklist de Revisión
 
 ### Código
+
 - [ ] Código sigue las convenciones del proyecto
 - [ ] No hay código comentado/debug
 - [ ] Variables y funciones con nombres descriptivos
@@ -68,18 +77,21 @@ assignees: ''
 - [ ] Documentación JSDoc actualizada
 
 ### Performance
+
 - [ ] Bundle size verificado
 - [ ] Imágenes optimizadas
 - [ ] Lazy loading implementado (si aplica)
 - [ ] Lighthouse score > 90 (si aplica)
 
 ### Seguridad
+
 - [ ] No hay secrets/keys en el código
 - [ ] Validación de inputs implementada
 - [ ] Sanitización de datos
 - [ ] Headers de seguridad configurados
 
 ### UX/UI
+
 - [ ] Design system respetado
 - [ ] Accesibilidad verificada (WCAG 2.1)
 - [ ] Estados de loading implementados
@@ -88,7 +100,7 @@ assignees: ''
 
 ## 🔗 Enlaces Relacionados
 
-- Issue relacionado: #___
+- Issue relacionado: #\_\_\_
 - Diseño en Figma: [enlace]
 - Documentación técnica: [enlace]
 - Demo en vivo: [enlace]
@@ -96,16 +108,19 @@ assignees: ''
 ## 📝 Notas Adicionales
 
 ### Breaking Changes
+
 - [ ] Este PR introduce breaking changes
 - [ ] Migración documentada
 - [ ] Versión actualizada
 
 ### Deploy
+
 - [ ] Requiere migraciones de BD
 - [ ] Requiere variables de entorno
 - [ ] Requiere actualizaciones de dependencias
 
 ### Comentarios
+
 <!-- Información adicional para los revisores -->
 
 ---
@@ -113,8 +128,8 @@ assignees: ''
 ## ✅ Revisores
 
 - [ ] @reviewer1 - Code review
-- [ ] @reviewer2 - Design review  
+- [ ] @reviewer2 - Design review
 - [ ] @reviewer3 - QA review
 
-**Tiempo estimado de revisión:** ___ horas
+**Tiempo estimado de revisión:** \_\_\_ horas
 **Prioridad:** Alta/Media/Baja

@@ -54,7 +54,7 @@
   "scopes": {
     "catalogo": "Catálogo de productos",
     "auth": "Autenticación",
-    "carrito": "Carrito de compras", 
+    "carrito": "Carrito de compras",
     "checkout": "Proceso de pago",
     "pedidos": "Gestión de pedidos",
     "inventario": "Control de inventario",

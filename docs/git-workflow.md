@@ -3,10 +3,12 @@
 ## 📋 Estructura de Ramas
 
 ### Ramas Principales
+
 - **`main`**: Producción estable, solo código probado y listo para deploy
 - **`develop`**: Integración continua, punto de unión de todas las features
 
 ### Ramas de Características (Features)
+
 ```
 feature/componentes-ui           # Base UI components y design system
 feature/catalogo-productos       # RF01+RF02: Catálogo y búsqueda de productos
@@ -19,12 +21,14 @@ feature/sistema-notificaciones  # RF08: Emails de confirmación y alerts
 ```
 
 ### Ramas de Mantenimiento
+
 - **`release/v1.0.0`**: Preparación de releases
 - **`hotfix/descripcion-breve`**: Correcciones críticas en producción
 
 ## 🎯 Convenciones de Commits (Español)
 
 ### Formato
+
 ```
 <tipo>(ámbito): descripción corta
 
@@ -35,6 +39,7 @@ Descripción opcional más detallada
 ```
 
 ### Tipos de Commit
+
 - **`feat`**: Nueva funcionalidad
 - **`fix`**: Corrección de errores
 - **`docs`**: Documentación
@@ -44,6 +49,7 @@ Descripción opcional más detallada
 - **`chore`**: Tareas de mantenimiento
 
 ### Ejemplos
+
 ```bash
 feat(catalogo): implementar filtros por categoría en productos
 fix(ui): corregir responsive en componente ProductCard
@@ -55,6 +61,7 @@ test(productos): añadir pruebas unitarias para ProductService
 ## 🔄 Flujo de Trabajo Recomendado
 
 ### 1. Iniciar Nueva Feature
+
 ```bash
 git checkout develop
 git pull origin develop
@@ -62,6 +69,7 @@ git checkout -b feature/nueva-funcionalidad
 ```
 
 ### 2. Desarrollo Iterativo
+
 ```bash
 # Hacer cambios...
 git add .
@@ -70,12 +78,14 @@ git push origin feature/nueva-funcionalidad
 ```
 
 ### 3. Actualizar con Develop (Diario)
+
 ```bash
 git fetch origin
 git rebase origin/develop
 ```
 
 ### 4. Finalizar Feature
+
 ```bash
 # Crear Pull Request hacia develop
 # Después de aprobación y merge:
@@ -85,6 +95,7 @@ git branch -d feature/nueva-funcionalidad
 ```
 
 ### 5. Release
+
 ```bash
 git checkout develop
 git pull origin develop
@@ -101,6 +112,7 @@ git merge release/v1.0.0
 ## 📁 Estructura de Directorios
 
 ### Frontend (web/)
+
 ```
 src/
 ├── app/                     # Next.js app router
@@ -116,6 +128,7 @@ src/
 ```
 
 ### Backend (api/)
+
 ```
 src/
 ├── modules/                # Módulos de negocio
@@ -131,11 +144,13 @@ src/
 ## 🧪 Estrategia de Testing
 
 ### Antes de Commit
+
 - [ ] Linting sin errores (`npm run lint`)
 - [ ] Build exitoso (`npm run build`)
 - [ ] Tests unitarios pasando (`npm test`)
 
 ### Antes de PR
+
 - [ ] Tests e2e pasando
 - [ ] Documentación actualizada
 - [ ] Screenshots si hay cambios UI
@@ -143,11 +158,13 @@ src/
 ## 🔒 Protección de Ramas
 
 ### main
+
 - Requiere PR review
 - Status checks obligatorios
 - No push directo
 
-### develop  
+### develop
+
 - Requiere PR review
 - Tests automáticos
 - Deploy automático a staging
@@ -160,5 +177,6 @@ src/
 - Performance Lighthouse > 90
 
 ---
+
 **Última actualización:** Mayo 2025
 **Versión:** 1.0.0
