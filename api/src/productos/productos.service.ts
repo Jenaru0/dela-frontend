@@ -6,7 +6,7 @@ import { PrismaService } from '../prisma/prisma.service';
 export class ProductosService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAll() {
+  findAll() {
     return this.prisma.producto.findMany({
       where: { estado: 'ACTIVO' },
       include: { categoria: true },
