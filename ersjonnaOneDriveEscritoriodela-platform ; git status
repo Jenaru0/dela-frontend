@@ -1,0 +1,10 @@
+[33m096312c[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mfeature/catalogo[m[33m, [m[1;31morigin/feature/catalogo[m[33m)[m feat(catalogo): añadir controlador y servicio base para productos
+[33mb8c81da[m[33m ([m[1;31morigin/feature/frontend/ui-components[m[33m, [m[1;31morigin/feature/autenticacion[m[33m, [m[1;31morigin/develop[m[33m, [m[1;32mfeature/frontend/ui-components[m[33m, [m[1;32mdevelop[m[33m)[m feat(backend): integrar Prisma ORM y configuración de base de datos
+[33mc22b975[m feat(prisma): implementar servicio y módulo para NestJS
+[33mfcf74df[m feat(db): añadir modelo de datos Prisma para DELA
+[33ma8f911f[m[33m ([m[1;32mmain[m[33m)[m Main: unificación de ramas frontend y backend
+[33m2f85ff4[m Merge pull request #6 from Jenaru0/back-inicial
+[33ma328e77[m Backend: proyecto NestJS creado
+[33m4173d89[m Merge pull request #7 from Jenaru0/front-inicial
+[33mb3cf73e[m Main: unificación de ramas frontend y backend
+[33m7938db9[m Backend: proyecto NestJS creado 0

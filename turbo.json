@@ -1,13 +1,41 @@
 {
   "$schema": "https://turborepo.org/schema.json",
+  "globalDependencies": ["**/.env.*local"],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "outputs": ["dist/**", ".next/**"]
+      "outputs": ["dist/**", ".next/**", "!node_modules"],
+      "env": ["NODE_ENV"]
     },
-    "lint": {},
+    "lint": {
+      "outputs": []
+    },
+    "lint:fix": {
+      "outputs": []
+    },
+    "test": {
+      "outputs": ["coverage/**"],
+      "dependsOn": []
+    },
+    "test:watch": {
+      "cache": false,
+      "persistent": true
+    },
     "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "start": {
+      "cache": false,
+      "persistent": true
+    },
+    "clean": {
       "cache": false
+    },
+    "type-check": {
+      "dependsOn": ["^build"],
+      "outputs": []
     }
-  }
+  },
+  "globalEnv": ["NODE_ENV", "CI"]
 }
