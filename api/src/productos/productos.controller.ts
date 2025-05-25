@@ -1,4 +1,13 @@
-import { Controller } from '@nestjs/common';
+// src/productos/productos.controller.ts
+import { Controller, Get } from '@nestjs/common';
+import { ProductosService } from './productos.service';
 
 @Controller('productos')
-export class ProductosController {}
+export class ProductosController {
+  constructor(private readonly productosService: ProductosService) {}
+
+  @Get()
+  async findAll() {
+    return this.productosService.findAll();
+  }
+}
