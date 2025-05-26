@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import React from "react";
-import Image from "next/image";
-import Link from "next/link";
+import React from 'react';
+import Image from 'next/image';
+import Link from 'next/link';
 
 const AboutSection: React.FC = () => {
   return (
@@ -12,7 +12,7 @@ const AboutSection: React.FC = () => {
           <div className="relative overflow-hidden rounded-xl group">
             <div className="aspect-[4/3] relative">
               <Image
-                src="/images/about-image.png"
+                src="/images/about-image.svg"
                 alt="Nuestra historia - DELA Deleites del Valle"
                 fill
                 className="object-cover transition-transform duration-500 group-hover:scale-105"
@@ -28,43 +28,43 @@ const AboutSection: React.FC = () => {
           <div className="flex flex-col justify-center space-y-6">
             <div className="space-y-3">
               <div className="inline-flex items-center rounded-full bg-[#F5EFD7] px-3 py-1 text-sm font-medium text-[#CC9F53]">
-                ✨ Nuestra Historia
+                🐄 Nuestra Historia
               </div>
               <h2 className="text-3xl font-bold text-[#3A3A3A] md:text-4xl leading-tight">
-                Tradición y Pasión en cada
-                <span className="text-[#CC9F53]"> Producto</span>
+                Lácteos Artesanales desde
+                <span className="text-[#CC9F53]"> el año 2000</span>
               </h2>
               <div className="h-1 w-20 bg-gradient-to-r from-[#CC9F53] to-[#F5EFD7] rounded-full"></div>
             </div>
             <div className="space-y-4 text-gray-600 leading-relaxed">
               <p>
-                DELA Deleites del Valle nació de la pasión por preservar las
-                tradiciones culinarias de nuestra región. Desde 2015, nos hemos
-                dedicado a elaborar productos artesanales que capturan la
-                esencia y los sabores auténticos del valle, utilizando
-                ingredientes locales y técnicas tradicionales.
+                DELA Corp SAC es una empresa familiar peruana fundada en el año
+                2000, especializada en la producción de lácteos artesanales de
+                alta calidad. Ubicados en Cerro Azul, Cañete, utilizamos leche
+                fresca de nuestro propio establo, garantizando frescura y
+                calidad en cada producto.
               </p>
               <p>
-                Cada producto que ofrecemos es el resultado de recetas
-                familiares transmitidas por generaciones, combinadas con
-                innovación y un compromiso inquebrantable con la calidad.
+                Nuestro compromiso con el bienestar animal, la sostenibilidad y
+                la conexión con la comunidad local nos ha convertido en un
+                referente en la producción lechera artesanal del valle.
               </p>
             </div>
             {/* Stats */}
             <div className="grid grid-cols-3 gap-4 py-4">
               <div className="text-center">
-                <div className="text-2xl font-bold text-[#CC9F53]">8+</div>
+                <div className="text-2xl font-bold text-[#CC9F53]">25+</div>
                 <div className="text-sm text-gray-600">Años de experiencia</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-[#CC9F53]">50+</div>
-                <div className="text-sm text-gray-600">Productos únicos</div>
+                <div className="text-2xl font-bold text-[#CC9F53]">2</div>
+                <div className="text-sm text-gray-600">Ubicaciones</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-[#CC9F53]">100%</div>
-                <div className="text-sm text-gray-600">Artesanal</div>
+                <div className="text-sm text-gray-600">Leche Fresca</div>
               </div>
-            </div>{" "}
+            </div>{' '}
             <div className="pt-2">
               <Link
                 href="/nosotros"

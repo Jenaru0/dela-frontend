@@ -1,17 +1,17 @@
-"use client";
+'use client';
 
-import React from "react";
-import Image from "next/image";
-import Link from "next/link";
-import { Button } from "@/components/ui/Button";
-import { ArrowRight, Play } from "lucide-react";
+import React from 'react';
+import Image from 'next/image';
+import Link from 'next/link';
+import { Button } from '@/components/ui/Button';
+import { ArrowRight, Play } from 'lucide-react';
 
 const HeroSection: React.FC = () => {
   return (
     <section className="relative min-h-[90vh] overflow-hidden bg-gradient-to-br from-[#F5EFD7] via-white to-[#F5EFD7]/50">
       {/* Background Pattern */}
       <div className="absolute inset-0 opacity-10">
-        <div className="absolute inset-0 bg-[url('/images/pattern-bg.png')] bg-cover bg-center" />
+        <div className="absolute inset-0 bg-[url('/images/pattern-bg.svg')] bg-cover bg-center" />
       </div>
 
       {/* Floating Elements */}
@@ -27,7 +27,7 @@ const HeroSection: React.FC = () => {
               {/* Badge */}
               <div className="inline-flex items-center gap-2 rounded-full bg-[#CC9F53]/10 px-4 py-2 text-sm font-medium text-[#CC9F53]">
                 <div className="h-2 w-2 rounded-full bg-[#CC9F53] animate-pulse" />
-                Productos 100% Artesanales
+                Lácteos Artesanales desde 2000
               </div>
 
               {/* Main heading */}
@@ -41,13 +41,23 @@ const HeroSection: React.FC = () => {
 
               {/* Subtitle */}
               <p className="text-lg md:text-xl text-gray-600 max-w-2xl leading-relaxed">
-                Descubre sabores auténticos y productos artesanales de la más
-                alta calidad, elaborados con{" "}
-                <span className="text-[#CC9F53] font-semibold">pasión</span> y
-                <span className="text-[#CC9F53] font-semibold"> tradición</span>{" "}
-                desde el corazón del valle.
+                Productos lácteos artesanales de la más alta calidad, elaborados
+                con leche fresca de nuestro propio establo en{' '}
+                <span className="text-[#CC9F53] font-semibold">
+                  Cerro Azul, Cañete
+                </span>
+                . Comprometidos con el{' '}
+                <span className="text-[#CC9F53] font-semibold">
+                  bienestar animal
+                </span>{' '}
+                y la
+                <span className="text-[#CC9F53] font-semibold">
+                  {' '}
+                  sostenibilidad
+                </span>
+                .
               </p>
-            </div>{" "}
+            </div>{' '}
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
               <Link href="/productos">
@@ -67,16 +77,16 @@ const HeroSection: React.FC = () => {
             {/* Stats */}
             <div className="flex items-center gap-8 pt-6 border-t border-[#E6D5A8]">
               <div className="text-center">
-                <div className="text-2xl font-bold text-[#CC9F53]">500+</div>
-                <div className="text-sm text-gray-600">Productos</div>
+                <div className="text-2xl font-bold text-[#CC9F53]">50+</div>
+                <div className="text-sm text-gray-600">Productos Lácteos</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-[#CC9F53]">10k+</div>
-                <div className="text-sm text-gray-600">Clientes Felices</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-[#CC9F53]">8+</div>
+                <div className="text-2xl font-bold text-[#CC9F53]">25+</div>
                 <div className="text-sm text-gray-600">Años de Experiencia</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-[#CC9F53]">100%</div>
+                <div className="text-sm text-gray-600">Leche Fresca</div>
               </div>
             </div>
           </div>
@@ -88,13 +98,13 @@ const HeroSection: React.FC = () => {
               <div className="relative h-[400px] w-[400px] md:h-[500px] md:w-[500px] lg:h-[600px] lg:w-[600px]">
                 <div className="absolute inset-0 rounded-full bg-gradient-to-br from-[#CC9F53]/20 to-[#F5EFD7]/20 animate-pulse" />
                 <Image
-                  src="/images/hero-product.png"
+                  src="https://picsum.photos/600/600?random=1"
                   alt="Productos artesanales DELA"
                   fill
                   className="object-contain drop-shadow-2xl transition-transform duration-700 hover:scale-105"
                   priority
                   onError={(e) => {
-                    e.currentTarget.src = "/images/hero-fallback.png";
+                    e.currentTarget.src = '/images/hero-fallback.svg';
                   }}
                 />
               </div>
@@ -105,9 +115,9 @@ const HeroSection: React.FC = () => {
                   <div className="h-8 w-8 rounded bg-[#F5EFD7]" />
                   <div>
                     <div className="text-xs font-semibold text-[#3A3A3A]">
-                      Miel Artesanal
+                      Leche Premium
                     </div>
-                    <div className="text-xs text-[#CC9F53]">€9.99</div>
+                    <div className="text-xs text-[#CC9F53]">S/8.50</div>
                   </div>
                 </div>
               </div>
@@ -117,9 +127,9 @@ const HeroSection: React.FC = () => {
                   <div className="h-8 w-8 rounded bg-[#F5EFD7]" />
                   <div>
                     <div className="text-xs font-semibold text-[#3A3A3A]">
-                      Mermelada
+                      Yogurt Griego
                     </div>
-                    <div className="text-xs text-[#CC9F53]">€6.99</div>
+                    <div className="text-xs text-[#CC9F53]">S/12.90</div>
                   </div>
                 </div>
               </div>

@@ -6,21 +6,21 @@ export interface Testimonio {
 
 export const testimonios: Testimonio[] = [
   {
-    nombre: "María González",
+    nombre: 'María Quispe',
     texto:
-      "Los productos de DELA son simplemente excepcionales. El sabor auténtico me transporta a mi infancia.",
+      'La Leche DELA Premium es simplemente excepcional. Tiene un sabor fresco que me recuerda a la leche de mi abuela en Cerro Azul.',
     calificacion: 5,
   },
   {
-    nombre: "Carlos Rodríguez",
+    nombre: 'Carlos Mendoza',
     texto:
-      "La calidad es incomparable. Cada producto refleja el cuidado y la pasión con la que están elaborados.",
+      'Como chef, valoro mucho la calidad de los lácteos. El Queso Fresco DELA es perfecto para mis recetas tradicionales peruanas.',
     calificacion: 5,
   },
   {
-    nombre: "Laura Martínez",
+    nombre: 'Ana Fernández',
     texto:
-      "He probado muchos productos artesanales, pero los de DELA están en otro nivel. ¡Totalmente recomendados!",
+      'El Yogurt Griego DELA es mi favorito para los desayunos. Tiene la consistencia perfecta y un sabor natural incomparable.',
     calificacion: 4,
   },
 ];
