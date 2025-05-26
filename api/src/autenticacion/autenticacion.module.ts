@@ -11,7 +11,7 @@ import { JwtEstrategia } from './estrategias/jwt.estrategia';
     PrismaModule,
     JwtModule.register({
       secret: process.env.JWT_SECRET || 'super_secreto_seguro', // Usa variable de entorno fuerte
-      signOptions: { expiresIn: '1d' },
+      signOptions: { expiresIn: process.env.JWT_EXPIRES_IN || '1d' },
     }),
   ],
   providers: [AutenticacionService, JwtEstrategia],

@@ -17,4 +17,10 @@ export class AutenticacionController {
   async iniciarSesion(@Body() dto: InicioSesionDto) {
     return this.autenticacionService.iniciarSesion(dto);
   }
+
+  @Post('logout')
+  logout() {
+    // El frontend debe borrar el token. Aquí solo devolvemos un mensaje de éxito.
+    return { mensaje: 'Sesión cerrada correctamente.' };
+  }
 }
