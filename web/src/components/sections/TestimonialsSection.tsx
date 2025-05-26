@@ -31,7 +31,7 @@ const defaultTestimonials: Testimonial[] = [
     name: 'María Quispe',
     text: 'La Leche DELA Premium es simplemente excepcional. Tiene un sabor fresco que me recuerda a la leche de mi abuela en Cerro Azul. Mis hijos la prefieren sobre cualquier otra marca.',
     rating: 5,
-    avatar: '/images/avatars/maria.jpg',
+    avatar: '',
     title: 'Madre de familia',
     location: 'San Borja, Lima',
     productPurchased: 'Leche DELA Premium',
@@ -42,7 +42,7 @@ const defaultTestimonials: Testimonial[] = [
     name: 'Carlos Mendoza',
     text: 'Como chef, valoro mucho la calidad de los lácteos. El Queso Fresco DELA es perfecto para mis recetas tradicionales. La textura y sabor son incomparables en el mercado peruano.',
     rating: 5,
-    avatar: '/images/avatars/carlos.jpg',
+    avatar: '',
     title: 'Chef Profesional',
     location: 'Miraflores, Lima',
     productPurchased: 'Queso Fresco DELA',
@@ -50,54 +50,54 @@ const defaultTestimonials: Testimonial[] = [
   },
   {
     id: '3',
-    name: 'Ana Fernández',
-    text: 'El Yogurt Griego DELA es mi favorito para los desayunos. Tiene la consistencia perfecta y un sabor natural que no he encontrado en otras marcas. ¡Totalmente recomendado!',
-    rating: 4,
-    avatar: '/images/avatars/ana.jpg',
+    name: 'Ana Torres',
+    text: 'El Yogurt Griego DELA es mi desayuno favorito. Cremoso, natural y sin conservantes artificiales. Se nota la diferencia en la calidad. Lo recomiendo totalmente.',
+    rating: 5,
+    avatar: '',
     title: 'Nutricionista',
     location: 'San Isidro, Lima',
     productPurchased: 'Yogurt Griego DELA',
-    date: '2024-03-05',
+    date: '2024-03-08',
   },
   {
     id: '4',
-    name: 'José Ramírez',
-    text: 'Como dueño de una cafetería, necesito productos lácteos de calidad constante. DELA nunca me ha decepcionado. Sus productos han elevado significativamente la calidad de mis bebidas.',
+    name: 'Roberto Silva',
+    text: 'Los helados DELA son artesanales de verdad. Sabores auténticos y ingredientes de primera calidad. Mis nietos siempre piden que compre DELA cuando vienen a visitarme.',
     rating: 5,
-    avatar: '/images/avatars/jose.jpg',
-    title: 'Propietario de Cafetería',
+    avatar: '',
+    title: 'Jubilado',
     location: 'Barranco, Lima',
-    productPurchased: 'Leche DELA Premium',
-    date: '2024-02-28',
+    productPurchased: 'Helados DELA',
+    date: '2024-03-05',
   },
   {
     id: '5',
-    name: 'Claudia Torres',
-    text: 'Descubrí DELA a través de una recomendación y ahora soy clienta habitual. Los helados artesanales son increíbles, se nota que están hechos con leche fresca de calidad.',
+    name: 'Patricia Vega',
+    text: 'Desde que probé la mantequilla DELA, no puedo usar otra marca. Su sabor es único y se nota que es hecha con leche fresca de verdad. Perfecta para mis postres caseros.',
     rating: 5,
-    avatar: '/images/avatars/claudia.jpg',
-    title: 'Contadora',
-    location: 'La Molina, Lima',
-    productPurchased: 'Helado DELA Vainilla',
-    date: '2024-02-20',
+    avatar: '',
+    title: 'Repostera',
+    location: 'Surco, Lima',
+    productPurchased: 'Mantequilla DELA',
+    date: '2024-03-03',
   },
   {
     id: '6',
-    name: 'Roberto Silva',
-    text: 'La experiencia de compra es fantástica desde el primer momento. Los productos llegan frescos y en perfecto estado. La relación calidad-precio es excelente para productos artesanales.',
-    rating: 4,
-    avatar: '/images/avatars/roberto.jpg',
-    title: 'Empresario',
-    location: 'Surco, Lima',
+    name: 'Miguel Castro',
+    text: 'El queso madurado DELA es excepcional. Perfecto para mis tablas de quesos en el restaurante. Los clientes siempre preguntan de dónde es y se sorprenden que sea peruano.',
+    rating: 5,
+    avatar: '',
+    title: 'Propietario de Restaurante',
+    location: 'Comas, Lima',
     productPurchased: 'Queso Madurado DELA',
-    date: '2024-02-15',
+    date: '2024-03-01',
   },
 ];
 
 const TestimonialsSection: React.FC<TestimonialsSectionProps> = ({
   testimonials = defaultTestimonials,
   title = 'Lo que dicen nuestros clientes',
-  subtitle = 'Miles de clientes satisfechos avalan la calidad de nuestros productos lácteos artesanales',
+  subtitle = 'Miles de familias peruanas ya disfrutan de nuestros productos lácteos artesanales. Descubre por qué DELA es la marca de confianza para el hogar.',
   autoplay = true,
   showNavigation = true,
 }) => {
@@ -152,11 +152,11 @@ const TestimonialsSection: React.FC<TestimonialsSectionProps> = ({
   };
 
   return (
-    <section className="py-16 bg-gradient-to-b from-[#F5EFD7]/20 to-white">
+    <section className="py-16 bg-gradient-to-b from-[#F5EFD7]/30 to-white">
       <div className="container mx-auto px-4 md:px-6">
         {/* Section Header */}
         <div className="text-center mb-12">
-          <div className="inline-flex items-center gap-2 bg-[#CC9F53]/10 px-4 py-2 rounded-full text-[#CC9F53] font-medium text-sm mb-4">
+          <div className="inline-flex items-center gap-2 bg-[#F5EFD7] px-4 py-2 rounded-full text-[#CC9F53] font-medium text-sm mb-4 border border-[#E6D5A8]">
             <MessageCircle className="h-4 w-4" />
             Testimonios
           </div>
@@ -167,7 +167,7 @@ const TestimonialsSection: React.FC<TestimonialsSectionProps> = ({
 
           <div className="w-20 h-1 bg-[#CC9F53] mx-auto mb-6"></div>
 
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-lg text-[#525252] max-w-2xl mx-auto leading-relaxed">
             {subtitle}
           </p>
         </div>
@@ -194,7 +194,6 @@ const TestimonialsSection: React.FC<TestimonialsSectionProps> = ({
                   className="px-3"
                   style={{ width: `${100 / testimonials.length}%` }}
                 >
-                  {' '}
                   <TestimonialCard
                     testimonial={{
                       name: testimonial.name,
@@ -247,7 +246,7 @@ const TestimonialsSection: React.FC<TestimonialsSectionProps> = ({
                 onClick={() => goToSlide(index)}
                 className={`w-3 h-3 rounded-full transition-all duration-200 ${
                   index === currentIndex
-                    ? 'bg-[#CC9F53] scale-110'
+                    ? 'bg-[#CC9F53] scale-110 shadow-md'
                     : 'bg-gray-300 hover:bg-gray-400'
                 }`}
                 aria-label={`Ir al testimonio ${index + 1}`}
@@ -262,7 +261,7 @@ const TestimonialsSection: React.FC<TestimonialsSectionProps> = ({
             <div className="text-3xl md:text-4xl font-bold text-[#CC9F53] mb-2">
               4.8/5
             </div>
-            <div className="text-sm md:text-base text-gray-600">
+            <div className="text-sm md:text-base text-[#525252]">
               Valoración Media
             </div>
           </div>
@@ -271,7 +270,7 @@ const TestimonialsSection: React.FC<TestimonialsSectionProps> = ({
             <div className="text-3xl md:text-4xl font-bold text-[#CC9F53] mb-2">
               {testimonials.length * 100}+
             </div>
-            <div className="text-sm md:text-base text-gray-600">
+            <div className="text-sm md:text-base text-[#525252]">
               Reseñas Positivas
             </div>
           </div>
@@ -280,7 +279,7 @@ const TestimonialsSection: React.FC<TestimonialsSectionProps> = ({
             <div className="text-3xl md:text-4xl font-bold text-[#CC9F53] mb-2">
               5k+
             </div>
-            <div className="text-sm md:text-base text-gray-600">
+            <div className="text-sm md:text-base text-[#525252]">
               Clientes Satisfechos
             </div>
           </div>
@@ -289,7 +288,7 @@ const TestimonialsSection: React.FC<TestimonialsSectionProps> = ({
             <div className="text-3xl md:text-4xl font-bold text-[#CC9F53] mb-2">
               92%
             </div>
-            <div className="text-sm md:text-base text-gray-600">
+            <div className="text-sm md:text-base text-[#525252]">
               Recompran Nuestros Productos
             </div>
           </div>

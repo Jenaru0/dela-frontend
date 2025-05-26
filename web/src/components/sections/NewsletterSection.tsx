@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import React from "react";
-import NewsletterSignup from "@/components/NewsletterSignup";
+import React from 'react';
+import NewsletterSignup from '@/components/NewsletterSignup';
 
 const NewsletterSection: React.FC = () => {
   return (

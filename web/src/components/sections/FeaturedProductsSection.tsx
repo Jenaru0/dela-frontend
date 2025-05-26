@@ -1,12 +1,12 @@
-"use client";
+'use client';
 
-import React, { useState } from "react";
-import Link from "next/link";
-import ProductCard from "@/components/common/ProductCard";
-import { Button } from "@/components/ui/Button";
-import { Badge } from "@/components/ui/badge";
-import { ArrowRight, Star, Filter, SortAsc } from "lucide-react";
-import { Product, products } from "@/lib/products";
+import React, { useState } from 'react';
+import Link from 'next/link';
+import ProductCard from '@/components/common/ProductCard';
+import { Button } from '@/components/ui/Button';
+import { Badge } from '@/components/ui/badge';
+import { ArrowRight, Star, Filter, SortAsc } from 'lucide-react';
+import { Product, products } from '@/lib/products';
 
 interface FeaturedProductsSectionProps {
   products?: Product[];
@@ -18,16 +18,16 @@ interface FeaturedProductsSectionProps {
 
 const FeaturedProductsSection: React.FC<FeaturedProductsSectionProps> = ({
   products: productsProp = products,
-  title = "Productos Destacados",
-  subtitle = "Descubre nuestra selección de productos artesanales más populares",
+  title = 'Productos Destacados',
+  subtitle = 'Descubre nuestra selección de productos artesanales más populares',
   showFilters = false,
   maxProducts = 8,
 }) => {
-  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
   // Filter products by category
   const filteredProducts =
-    selectedCategory === "all"
+    selectedCategory === 'all'
       ? productsProp.slice(0, maxProducts)
       : productsProp
           .filter(
@@ -66,24 +66,24 @@ const FeaturedProductsSection: React.FC<FeaturedProductsSectionProps> = ({
         {showFilters && (
           <div className="flex flex-wrap justify-center gap-2 mb-8">
             <Badge
-              variant={selectedCategory === "all" ? "default" : "outline"}
+              variant={selectedCategory === 'all' ? 'default' : 'outline'}
               className={`cursor-pointer px-4 py-2 ${
-                selectedCategory === "all"
-                  ? "bg-[#CC9F53] text-white"
-                  : "text-[#CC9F53] hover:bg-[#CC9F53]/10"
+                selectedCategory === 'all'
+                  ? 'bg-[#CC9F53] text-white'
+                  : 'text-[#CC9F53] hover:bg-[#CC9F53]/10'
               }`}
-              onClick={() => setSelectedCategory("all")}
+              onClick={() => setSelectedCategory('all')}
             >
               Todos
             </Badge>
             {categories.map((category) => (
               <Badge
                 key={category}
-                variant={selectedCategory === category ? "default" : "outline"}
+                variant={selectedCategory === category ? 'default' : 'outline'}
                 className={`cursor-pointer px-4 py-2 ${
                   selectedCategory === category
-                    ? "bg-[#CC9F53] text-white"
-                    : "text-[#CC9F53] hover:bg-[#CC9F53]/10"
+                    ? 'bg-[#CC9F53] text-white'
+                    : 'text-[#CC9F53] hover:bg-[#CC9F53]/10'
                 }`}
                 onClick={() => setSelectedCategory(category)}
               >

@@ -81,7 +81,7 @@ const Header: React.FC<HeaderProps> = ({
             <Link href="/" className="flex items-center space-x-3">
               <div className="relative h-10 w-10 md:h-12 md:w-12">
                 <Image
-                  src="/images/logo.svg"
+                  src="https://dela.com.pe/img/lodo-dela-header.png"
                   alt="DELA Logo"
                   fill
                   className="object-contain"

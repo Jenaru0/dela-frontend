@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import React from "react";
-import Image from "next/image";
-import { Card, CardContent } from "@/components/ui/card";
-import { Star } from "lucide-react";
+import React from 'react';
+import Image from 'next/image';
+import { Card, CardContent } from '@/components/ui/card';
+import { Star } from 'lucide-react';
 
 interface TestimonialCardProps {
   testimonial: {
@@ -32,8 +32,8 @@ const TestimonialCard: React.FC<TestimonialCardProps> = ({
   showLocation = true,
 }) => {
   // Handle both interface formats: nombre/texto/calificacion (Spanish) and name/text/rating (English)
-  const name = testimonial.name || testimonial.nombre || "Cliente";
-  const text = testimonial.text || testimonial.texto || "";
+  const name = testimonial.name || testimonial.nombre || 'Cliente';
+  const text = testimonial.text || testimonial.texto || '';
   const rating = testimonial.rating || testimonial.calificacion || 0;
   return (
     <Card
@@ -47,12 +47,12 @@ const TestimonialCard: React.FC<TestimonialCardProps> = ({
               key={i}
               className={`h-4 w-4 transition-all duration-200 ${
                 i < rating
-                  ? "fill-[#CC9F53] text-[#CC9F53] group-hover:scale-110"
-                  : "text-gray-300"
+                  ? 'fill-[#CC9F53] text-[#CC9F53] group-hover:scale-110'
+                  : 'text-gray-300'
               }`}
             />
           ))}
-        </div>{" "}
+        </div>{' '}
         {/* Quote */}
         <blockquote className="text-gray-600 mb-4 relative">
           <span className="text-4xl text-[#CC9F53]/20 absolute -top-2 -left-1 font-serif">
@@ -75,16 +75,16 @@ const TestimonialCard: React.FC<TestimonialCardProps> = ({
                   height={40}
                   className="rounded-full object-cover"
                   onError={(e) => {
-                    e.currentTarget.style.display = "none";
+                    e.currentTarget.style.display = 'none';
                     const fallback = e.currentTarget
                       .nextElementSibling as HTMLElement;
-                    if (fallback) fallback.style.display = "flex";
+                    if (fallback) fallback.style.display = 'flex';
                   }}
                 />
               ) : null}
               <div
                 className="h-10 w-10 rounded-full bg-gradient-to-br from-[#CC9F53] to-[#B88D42] flex items-center justify-center text-white font-semibold"
-                style={testimonial.avatar ? { display: "none" } : {}}
+                style={testimonial.avatar ? { display: 'none' } : {}}
               >
                 {name.charAt(0)}
               </div>
@@ -95,7 +95,7 @@ const TestimonialCard: React.FC<TestimonialCardProps> = ({
               {name}
             </p>
             <p className="text-xs text-gray-500">
-              {testimonial.title || "Cliente verificado"}
+              {testimonial.title || 'Cliente verificado'}
             </p>
             {showLocation && testimonial.location && (
               <p className="text-xs text-gray-400">{testimonial.location}</p>

@@ -6,6 +6,13 @@ export interface Product {
   image: string;
   category: string;
   discount?: number;
+  // Propiedades adicionales para el catálogo completo
+  description?: string;
+  rating?: number;
+  reviews?: number;
+  isNew?: boolean;
+  isFeatured?: boolean;
+  stock?: number;
 }
 
 export const products: Product[] = [

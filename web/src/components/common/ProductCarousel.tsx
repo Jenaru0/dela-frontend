@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { useEffect, useRef, useState } from "react";
-import type { Product } from "@/lib/products";
-import ProductCard from "./ProductCard";
+import { useEffect, useRef, useState } from 'react';
+import type { Product } from '@/lib/products';
+import ProductCard from './ProductCard';
 
 export default function ProductCarousel({ products }: { products: Product[] }) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -47,16 +47,16 @@ export default function ProductCarousel({ products }: { products: Product[] }) {
         ref={containerRef}
         className="flex gap-6 overflow-x-auto pb-6"
         style={{
-          scrollBehavior: "smooth",
-          scrollbarWidth: "none",
-          msOverflowStyle: "none",
+          scrollBehavior: 'smooth',
+          scrollbarWidth: 'none',
+          msOverflowStyle: 'none',
         }}
       >
         <style jsx>{`
           div::-webkit-scrollbar {
             display: none;
           }
-        `}</style>{" "}
+        `}</style>{' '}
         {/* Duplicate products for infinite scroll effect */}
         {[...products, ...products].map((product, index) => (
           <div
