@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect } from "react";
-import Link from "next/link";
-import Image from "next/image";
-import { Button } from "@/components/ui/Button";
-import { Badge } from "@/components/ui/badge";
+import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
+import Image from 'next/image';
+import { Button } from '@/components/ui/Button';
+import { Badge } from '@/components/ui/badge';
 import {
   Menu,
   X,
@@ -14,7 +14,7 @@ import {
   Heart,
   Phone,
   Mail,
-} from "lucide-react";
+} from 'lucide-react';
 
 interface HeaderProps {
   cartItemsCount?: number;
@@ -27,23 +27,23 @@ const Header: React.FC<HeaderProps> = ({
 }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 10);
     };
 
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   const navigation = [
-    { name: "Inicio", href: "/" },
-    { name: "Productos", href: "/productos" },
-    { name: "Categorías", href: "/categorias" },
-    { name: "Nosotros", href: "/nosotros" },
-    { name: "Contacto", href: "/contacto" },
+    { name: 'Inicio', href: '/' },
+    { name: 'Productos', href: '/productos' },
+    { name: 'Categorías', href: '/categorias' },
+    { name: 'Nosotros', href: '/nosotros' },
+    { name: 'Contacto', href: '/contacto' },
   ];
 
   return (
@@ -54,15 +54,15 @@ const Header: React.FC<HeaderProps> = ({
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2">
               <Phone className="h-4 w-4" />
-              <span>+1 (555) 123-4567</span>
+              <span>+51 912 949 652</span>
             </div>
             <div className="flex items-center space-x-2">
               <Mail className="h-4 w-4" />
-              <span>info@dela-deleites.com</span>
+              <span>comercial@dela.com.pe</span>
             </div>
           </div>
           <div className="hidden md:block">
-            <span>🚚 Envío gratis en pedidos superiores a €50</span>
+            <span>🚚 Envío gratis en pedidos superiores a S/100</span>
           </div>
         </div>
       </div>
@@ -71,8 +71,8 @@ const Header: React.FC<HeaderProps> = ({
       <header
         className={`sticky top-0 z-50 w-full transition-all duration-300 ${
           isScrolled
-            ? "bg-white/95 backdrop-blur-sm shadow-lg"
-            : "bg-white border-b border-[#E6D5A8]"
+            ? 'bg-white/95 backdrop-blur-sm shadow-lg'
+            : 'bg-white border-b border-[#E6D5A8]'
         }`}
       >
         <div className="container mx-auto px-4">
@@ -81,12 +81,12 @@ const Header: React.FC<HeaderProps> = ({
             <Link href="/" className="flex items-center space-x-3">
               <div className="relative h-10 w-10 md:h-12 md:w-12">
                 <Image
-                  src="/images/logo.png"
+                  src="/images/logo.svg"
                   alt="DELA Logo"
                   fill
                   className="object-contain"
                   onError={(e) => {
-                    e.currentTarget.src = "/images/logo-fallback.png";
+                    e.currentTarget.src = '/images/logo-fallback.png';
                   }}
                 />
               </div>

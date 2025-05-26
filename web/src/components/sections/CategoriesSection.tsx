@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import React from "react";
-import Link from "next/link";
-import CategoryCard from "@/components/common/CategoryCard";
-import { Button } from "@/components/ui/Button";
-import { ArrowRight, Grid3X3 } from "lucide-react";
+import React from 'react';
+import Link from 'next/link';
+import CategoryCard from '@/components/common/CategoryCard';
+import { Button } from '@/components/ui/Button';
+import { ArrowRight, Grid3X3 } from 'lucide-react';
 
 interface Category {
   id: string;
@@ -24,58 +24,44 @@ interface CategoriesSectionProps {
 
 const defaultCategories: Category[] = [
   {
-    id: "mieles",
-    name: "Mieles Artesanales",
-    image: "/images/categories/mieles.jpg",
-    productCount: 15,
-    description: "Mieles puras y naturales del valle",
+    id: 'leche',
+    name: 'Leche DELA',
+    image: '/images/categories/lacteos.svg',
+    productCount: 3,
+    description: 'Leche fresca de alta calidad de nuestro establo',
     featured: true,
   },
   {
-    id: "mermeladas",
-    name: "Mermeladas",
-    image: "/images/categories/mermeladas.jpg",
-    productCount: 28,
-    description: "Dulces caseros con frutas frescas",
+    id: 'yogurt',
+    name: 'Yogurt DELA',
+    image: '/images/categories/mieles.svg',
+    productCount: 8,
+    description: 'Yogures naturales y frutados, incluyendo yogurt griego',
     featured: true,
   },
   {
-    id: "conservas",
-    name: "Conservas",
-    image: "/images/categories/conservas.jpg",
-    productCount: 22,
-    description: "Conservas tradicionales del valle",
-    featured: true,
-  },
-  {
-    id: "lacteos",
-    name: "Productos Lácteos",
-    image: "/images/categories/lacteos.jpg",
-    productCount: 18,
-    description: "Quesos y lácteos artesanales",
-    featured: true,
-  },
-  {
-    id: "embutidos",
-    name: "Embutidos",
-    image: "/images/categories/embutidos.jpg",
+    id: 'quesos',
+    name: 'Quesos DELA',
+    image: '/images/categories/conservas.svg',
     productCount: 12,
-    description: "Embutidos curados tradicionales",
+    description: 'Variedades de quesos artesanales frescos y madurados',
+    featured: true,
   },
   {
-    id: "panaderia",
-    name: "Panadería",
-    image: "/images/categories/panaderia.jpg",
-    productCount: 25,
-    description: "Panes y dulces recién horneados",
+    id: 'helados',
+    name: 'Helados DELA',
+    image: '/images/categories/mermeladas.svg',
+    productCount: 15,
+    description: 'Helados elaborados con ingredientes naturales',
+    featured: true,
   },
 ];
 
 const CategoriesSection: React.FC<CategoriesSectionProps> = ({
   categories = defaultCategories,
   showAll = false,
-  title = "Explora Nuestras Categorías",
-  subtitle = "Descubre la variedad de productos artesanales que tenemos para ti",
+  title = 'Nuestros Productos Lácteos',
+  subtitle = 'Descubre la calidad y frescura de nuestros productos artesanales DELA',
 }) => {
   const displayCategories = showAll
     ? categories
@@ -117,7 +103,7 @@ const CategoriesSection: React.FC<CategoriesSectionProps> = ({
               animationDelay={index * 100}
             />
           ))}
-        </div>{" "}
+        </div>{' '}
         {/* Show All Button */}
         {!showAll && categories.length > 4 && (
           <div className="text-center">
@@ -156,7 +142,7 @@ const CategoriesSection: React.FC<CategoriesSectionProps> = ({
 
           <div className="text-center">
             <div className="text-3xl md:text-4xl font-bold text-[#CC9F53] mb-2">
-              8+
+              25
             </div>
             <div className="text-sm md:text-base text-gray-600">
               Años de Experiencia

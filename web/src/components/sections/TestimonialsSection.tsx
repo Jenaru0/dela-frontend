@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect } from "react";
-import TestimonialCard from "@/components/common/TestimonialCard";
-import { Button } from "@/components/ui/Button";
-import { ChevronLeft, ChevronRight, MessageCircle } from "lucide-react";
+import React, { useState, useEffect } from 'react';
+import TestimonialCard from '@/components/common/TestimonialCard';
+import { Button } from '@/components/ui/Button';
+import { ChevronLeft, ChevronRight, MessageCircle } from 'lucide-react';
 
 interface Testimonial {
   id: string;
@@ -27,77 +27,77 @@ interface TestimonialsSectionProps {
 
 const defaultTestimonials: Testimonial[] = [
   {
-    id: "1",
-    name: "María González",
-    text: "Los productos de DELA son simplemente excepcionales. El sabor auténtico me transporta a mi infancia. La miel de eucalipto es mi favorita, tiene un sabor único que no he encontrado en ningún otro lugar.",
+    id: '1',
+    name: 'María Quispe',
+    text: 'La Leche DELA Premium es simplemente excepcional. Tiene un sabor fresco que me recuerda a la leche de mi abuela en Cerro Azul. Mis hijos la prefieren sobre cualquier otra marca.',
     rating: 5,
-    avatar: "/images/avatars/maria.jpg",
-    title: "Cliente Premium",
-    location: "Madrid, España",
-    productPurchased: "Miel de Eucalipto Premium",
-    date: "2024-03-15",
+    avatar: '/images/avatars/maria.jpg',
+    title: 'Madre de familia',
+    location: 'San Borja, Lima',
+    productPurchased: 'Leche DELA Premium',
+    date: '2024-03-15',
   },
   {
-    id: "2",
-    name: "Carlos Rodríguez",
-    text: "La calidad es incomparable. Cada producto refleja el cuidado y la pasión con la que están elaborados. He probado las mermeladas y conservas, y todas superan mis expectativas.",
+    id: '2',
+    name: 'Carlos Mendoza',
+    text: 'Como chef, valoro mucho la calidad de los lácteos. El Queso Fresco DELA es perfecto para mis recetas tradicionales. La textura y sabor son incomparables en el mercado peruano.',
     rating: 5,
-    avatar: "/images/avatars/carlos.jpg",
-    title: "Chef Profesional",
-    location: "Barcelona, España",
-    productPurchased: "Mermelada de Fresa Casera",
-    date: "2024-03-10",
+    avatar: '/images/avatars/carlos.jpg',
+    title: 'Chef Profesional',
+    location: 'Miraflores, Lima',
+    productPurchased: 'Queso Fresco DELA',
+    date: '2024-03-10',
   },
   {
-    id: "3",
-    name: "Laura Martínez",
-    text: "He probado muchos productos artesanales, pero los de DELA están en otro nivel. La atención al cliente es excelente y los productos llegan siempre frescos y bien empaquetados.",
+    id: '3',
+    name: 'Ana Fernández',
+    text: 'El Yogurt Griego DELA es mi favorito para los desayunos. Tiene la consistencia perfecta y un sabor natural que no he encontrado en otras marcas. ¡Totalmente recomendado!',
     rating: 4,
-    avatar: "/images/avatars/laura.jpg",
-    title: "Bloguera Gastronómica",
-    location: "Valencia, España",
-    productPurchased: "Queso de Cabra Curado",
-    date: "2024-03-05",
+    avatar: '/images/avatars/ana.jpg',
+    title: 'Nutricionista',
+    location: 'San Isidro, Lima',
+    productPurchased: 'Yogurt Griego DELA',
+    date: '2024-03-05',
   },
   {
-    id: "4",
-    name: "José Antonio López",
-    text: "Como dueño de un restaurante, valoro mucho la consistencia en la calidad. DELA nunca me ha decepcionado. Sus productos han elevado significativamente el nivel de mis platos.",
+    id: '4',
+    name: 'José Ramírez',
+    text: 'Como dueño de una cafetería, necesito productos lácteos de calidad constante. DELA nunca me ha decepcionado. Sus productos han elevado significativamente la calidad de mis bebidas.',
     rating: 5,
-    avatar: "/images/avatars/jose.jpg",
-    title: "Propietario de Restaurante",
-    location: "Sevilla, España",
-    productPurchased: "Conservas Variadas",
-    date: "2024-02-28",
+    avatar: '/images/avatars/jose.jpg',
+    title: 'Propietario de Cafetería',
+    location: 'Barranco, Lima',
+    productPurchased: 'Leche DELA Premium',
+    date: '2024-02-28',
   },
   {
-    id: "5",
-    name: "Ana Fernández",
-    text: "Descubrí DELA a través de una recomendación y ahora soy clienta habitual. Los embutidos artesanales son increíbles, se nota que están hechos con técnicas tradicionales.",
+    id: '5',
+    name: 'Claudia Torres',
+    text: 'Descubrí DELA a través de una recomendación y ahora soy clienta habitual. Los helados artesanales son increíbles, se nota que están hechos con leche fresca de calidad.',
     rating: 5,
-    avatar: "/images/avatars/ana.jpg",
-    title: "Nutricionista",
-    location: "Bilbao, España",
-    productPurchased: "Embutidos Artesanales",
-    date: "2024-02-20",
+    avatar: '/images/avatars/claudia.jpg',
+    title: 'Contadora',
+    location: 'La Molina, Lima',
+    productPurchased: 'Helado DELA Vainilla',
+    date: '2024-02-20',
   },
   {
-    id: "6",
-    name: "Roberto Silva",
-    text: "La experiencia de compra es fantástica desde el primer momento. Los productos llegan rápido y en perfecto estado. La relación calidad-precio es excelente.",
+    id: '6',
+    name: 'Roberto Silva',
+    text: 'La experiencia de compra es fantástica desde el primer momento. Los productos llegan frescos y en perfecto estado. La relación calidad-precio es excelente para productos artesanales.',
     rating: 4,
-    avatar: "/images/avatars/roberto.jpg",
-    title: "Empresario",
-    location: "Zaragoza, España",
-    productPurchased: "Pack Degustación",
-    date: "2024-02-15",
+    avatar: '/images/avatars/roberto.jpg',
+    title: 'Empresario',
+    location: 'Surco, Lima',
+    productPurchased: 'Queso Madurado DELA',
+    date: '2024-02-15',
   },
 ];
 
 const TestimonialsSection: React.FC<TestimonialsSectionProps> = ({
   testimonials = defaultTestimonials,
-  title = "Lo que dicen nuestros clientes",
-  subtitle = "Miles de clientes satisfechos avalan la calidad de nuestros productos artesanales",
+  title = 'Lo que dicen nuestros clientes',
+  subtitle = 'Miles de clientes satisfechos avalan la calidad de nuestros productos lácteos artesanales',
   autoplay = true,
   showNavigation = true,
 }) => {
@@ -106,7 +106,7 @@ const TestimonialsSection: React.FC<TestimonialsSectionProps> = ({
 
   // Calculate items per view based on screen size
   const getItemsPerView = () => {
-    if (typeof window !== "undefined") {
+    if (typeof window !== 'undefined') {
       if (window.innerWidth >= 1024) return 3;
       if (window.innerWidth >= 768) return 2;
       return 1;
@@ -122,8 +122,8 @@ const TestimonialsSection: React.FC<TestimonialsSectionProps> = ({
     };
 
     handleResize();
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   const maxIndex = Math.max(0, testimonials.length - itemsPerView);
@@ -194,7 +194,7 @@ const TestimonialsSection: React.FC<TestimonialsSectionProps> = ({
                   className="px-3"
                   style={{ width: `${100 / testimonials.length}%` }}
                 >
-                  {" "}
+                  {' '}
                   <TestimonialCard
                     testimonial={{
                       name: testimonial.name,
@@ -247,8 +247,8 @@ const TestimonialsSection: React.FC<TestimonialsSectionProps> = ({
                 onClick={() => goToSlide(index)}
                 className={`w-3 h-3 rounded-full transition-all duration-200 ${
                   index === currentIndex
-                    ? "bg-[#CC9F53] scale-110"
-                    : "bg-gray-300 hover:bg-gray-400"
+                    ? 'bg-[#CC9F53] scale-110'
+                    : 'bg-gray-300 hover:bg-gray-400'
                 }`}
                 aria-label={`Ir al testimonio ${index + 1}`}
               />
@@ -278,7 +278,7 @@ const TestimonialsSection: React.FC<TestimonialsSectionProps> = ({
 
           <div className="text-center">
             <div className="text-3xl md:text-4xl font-bold text-[#CC9F53] mb-2">
-              10k+
+              5k+
             </div>
             <div className="text-sm md:text-base text-gray-600">
               Clientes Satisfechos
@@ -287,7 +287,7 @@ const TestimonialsSection: React.FC<TestimonialsSectionProps> = ({
 
           <div className="text-center">
             <div className="text-3xl md:text-4xl font-bold text-[#CC9F53] mb-2">
-              95%
+              92%
             </div>
             <div className="text-sm md:text-base text-gray-600">
               Recompran Nuestros Productos

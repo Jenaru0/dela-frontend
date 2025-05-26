@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import React from "react";
-import Link from "next/link";
-import Image from "next/image";
-import { Button } from "@/components/ui/Button";
+import React from 'react';
+import Link from 'next/link';
+import Image from 'next/image';
+import { Button } from '@/components/ui/Button';
 import {
   Facebook,
   Instagram,
@@ -14,39 +14,47 @@ import {
   MapPin,
   Clock,
   ArrowRight,
-} from "lucide-react";
+} from 'lucide-react';
 
 const Footer: React.FC = () => {
   const socialLinks = [
-    { icon: Facebook, href: "#", label: "Facebook" },
-    { icon: Instagram, href: "#", label: "Instagram" },
-    { icon: Twitter, href: "#", label: "Twitter" },
-    { icon: Youtube, href: "#", label: "YouTube" },
+    {
+      icon: Facebook,
+      href: 'https://facebook.com/DELADeleitesDelValle',
+      label: 'Facebook',
+    },
+    {
+      icon: Instagram,
+      href: 'https://instagram.com/dela.peru',
+      label: 'Instagram',
+    },
+    { icon: Twitter, href: 'https://twitter.com/dela.peru', label: 'TikTok' },
+    { icon: Youtube, href: 'https://threads.net/@dela.peru', label: 'Threads' },
   ];
 
   const productCategories = [
-    "Mieles Artesanales",
-    "Mermeladas",
-    "Conservas",
-    "Productos Lácteos",
-    "Embutidos",
-    "Panadería",
+    'Leche DELA',
+    'Yogurt DELA',
+    'Quesos DELA',
+    'Helados DELA',
+    'Productos Lácteos',
+    'Productos Frescos',
   ];
 
   const quickLinks = [
-    { name: "Sobre Nosotros", href: "/nosotros" },
-    { name: "Catálogo", href: "/productos" },
-    { name: "Contacto", href: "/contacto" },
-    { name: "Blog", href: "/blog" },
-    { name: "Recetas", href: "/recetas" },
-    { name: "Eventos", href: "/eventos" },
+    { name: 'Sobre Nosotros', href: '/nosotros' },
+    { name: 'Catálogo', href: '/productos' },
+    { name: 'Contacto', href: '/contacto' },
+    { name: 'Blog', href: '/blog' },
+    { name: 'Recetas', href: '/recetas' },
+    { name: 'Eventos', href: '/eventos' },
   ];
 
   const legalLinks = [
-    { name: "Términos y Condiciones", href: "/terminos" },
-    { name: "Política de Privacidad", href: "/privacidad" },
-    { name: "Política de Cookies", href: "/cookies" },
-    { name: "Devoluciones", href: "/devoluciones" },
+    { name: 'Términos y Condiciones', href: '/terminos' },
+    { name: 'Política de Privacidad', href: '/privacidad' },
+    { name: 'Política de Cookies', href: '/cookies' },
+    { name: 'Devoluciones', href: '/devoluciones' },
   ];
 
   return (
@@ -89,12 +97,12 @@ const Footer: React.FC = () => {
               <Link href="/" className="flex items-center space-x-3 mb-6">
                 <div className="relative h-12 w-12">
                   <Image
-                    src="/images/logo-white.png"
+                    src="/images/logo-white.svg"
                     alt="DELA Logo"
                     fill
                     className="object-contain"
                     onError={(e) => {
-                      e.currentTarget.src = "/images/logo-fallback-white.png";
+                      e.currentTarget.src = '/images/logo-fallback-white.png';
                     }}
                   />
                 </div>
@@ -107,9 +115,9 @@ const Footer: React.FC = () => {
               </Link>
 
               <p className="text-gray-300 mb-6 leading-relaxed">
-                Desde 2015, elaboramos productos artesanales que capturan la
-                esencia y sabores auténticos del valle, utilizando ingredientes
-                locales y técnicas tradicionales.
+                Desde el año 2000, DELA Corp SAC se dedica a la producción de
+                lácteos frescos y de calidad en Cerro Azul, Cañete.
+                Comprometidos con el bienestar animal y la sostenibilidad.
               </p>
 
               {/* Contact Info */}
@@ -117,23 +125,29 @@ const Footer: React.FC = () => {
                 <div className="flex items-center space-x-3">
                   <MapPin className="h-4 w-4 text-[#CC9F53] flex-shrink-0" />
                   <span className="text-sm text-gray-300">
-                    Calle del Valle 123, 28001 Madrid, España
+                    Cerro Azul, Cañete - Lima, Perú
+                  </span>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <MapPin className="h-4 w-4 text-[#CC9F53] flex-shrink-0" />
+                  <span className="text-sm text-gray-300">
+                    Sucursal Lima - Lima, Perú
                   </span>
                 </div>
                 <div className="flex items-center space-x-3">
                   <Phone className="h-4 w-4 text-[#CC9F53] flex-shrink-0" />
-                  <span className="text-sm text-gray-300">+34 123 456 789</span>
+                  <span className="text-sm text-gray-300">+51 912 949 652</span>
                 </div>
                 <div className="flex items-center space-x-3">
                   <Mail className="h-4 w-4 text-[#CC9F53] flex-shrink-0" />
                   <span className="text-sm text-gray-300">
-                    info@dela-deleites.com
+                    comercial@dela.com.pe
                   </span>
                 </div>
                 <div className="flex items-center space-x-3">
                   <Clock className="h-4 w-4 text-[#CC9F53] flex-shrink-0" />
                   <span className="text-sm text-gray-300">
-                    Lun - Vie: 9:00 - 18:00
+                    Lun - Vie: 8:00 - 17:00
                   </span>
                 </div>
               </div>
@@ -150,7 +164,7 @@ const Footer: React.FC = () => {
                     <Link
                       href={`/productos/${category
                         .toLowerCase()
-                        .replace(/\s+/g, "-")}`}
+                        .replace(/\s+/g, '-')}`}
                       className="text-gray-300 hover:text-[#CC9F53] transition-colors duration-200 text-sm"
                     >
                       {category}
@@ -223,7 +237,8 @@ const Footer: React.FC = () => {
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
             <div className="text-sm text-gray-400">
-              © 2024 DELA Deleites del Valle. Todos los derechos reservados.
+              © 2024 DELA Corp SAC. Todos los derechos reservados. RUC:
+              20000000001
             </div>
 
             {/* Payment Methods */}
@@ -232,7 +247,7 @@ const Footer: React.FC = () => {
               <div className="flex space-x-2">
                 <div className="bg-white rounded p-1">
                   <Image
-                    src="/images/visa.png"
+                    src="/images/visa.svg"
                     alt="Visa"
                     width={32}
                     height={20}
@@ -241,7 +256,7 @@ const Footer: React.FC = () => {
                 </div>
                 <div className="bg-white rounded p-1">
                   <Image
-                    src="/images/mastercard.png"
+                    src="/images/mastercard.svg"
                     alt="Mastercard"
                     width={32}
                     height={20}
@@ -250,7 +265,7 @@ const Footer: React.FC = () => {
                 </div>
                 <div className="bg-white rounded p-1">
                   <Image
-                    src="/images/paypal.png"
+                    src="/images/paypal.svg"
                     alt="PayPal"
                     width={32}
                     height={20}

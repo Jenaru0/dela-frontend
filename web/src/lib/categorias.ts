@@ -4,8 +4,8 @@ export interface Categoria {
 }
 
 export const categorias: Categoria[] = [
-  { nombre: "Dulces", imagen: "/images/category-1.png" },
-  { nombre: "Conservas", imagen: "/images/category-2.png" },
-  { nombre: "Bebidas", imagen: "/images/category-3.png" },
-  { nombre: "Artesanías", imagen: "/images/category-4.png" },
+  { nombre: 'Leche DELA', imagen: '/images/categories/lacteos.svg' },
+  { nombre: 'Yogurt DELA', imagen: '/images/categories/mieles.svg' },
+  { nombre: 'Quesos DELA', imagen: '/images/categories/conservas.svg' },
+  { nombre: 'Helados DELA', imagen: '/images/categories/mermeladas.svg' },
 ];
