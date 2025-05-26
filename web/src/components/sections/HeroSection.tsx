@@ -10,8 +10,8 @@ const HeroSection: React.FC = () => {
   return (
     <section className="relative min-h-[90vh] overflow-hidden bg-gradient-to-br from-[#F5EFD7] via-white to-[#F5EFD7]/50">
       {/* Background Pattern */}
-      <div className="absolute inset-0 opacity-10">
-        <div className="absolute inset-0 bg-[url('/images/pattern-bg.svg')] bg-cover bg-center" />
+      <div className="absolute inset-0 opacity-30">
+        <div className="absolute inset-0 bg-[url('https://dela.com.pe/img/valle_pc.png')] bg-cover bg-center" />
       </div>
 
       {/* Floating Elements */}
@@ -98,7 +98,7 @@ const HeroSection: React.FC = () => {
               <div className="relative h-[400px] w-[400px] md:h-[500px] md:w-[500px] lg:h-[600px] lg:w-[600px]">
                 <div className="absolute inset-0 rounded-full bg-gradient-to-br from-[#CC9F53]/20 to-[#F5EFD7]/20 animate-pulse" />
                 <Image
-                  src="https://picsum.photos/600/600?random=1"
+                  src="https://dela.com.pe/img/logoRecurso%201.svg"
                   alt="Productos artesanales DELA"
                   fill
                   className="object-contain drop-shadow-2xl transition-transform duration-700 hover:scale-105"

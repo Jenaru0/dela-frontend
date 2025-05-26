@@ -26,7 +26,7 @@ const defaultCategories: Category[] = [
   {
     id: 'leche',
     name: 'Leche DELA',
-    image: '/images/categories/lacteos.svg',
+    image: 'https://dela.com.pe/img/leche__background.jpg',
     productCount: 3,
     description: 'Leche fresca de alta calidad de nuestro establo',
     featured: true,
@@ -34,7 +34,7 @@ const defaultCategories: Category[] = [
   {
     id: 'yogurt',
     name: 'Yogurt DELA',
-    image: '/images/categories/mieles.svg',
+    image: 'https://dela.com.pe/img/yogurt__background.jpg',
     productCount: 8,
     description: 'Yogures naturales y frutados, incluyendo yogurt griego',
     featured: true,
@@ -42,7 +42,7 @@ const defaultCategories: Category[] = [
   {
     id: 'quesos',
     name: 'Quesos DELA',
-    image: '/images/categories/conservas.svg',
+    image: 'https://dela.com.pe/img/queso__background.jpg',
     productCount: 12,
     description: 'Variedades de quesos artesanales frescos y madurados',
     featured: true,
@@ -50,7 +50,7 @@ const defaultCategories: Category[] = [
   {
     id: 'helados',
     name: 'Helados DELA',
-    image: '/images/categories/mermeladas.svg',
+    image: 'https://dela.com.pe/img/helado__background.jpg',
     productCount: 15,
     description: 'Helados elaborados con ingredientes naturales',
     featured: true,
