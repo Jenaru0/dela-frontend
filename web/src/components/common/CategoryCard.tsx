@@ -4,7 +4,6 @@ import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
-import { ChevronRight } from 'lucide-react';
 
 interface CategoryCardProps {
   category: {
@@ -15,16 +14,13 @@ interface CategoryCardProps {
     imagen?: string;
     productCount?: number;
     href?: string;
-  };
-  className?: string;
-  showProductCount?: boolean;
+  };  className?: string;
   animationDelay?: number;
 }
 
 const CategoryCard: React.FC<CategoryCardProps> = ({
   category,
   className,
-  showProductCount,
   animationDelay,
 }) => {
   // Handle both interface formats: nombre/imagen (legacy) and name/image (new)

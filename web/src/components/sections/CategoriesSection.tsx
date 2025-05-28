@@ -92,14 +92,12 @@ const CategoriesSection: React.FC<CategoriesSectionProps> = ({
           {displayCategories.map((category, index) => (
             <CategoryCard
               key={category.id}
-              category={{
-                id: category.id,
+              category={{                id: category.id,
                 name: category.name,
                 image: category.image,
                 productCount: category.productCount,
                 href: `/categorias/${category.id}`,
               }}
-              showProductCount={true}
               animationDelay={index * 100}
             />
           ))}

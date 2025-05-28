@@ -23,7 +23,6 @@ model Usuario {
   email              String                   @unique @db.VarChar(150)
   celular            String?                  @db.VarChar(15)
   tipoUsuarioId      Int
-  estado             String?                  @db.VarChar(20)
   creadoEn           DateTime                 @default(now()) @db.Timestamp(6)
   actualizadoEn      DateTime                 @updatedAt @db.Timestamp(6)
   auditorias         Auditoria[]
@@ -37,6 +36,7 @@ model Usuario {
   reviews            Review[]
   tipoUsuario        TipoUsuario              @relation(fields: [tipoUsuarioId], references: [id])
   auth               UsuarioAuth?
+  eliminado          Boolean                   @default(false)
 
   @@map("usuario")
 }
@@ -69,7 +69,7 @@ model CategoriaProducto {
   slug          String     @unique @db.VarChar(100)
   imagenUrl     String?    @db.VarChar(255)
   creadoEn      DateTime   @default(now())
-  actualizadoEn DateTime   @updatedAt
+  actualizadoEn DateTime   @default(now())
   productos     Producto[]
 
   @@map("categoria_producto")
@@ -93,7 +93,7 @@ model Producto {
   imagenUrl        String?           @db.VarChar(255)
   estado           EstadoProducto    @default(ACTIVO)
   creadoEn         DateTime          @default(now())
-  actualizadoEn    DateTime          @updatedAt
+  actualizadoEn    DateTime          @default(now())
   carritoItems     CarritoItem[]
   detallePedidos   DetallePedido[]
   favoritos        Favorito[]
@@ -126,7 +126,7 @@ model DireccionCliente {
   referencia     String?
   predeterminada Boolean  @default(false)
   creadoEn       DateTime @default(now())
-  actualizadoEn  DateTime @updatedAt
+  actualizadoEn  DateTime @default(now())
   usuario        Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
   pedidos        Pedido[]
 
@@ -172,7 +172,7 @@ model Promocion {
   usoActual     Int      @default(0)
   activo        Boolean  @default(true)
   creadoEn      DateTime @default(now())
-  actualizadoEn DateTime @updatedAt
+  actualizadoEn DateTime @default(now())
 
   @@map("promocion")
 }
@@ -190,7 +190,7 @@ model Carrito {
   id            Int           @id @default(autoincrement())
   usuarioId     Int           @unique
   creadoEn      DateTime      @default(now())
-  actualizadoEn DateTime      @updatedAt
+  actualizadoEn DateTime      @default(now())
   usuario       Usuario       @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
   items         CarritoItem[]
 
@@ -203,7 +203,7 @@ model CarritoItem {
   productoId    Int
   cantidad      Int
   creadoEn      DateTime @default(now())
-  actualizadoEn DateTime @updatedAt
+  actualizadoEn DateTime @default(now())
   carrito       Carrito  @relation(fields: [carritoId], references: [id], onDelete: Cascade)
   producto      Producto @relation(fields: [productoId], references: [id])
 
@@ -226,7 +226,7 @@ model Pedido {
   notasCliente   String?
   notasInternas  String?
   creadoEn       DateTime         @default(now())
-  actualizadoEn  DateTime         @updatedAt
+  actualizadoEn  DateTime         @default(now())
   detallePedidos DetallePedido[]
   pagos          Pago[]
   direccion      DireccionCliente @relation(fields: [direccionId], references: [id])
@@ -245,7 +245,7 @@ model DetallePedido {
   cantidad       Int
   precioUnitario Decimal  @db.Decimal(10, 2)
   creadoEn       DateTime @default(now())
-  actualizadoEn  DateTime @updatedAt
+  actualizadoEn  DateTime @default(now())
   pedido         Pedido   @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
   producto       Producto @relation(fields: [productoId], references: [id])
 
@@ -277,7 +277,7 @@ model Reclamo {
   estado        EstadoReclamo       @default(ABIERTO)
   tipoReclamo   TipoReclamo         @default(OTRO)
   creadoEn      DateTime            @default(now())
-  actualizadoEn DateTime            @updatedAt
+  actualizadoEn DateTime            @default(now())
   comentarios   ComentarioReclamo[]
   pedido        Pedido              @relation(fields: [pedidoId], references: [id])
   usuario       Usuario             @relation(fields: [usuarioId], references: [id])
