@@ -1,0 +1,20 @@
+[variables]
+NODE_ENV = "production"
+
+[phases.setup]
+nixPkgs = ["nodejs-18_x", "npm-9_x"]
+
+[phases.install]
+cmds = [
+    "npm ci --prefer-offline --no-audit --progress=false",
+    "cd api && npx prisma generate"
+]
+
+[phases.build]
+cmds = [
+    "cd api && npx prisma generate",
+    "npx turbo run build"
+]
+
+[start]
+cmd = "cd api && npm run start:prod"

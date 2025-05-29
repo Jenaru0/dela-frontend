@@ -21,7 +21,7 @@
     "docker:prod": "docker-compose -f docker-compose.prod.yml up -d",
     "docker:down": "docker-compose down",
     "setup": "npm install && npm run prisma:generate",
-    "prisma:generate": "cd api && npx prisma generate",
+    "prisma:generate": "turbo prisma:generate",
     "prisma:migrate": "cd api && npx prisma migrate dev",
     "prisma:studio": "cd api && npx prisma studio"
   },
