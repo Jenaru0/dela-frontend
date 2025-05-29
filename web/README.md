@@ -1,36 +1,81 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🎨 DELA Platform - Frontend
 
-## Getting Started
+## 📱 Aplicación Web React/Next.js
 
-First, run the development server:
+**Stack Tecnológico:**
+- Next.js 15 (App Router)
+- React 19
+- Tailwind CSS v4.1
+- TypeScript
+- Lucide React (iconos)
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## 🚀 Despliegue en Dokploy
+
+### Configuración:
+- **Rama**: `frontend/production`
+- **Build Directory**: `web`
+- **Puerto**: 3000
+- **Build Provider**: Nixpacks
+
+### Variables de Entorno:
+```env
+NEXT_PUBLIC_API_URL=https://tu-backend.dokploy.dev
+NODE_ENV=production
+NEXT_TELEMETRY_DISABLED=1
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🛠️ Desarrollo Local
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+# Instalar dependencias
+npm install
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+# Modo desarrollo
+npm run dev
 
-## Learn More
+# Compilar para producción
+npm run build
 
-To learn more about Next.js, take a look at the following resources:
+# Ejecutar versión de producción
+npm start
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 📁 Estructura del Proyecto
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```
+src/
+├── app/                    # App Router de Next.js
+│   ├── layout.tsx         # Layout principal
+│   ├── page.tsx           # Página de inicio
+│   └── productos/         # Páginas de productos
+├── components/            # Componentes reutilizables
+│   ├── common/           # Componentes comunes
+│   ├── layout/           # Componentes de layout
+│   ├── sections/         # Secciones de páginas
+│   └── ui/               # Componentes de UI
+├── lib/                  # Utilidades y configuraciones
+├── hooks/                # React hooks personalizados
+├── services/             # Servicios de API
+└── types/                # Definiciones de TypeScript
+```
 
-## Deploy on Vercel
+## 🎯 Características
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- ✅ Diseño responsive
+- ✅ SEO optimizado
+- ✅ Accesibilidad (a11y)
+- ✅ Componentes modulares
+- ✅ TypeScript estricto
+- ✅ Tailwind CSS v4.1
+- ✅ Optimización de imágenes
+- ✅ Carga diferida (lazy loading)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 🔗 Enlaces
+
+- **Sitio Web**: En producción en Dokploy
+- **API Backend**: Conectado via `NEXT_PUBLIC_API_URL`
+- **Documentación**: `/docs`
+
+---
+
+**Estado**: ✅ Desplegado en producción
