@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/badge';
+import { useCart } from '@/context/CarContext';
 import {
   Menu,
   X,
@@ -15,19 +16,17 @@ import {
   Phone,
   Mail,
 } from 'lucide-react';
+import { useFavorites } from '@/context/FavoritoContext';
 
-interface HeaderProps {
-  cartItemsCount?: number;
-  wishlistCount?: number;
-}
-
-const Header: React.FC<HeaderProps> = ({
-  cartItemsCount = 0,
-  wishlistCount = 0,
-}) => {
+const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const { favorites } = useFavorites();
+
+  // --- Carrito ---
+  const { cart } = useCart();
+  const cartItemsCount = cart.reduce((acc, item) => acc + item.quantity, 0);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -86,7 +85,8 @@ const Header: React.FC<HeaderProps> = ({
                   fill
                   className="object-contain"
                   onError={(e) => {
-                    e.currentTarget.src = '/images/logo-fallback.png';
+                    (e.target as HTMLImageElement).src =
+                      '/images/logo-fallback.png';
                   }}
                 />
               </div>
@@ -131,30 +131,32 @@ const Header: React.FC<HeaderProps> = ({
             {/* Action Buttons */}
             <div className="flex items-center space-x-2 md:space-x-4">
               {/* Wishlist */}
-              <Button variant="ghost" size="icon" className="relative">
-                <Heart className="h-5 w-5" />
-                {wishlistCount > 0 && (
-                  <Badge
-                    variant="destructive"
-                    className="absolute -top-2 -right-2 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs"
-                  >
-                    {wishlistCount}
-                  </Badge>
-                )}
-              </Button>
 
-              {/* Cart */}
-              <Button variant="ghost" size="icon" className="relative">
-                <ShoppingCart className="h-5 w-5" />
-                {cartItemsCount > 0 && (
-                  <Badge
-                    variant="default"
-                    className="absolute -top-2 -right-2 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs bg-[#CC9F53] hover:bg-[#B88D42]"
-                  >
-                    {cartItemsCount}
-                  </Badge>
+              <Link href="/favoritos" className="relative">
+                <Heart className="w-6 h-6" />
+                {favorites.length > 0 && (
+                  <span className="absolute -top-1 -right-2 bg-[#CC9F53] text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                    {favorites.length}
+                  </span>
                 )}
-              </Button>
+              </Link>
+              <Link href="/carrito">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="relative cursor-pointer"
+                >
+                  <ShoppingCart className="h-5 w-5" />
+                  {cartItemsCount > 0 && (
+                    <Badge
+                      variant="default"
+                      className="absolute -top-2 -right-2 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs bg-[#CC9F53] hover:bg-[#B88D42]"
+                    >
+                      {cartItemsCount}
+                    </Badge>
+                  )}
+                </Button>
+              </Link>
 
               {/* User Account */}
               <Button variant="ghost" size="icon">

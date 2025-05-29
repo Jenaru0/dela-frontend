@@ -36,4 +36,9 @@ export interface ProductsResponse {
   meta: PaginationMeta;
 }
 
+
 export type ViewMode = 'grid' | 'list';
+
+export interface CartProduct extends Product {
+  quantity: number;
+}

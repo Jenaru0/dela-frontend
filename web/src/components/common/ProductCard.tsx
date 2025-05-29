@@ -1,5 +1,8 @@
 'use client';
 
+import { useCart } from '@/context/CarContext';
+import { useRouter } from 'next/navigation';
+import { useCartDrawer } from '@/context/CartDrawerContext';
 import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -9,6 +12,7 @@ import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Heart, ShoppingBag } from 'lucide-react';
 import { formatPrice } from '@/lib/utils';
 import type { Product } from '@/lib/products';
+import { useFavorites } from '@/context/FavoritoContext';
 
 interface ProductCardProps {
   product: Product;
@@ -21,7 +25,15 @@ const ProductCard: React.FC<ProductCardProps> = ({
   showFavorite = true,
   className,
 }) => {
-  const [isFavorite, setIsFavorite] = React.useState(false);
+  const { addFavorite, removeFavorite, isFavorite } = useFavorites();
+
+  // Solo aquí, no afuera ni suelto
+  const fav = isFavorite(product.id);
+
+  const handleFavoriteClick = () => {
+    fav ? removeFavorite(product.id) : addFavorite(product);
+  };
+
   const hasDiscount = product.oldPrice && product.oldPrice > product.price;
   const discountPercentage = hasDiscount
     ? Math.round(
@@ -29,13 +41,25 @@ const ProductCard: React.FC<ProductCardProps> = ({
       )
     : 0;
 
+  const { addToCart } = useCart();
+  const { openDrawer } = useCartDrawer();
+  
+  const handleAddToCart = () => {
+    addToCart(product);
+    openDrawer();
+  };
+
+  const router = useRouter();
+
+  const handleQuickView = () => {
+    router.push(`/productos/${product.id}`);
+  };
+
   return (
     <Card
       className={`group relative overflow-hidden transition-all duration-500 hover:scale-[1.03] hover:shadow-xl hover:shadow-[#CC9F53]/10 border-[#E6D5A8]/30 hover:border-[#CC9F53]/40 bg-white ${className}`}
     >
-      {/* Enhanced image container with better gradients */}
       <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-[#F5EFD7]/80 via-white to-[#F5EFD7]/40">
-        {/* Subtle pattern overlay */}
         <div className="absolute inset-0 opacity-5 bg-[url('/images/pattern-bg.svg')] bg-cover bg-center" />
 
         <Image
@@ -43,50 +67,44 @@ const ProductCard: React.FC<ProductCardProps> = ({
           alt={product.name}
           fill
           className="object-contain p-6 transition-all duration-500 group-hover:scale-110 group-hover:rotate-1"
-          onError={(e) => {
-            e.currentTarget.src = '/images/product-fallback.svg';
-          }}
         />
 
-        {/* Enhanced discount badge with DELA colors */}
         {hasDiscount && (
           <Badge className="absolute left-3 top-3 z-10 bg-gradient-to-r from-red-500 to-red-600 text-white font-bold shadow-lg animate-pulse">
             -{discountPercentage}% OFF
           </Badge>
         )}
 
-        {/* Improved favorite button with DELA styling */}
         {showFavorite && (
           <Button
             variant="ghost"
             size="icon"
             className={`absolute right-3 top-3 z-10 h-9 w-9 rounded-full bg-white/90 backdrop-blur-md transition-all duration-300 hover:bg-white hover:scale-110 shadow-lg ${
-              isFavorite
+              fav
                 ? 'text-red-500 shadow-red-200'
                 : 'text-[#525252] hover:text-[#CC9F53]'
             }`}
-            onClick={() => setIsFavorite(!isFavorite)}
-            aria-label={
-              isFavorite ? 'Quitar de favoritos' : 'Añadir a favoritos'
-            }
+            onClick={handleFavoriteClick}
+            aria-label={fav ? 'Quitar de favoritos' : 'Añadir a favoritos'}
           >
             <Heart
-              className={`h-4 w-4 transition-all ${isFavorite ? 'fill-current scale-110' : ''}`}
+              className={`h-4 w-4 transition-all ${
+                fav ? 'fill-current scale-110' : ''
+              }`}
             />
           </Button>
         )}
 
-        {/* Enhanced category badge */}
         <Badge className="absolute bottom-3 left-3 bg-[#CC9F53]/90 text-white backdrop-blur-sm font-medium shadow-md">
           {product.category}
         </Badge>
 
-        {/* New: Quick actions overlay on hover */}
         <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center">
           <Button
             variant="ghost"
             size="sm"
             className="bg-white/95 text-[#CC9F53] hover:bg-[#CC9F53] hover:text-white transform translate-y-4 group-hover:translate-y-0 transition-all duration-300 shadow-lg font-medium"
+            onClick={handleQuickView}
           >
             Vista rápida
           </Button>
@@ -100,7 +118,6 @@ const ProductCard: React.FC<ProductCardProps> = ({
           </h3>
         </Link>
 
-        {/* Enhanced price section with better spacing */}
         <div className="space-y-1">
           <div className="flex items-baseline gap-3">
             <span className="text-2xl font-bold text-[#CC9F53] tracking-tight">
@@ -122,11 +139,10 @@ const ProductCard: React.FC<ProductCardProps> = ({
       </CardContent>
 
       <CardFooter className="p-6 pt-0 space-y-3">
-        {' '}
-        {/* Enhanced CTA button with DELA styling */}
         <Button
           className="w-full bg-[#CC9F53] hover:bg-[#CC9F53]/90 text-white font-semibold py-3 px-6 rounded-lg shadow-lg hover:shadow-xl hover:shadow-[#CC9F53]/20 transition-all duration-300 transform hover:scale-[1.02] group/btn"
           size="default"
+          onClick={handleAddToCart}
         >
           <ShoppingBag className="mr-2 h-5 w-5 transition-transform group-hover/btn:scale-110" />
           Añadir al carrito
