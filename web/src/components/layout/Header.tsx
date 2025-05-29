@@ -23,13 +23,8 @@ const Header: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
 
   // --- Carrito ---
-  const { cart } = useCart();
-  const cartItemsCount = cart.reduce((acc, prod) => acc + prod.quantity, 0);
-
-  // --- Opcional: wishlist ---
-  // Si tienes un contexto para wishlist, puedes hacer algo similar:
-  // const { wishlist } = useWishlist();
-  // const wishlistCount = wishlist.length;
+  const { cart } = useCart(); 
+  const cartItemsCount = cart.reduce((acc, item) => acc + item.quantity, 0);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -134,15 +129,6 @@ const Header: React.FC = () => {
               {/* Wishlist */}
               <Button variant="ghost" size="icon" className="relative">
                 <Heart className="h-5 w-5" />
-                {/* Si usas wishlist, activa esto
-                {wishlistCount > 0 && (
-                  <Badge
-                    variant="destructive"
-                    className="absolute -top-2 -right-2 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs"
-                  >
-                    {wishlistCount}
-                  </Badge>
-                )} */}
               </Button>
               <Link href="/carrito">
                 <Button variant="ghost" size="icon" className="relative cursor-pointer">

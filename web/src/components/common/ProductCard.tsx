@@ -1,6 +1,7 @@
 'use client';
 
 import { useCart } from '@/context/CarContext';
+import { useRouter } from 'next/navigation';
 import { useCartDrawer } from '@/context/CartDrawerContext';
 import React from 'react';
 import Image from 'next/image';
@@ -40,6 +41,12 @@ const ProductCard: React.FC<ProductCardProps> = ({
     openDrawer();
   };
 
+  const router = useRouter();
+
+  const handleQuickView = () => {
+    router.push(`/productos/${product.id}`);
+  };
+
   return (
     <Card
       className={`group relative overflow-hidden transition-all duration-500 hover:scale-[1.03] hover:shadow-xl hover:shadow-[#CC9F53]/10 border-[#E6D5A8]/30 hover:border-[#CC9F53]/40 bg-white ${className}`}
@@ -54,10 +61,6 @@ const ProductCard: React.FC<ProductCardProps> = ({
           alt={product.name}
           fill
           className="object-contain p-6 transition-all duration-500 group-hover:scale-110 group-hover:rotate-1"
-          onError={(e) => {
-            // Este hack funciona solo en <img>, no en next/image
-            // Si quieres fallback, maneja con un estado o usa componente personalizado
-          }}
         />
 
         {/* Enhanced discount badge with DELA colors */}
@@ -101,6 +104,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
             variant="ghost"
             size="sm"
             className="bg-white/95 text-[#CC9F53] hover:bg-[#CC9F53] hover:text-white transform translate-y-4 group-hover:translate-y-0 transition-all duration-300 shadow-lg font-medium"
+            onClick={handleQuickView}
           >
             Vista rápida
           </Button>
