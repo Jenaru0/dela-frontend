@@ -22,23 +22,18 @@ jobs:
 
       - name: 🚀 Trigger Dokploy Frontend Deploy
         run: |
-          if [ -n "${{ secrets.DOKPLOY_FRONTEND_WEBHOOK }}" ]; then
-            curl -X POST "${{ secrets.DOKPLOY_FRONTEND_WEBHOOK }}" \
-              -H "Content-Type: application/json" \
-              -d '{
-                "ref": "refs/heads/frontend/production",
-                "repository": {
-                  "full_name": "${{ github.repository }}"
-                },
-                "commits": [{
-                  "message": "${{ github.event.head_commit.message }}",
-                  "id": "${{ github.sha }}"
-                }]
-              }'
-          else
-            echo "⚠️ DOKPLOY_FRONTEND_WEBHOOK no configurado. Saltando deploy automático."
-            echo "✅ Frontend build verificado correctamente"
-          fi
+          curl -X POST "${{ secrets.DOKPLOY_FRONTEND_WEBHOOK }}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "ref": "refs/heads/frontend/production",
+              "repository": {
+                "full_name": "${{ github.repository }}"
+              },
+              "commits": [{
+                "message": "${{ github.event.head_commit.message }}",
+                "id": "${{ github.sha }}"
+              }]
+            }'
 
       - name: ✅ Frontend Deploy Triggered
         run: |
@@ -56,23 +51,18 @@ jobs:
 
       - name: 🚀 Trigger Dokploy Backend Deploy
         run: |
-          if [ -n "${{ secrets.DOKPLOY_BACKEND_WEBHOOK }}" ]; then
-            curl -X POST "${{ secrets.DOKPLOY_BACKEND_WEBHOOK }}" \
-              -H "Content-Type: application/json" \
-              -d '{
-                "ref": "refs/heads/backend/production",
-                "repository": {
-                  "full_name": "${{ github.repository }}"
-                },
-                "commits": [{
-                  "message": "${{ github.event.head_commit.message }}",
-                  "id": "${{ github.sha }}"
-                }]
-              }'
-          else
-            echo "⚠️ DOKPLOY_BACKEND_WEBHOOK no configurado. Saltando deploy automático."
-            echo "✅ Backend build verificado correctamente"
-          fi
+          curl -X POST "${{ secrets.DOKPLOY_BACKEND_WEBHOOK }}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "ref": "refs/heads/backend/production",
+              "repository": {
+                "full_name": "${{ github.repository }}"
+              },
+              "commits": [{
+                "message": "${{ github.event.head_commit.message }}",
+                "id": "${{ github.sha }}"
+              }]
+            }'
 
       - name: ✅ Backend Deploy Triggered
         run: |
