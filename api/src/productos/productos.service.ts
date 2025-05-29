@@ -87,11 +87,6 @@ export class ProductosService {
       this.prisma.producto.count({ where }),
     ]);
 
-    // Calcular metadatos de paginación
-    const totalPages = Math.ceil(total / limit);
-    const hasNextPage = page < totalPages;
-    const hasPrevPage = page > 1;
-
     return new PaginacionDto(productos, page, limit, total);
   }
 
@@ -194,7 +189,7 @@ export class ProductosService {
       estado: 'ACTIVO' as const,
     };
 
-    const queryOptions: any = {
+    const queryOptions: Prisma.ProductoFindManyArgs = {
       where,
       include: { categoria: true },
       orderBy: { nombre: 'asc' },
