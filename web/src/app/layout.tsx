@@ -1,12 +1,11 @@
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
+import { CartProvider } from '@/context/CarContext';
+import { CartDrawerProvider } from '@/context/CartDrawerContext';
+import { MiniCartDrawer } from '@/components/carrito/carritoDrawer/MiniCartDrawer';
 
-const geistSans = Geist({
-  variable: '--font-geist-sans',
-  subsets: ['latin'],
-});
-
+const geistSans = Geist({ variable: '--font-geist-sans', subsets: ['latin'] });
 const geistMono = Geist_Mono({
   variable: '--font-geist-mono',
   subsets: ['latin'],
@@ -28,7 +27,12 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <main id="main-content">{children}</main>
+        <CartProvider>
+          <CartDrawerProvider>
+            <MiniCartDrawer />
+            <main id="main-content">{children}</main>
+          </CartDrawerProvider>
+        </CartProvider>
       </body>
     </html>
   );
