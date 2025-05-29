@@ -18,6 +18,7 @@
 - **Build Directory**: `web`
 - **Puerto**: 3000
 - **Build Provider**: Nixpacks
+- **Auto-Deploy**: ✅ Configurado (webhooks + GitHub Actions)
 
 ### Variables de Entorno:
 
