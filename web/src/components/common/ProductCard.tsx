@@ -31,7 +31,11 @@ const ProductCard: React.FC<ProductCardProps> = ({
   const fav = isFavorite(product.id);
 
   const handleFavoriteClick = () => {
-    fav ? removeFavorite(product.id) : addFavorite(product);
+    if (fav) {
+      removeFavorite(product.id);
+    } else {
+      addFavorite(product);
+    }
   };
 
   const hasDiscount = product.oldPrice && product.oldPrice > product.price;
@@ -43,7 +47,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
 
   const { addToCart } = useCart();
   const { openDrawer } = useCartDrawer();
-  
+
   const handleAddToCart = () => {
     addToCart(product);
     openDrawer();

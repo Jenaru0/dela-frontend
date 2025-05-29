@@ -3,6 +3,7 @@
 ## 📱 Aplicación Web React/Next.js
 
 **Stack Tecnológico:**
+
 - Next.js 15 (App Router)
 - React 19
 - Tailwind CSS v4.1
@@ -12,12 +13,14 @@
 ## 🚀 Despliegue en Dokploy
 
 ### Configuración:
+
 - **Rama**: `frontend/production`
 - **Build Directory**: `web`
 - **Puerto**: 3000
 - **Build Provider**: Nixpacks
 
 ### Variables de Entorno:
+
 ```env
 NEXT_PUBLIC_API_URL=https://tu-backend.dokploy.dev
 NODE_ENV=production

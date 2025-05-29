@@ -18,12 +18,14 @@ Tailwind v4.1      TypeScript      Backups
 ## 🚀 Servicios y Ramas
 
 ### **Frontend (Aplicación Web)**
+
 - **Tecnologías**: Next.js 15, React 19, Tailwind CSS v4.1
 - **Rama GitHub**: `frontend/production`
 - **Directorio**: `web/`
 - **Estado**: ✅ **Desplegado en Dokploy**
 
 ### **Backend (API REST)**
+
 - **Tecnologías**: NestJS, Prisma ORM, PostgreSQL
 - **Rama GitHub**: `backend/production`
 - **Directorio**: `api/`
@@ -32,6 +34,7 @@ Tailwind v4.1      TypeScript      Backups
 ## ⚡ Configuración Rápida para Dokploy
 
 ### 1. Frontend (Ya desplegado):
+
 ```
 Repositorio: https://github.com/Jenaru0/dela-platform.git
 Rama: frontend/production
@@ -40,6 +43,7 @@ Puerto: 3000
 ```
 
 ### 2. Backend (Listo para desplegar):
+
 ```
 Repositorio: https://github.com/Jenaru0/dela-platform.git
 Rama: backend/production
@@ -51,10 +55,12 @@ Variables: Ver FRONTEND-DEPLOY.md
 ## 🛠️ Desarrollo Local
 
 ### Requisitos:
+
 - Node.js 18+
 - PostgreSQL (o usar Neon Cloud)
 
 ### Inicio Rápido:
+
 ```bash
 # Clonar repositorio
 git clone https://github.com/Jenaru0/dela-platform.git
@@ -86,6 +92,7 @@ dela-platform/
 ## 🎯 Funcionalidades Implementadas
 
 ### Frontend:
+
 - ✅ Página de inicio con hero section
 - ✅ Catálogo de productos con filtros
 - ✅ Diseño responsive mobile-first
@@ -93,6 +100,7 @@ dela-platform/
 - ✅ SEO optimizado
 
 ### Backend:
+
 - ✅ API REST completa
 - ✅ Autenticación JWT
 - ✅ CRUD de productos
@@ -102,12 +110,14 @@ dela-platform/
 ## 🔐 Variables de Entorno
 
 ### Frontend:
+
 ```env
 NEXT_PUBLIC_API_URL=https://tu-backend-url.dokploy.dev
 NODE_ENV=production
 ```
 
 ### Backend:
+
 ```env
 DATABASE_URL=postgresql://...
 JWT_SECRET=tu_secret_seguro

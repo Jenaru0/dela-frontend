@@ -1,4 +1,5 @@
 import React from 'react';
+import Image from 'next/image';
 import { Button } from '@/components/ui/Button';
 import { Trash, Plus, Minus } from 'lucide-react';
 import type { CartProduct } from '@/types/productos';
@@ -21,9 +22,11 @@ export const CartProductItem: React.FC<CartProductItemProps> = ({
     style={{ backdropFilter: 'blur(4px)' }}
   >
     <div className="w-20 h-20 rounded-4xl bg-[#F5E6C6] flex items-center justify-center mr-4 border-2 border-[#CC9F53] overflow-hidden">
-      <img
+      <Image
         src={prod.image}
         alt={prod.name}
+        width={64}
+        height={64}
         className="w-16 h-16 object-contain"
       />
     </div>

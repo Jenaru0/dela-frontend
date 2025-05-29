@@ -1,16 +1,9 @@
 import type { Metadata } from 'next';
-import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
 import { CartProvider } from '@/context/CarContext';
 import { CartDrawerProvider } from '@/context/CartDrawerContext';
 import { MiniCartDrawer } from '@/components/carrito/carritoDrawer/MiniCartDrawer';
 import { FavoritesProvider } from '@/context/FavoritoContext';
-
-const geistSans = Geist({ variable: '--font-geist-sans', subsets: ['latin'] });
-const geistMono = Geist_Mono({
-  variable: '--font-geist-mono',
-  subsets: ['latin'],
-});
 
 export const metadata: Metadata = {
   title: 'DELA - Deleites del Valle | Lácteos Artesanales desde 2000',
@@ -25,14 +18,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+      <body className="font-sans antialiased">
         <CartProvider>
           <CartDrawerProvider>
             <FavoritesProvider>
-            <MiniCartDrawer />
-            <main id="main-content">{children}</main>
+              <MiniCartDrawer />
+              <main id="main-content">{children}</main>
             </FavoritesProvider>
           </CartDrawerProvider>
         </CartProvider>
