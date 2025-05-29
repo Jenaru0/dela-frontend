@@ -20,25 +20,28 @@ jobs:
       - name: 📂 Checkout Code
         uses: actions/checkout@v4
 
-      - name: 🚀 Trigger Dokploy Frontend Deploy
-        run: |
-          curl -X POST "${{ secrets.DOKPLOY_FRONTEND_WEBHOOK }}" \
-            -H "Content-Type: application/json" \
-            -d '{
-              "ref": "refs/heads/frontend/production",
-              "repository": {
-                "full_name": "${{ github.repository }}"
-              },
-              "commits": [{
-                "message": "${{ github.event.head_commit.message }}",
-                "id": "${{ github.sha }}"
-              }]
-            }'
+      - name: ⚙️ Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: 'web/package.json'
 
-      - name: ✅ Frontend Deploy Triggered
+      - name: 📦 Install Frontend Dependencies
+        working-directory: web
+        run: npm ci
+
+      - name: 🏗️ Build Frontend
+        working-directory: web
+        run: npm run build
+
+      - name: ✅ Frontend Ready for Deploy
         run: |
-          echo "✅ Frontend deploy iniciado en Dokploy"
-          echo "🔗 Monitorea el progreso en tu dashboard de Dokploy"
+          echo "✅ Frontend build completado exitosamente"
+          echo "🚀 Dokploy detectará este push automáticamente via webhook"
+          echo "🔗 Monitorea el progreso en: https://admin.episundc.pe"
+          echo "📅 Commit: ${{ github.sha }}"
+          echo "👤 Deploy iniciado por: ${{ github.actor }}"
 
   deploy-backend:
     name: 🔧 Deploy Backend
@@ -49,36 +52,42 @@ jobs:
       - name: 📂 Checkout Code
         uses: actions/checkout@v4
 
-      - name: 🚀 Trigger Dokploy Backend Deploy
-        run: |
-          curl -X POST "${{ secrets.DOKPLOY_BACKEND_WEBHOOK }}" \
-            -H "Content-Type: application/json" \
-            -d '{
-              "ref": "refs/heads/backend/production",
-              "repository": {
-                "full_name": "${{ github.repository }}"
-              },
-              "commits": [{
-                "message": "${{ github.event.head_commit.message }}",
-                "id": "${{ github.sha }}"
-              }]
-            }'
+      - name: ⚙️ Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: 'api/package.json'
 
-      - name: ✅ Backend Deploy Triggered
-        run: |
-          echo "✅ Backend deploy iniciado en Dokploy"
-          echo "🔗 Monitorea el progreso en tu dashboard de Dokploy"
+      - name: 📦 Install Backend Dependencies
+        working-directory: api
+        run: npm ci
 
-  notify-success:
-    name: 📢 Notificar Éxito
+      - name: 🏗️ Build Backend
+        working-directory: api
+        run: npm run build
+
+      - name: ✅ Backend Ready for Deploy
+        run: |
+          echo "✅ Backend build completado exitosamente"
+          echo "🚀 Dokploy detectará este push automáticamente via webhook"
+          echo "🔗 Monitorea el progreso en: https://admin.episundc.pe"
+          echo "📅 Commit: ${{ github.sha }}"
+          echo "👤 Deploy iniciado por: ${{ github.actor }}"
+
+  validate-build:
+    name: ✅ Validar Build Exitoso
     runs-on: ubuntu-latest
     needs: [deploy-frontend, deploy-backend]
     if: always() && (needs.deploy-frontend.result == 'success' || needs.deploy-backend.result == 'success')
 
     steps:
-      - name: 🎉 Deploy Completado
+      - name: 🎉 Build y Deploy Validado
         run: |
-          echo "🎉 Deploy completado exitosamente"
+          echo "🎉 Validación completada exitosamente"
+          echo "✅ Código validado y listo para producción"
+          echo "🚀 Dokploy manejará el deploy automáticamente"
           echo "📅 Fecha: $(date)"
           echo "🔗 Commit: ${{ github.sha }}"
           echo "👤 Usuario: ${{ github.actor }}"
+          echo "🌐 Dashboard: https://admin.episundc.pe"
