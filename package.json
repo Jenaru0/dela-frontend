@@ -1,9 +1,14 @@
 {
   "name": "dela-platform",
+  "version": "1.0.0",
   "private": true,
+  "description": "Plataforma de comercio electrónico moderna con NestJS + Next.js",
+  "author": "Dela Platform Team",
+  "license": "MIT",
   "scripts": {
     "build": "turbo build",
     "dev": "turbo dev --parallel",
+    "start": "turbo start",
     "lint": "turbo lint",
     "lint:fix": "turbo lint:fix",
     "test": "turbo test",
@@ -11,7 +16,14 @@
     "clean": "turbo clean && rm -rf node_modules",
     "type-check": "turbo type-check",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
-    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\""
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "docker:dev": "docker-compose up -d",
+    "docker:prod": "docker-compose -f docker-compose.prod.yml up -d",
+    "docker:down": "docker-compose down",
+    "setup": "npm install && npm run prisma:generate",
+    "prisma:generate": "cd api && npx prisma generate",
+    "prisma:migrate": "cd api && npx prisma migrate dev",
+    "prisma:studio": "cd api && npx prisma studio"
   },
   "devDependencies": {
     "turbo": "^2.5.3",
