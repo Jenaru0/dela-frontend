@@ -4,6 +4,7 @@ import './globals.css';
 import { CartProvider } from '@/context/CarContext';
 import { CartDrawerProvider } from '@/context/CartDrawerContext';
 import { MiniCartDrawer } from '@/components/carrito/carritoDrawer/MiniCartDrawer';
+import { FavoritesProvider } from '@/context/FavoritoContext';
 
 const geistSans = Geist({ variable: '--font-geist-sans', subsets: ['latin'] });
 const geistMono = Geist_Mono({
@@ -29,8 +30,10 @@ export default function RootLayout({
       >
         <CartProvider>
           <CartDrawerProvider>
+            <FavoritesProvider>
             <MiniCartDrawer />
             <main id="main-content">{children}</main>
+            </FavoritesProvider>
           </CartDrawerProvider>
         </CartProvider>
       </body>

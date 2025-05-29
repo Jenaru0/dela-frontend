@@ -8,7 +8,7 @@ import { CartProductItem } from '@/components/carrito/CartProductItem';
 import { CartSummary } from '@/components/carrito/CartSummary';
 import { CartEmpty } from '@/components/carrito/CartEmpty';
 import { Button } from '@/components/ui/Button';
-
+import Link from 'next/link';
 export default function CarritoPage() {
   const {
     cart,
@@ -38,12 +38,12 @@ export default function CarritoPage() {
               <Lock className="w-4 h-4" />
               Compra protegida y datos seguros con DELA
             </div>
-            <a
+            <Link
               href="/productos"
               className="text-[#B88D42] font-semibold hover:underline transition"
             >
               + Seguir comprando
-            </a>
+            </Link>
           </div>
 
           {cart.length === 0 ? (

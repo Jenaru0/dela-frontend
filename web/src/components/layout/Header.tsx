@@ -16,14 +16,16 @@ import {
   Phone,
   Mail,
 } from 'lucide-react';
+import { useFavorites } from '@/context/FavoritoContext';
 
 const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const { favorites } = useFavorites();
 
   // --- Carrito ---
-  const { cart } = useCart(); 
+  const { cart } = useCart();
   const cartItemsCount = cart.reduce((acc, item) => acc + item.quantity, 0);
 
   useEffect(() => {
@@ -66,10 +68,11 @@ const Header: React.FC = () => {
 
       {/* Main Header */}
       <header
-        className={`sticky top-0 z-50 w-full transition-all duration-300 ${isScrolled
+        className={`sticky top-0 z-50 w-full transition-all duration-300 ${
+          isScrolled
             ? 'bg-white/95 backdrop-blur-sm shadow-lg'
             : 'bg-white border-b border-[#E6D5A8]'
-          }`}
+        }`}
       >
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-16 md:h-20">
@@ -82,7 +85,8 @@ const Header: React.FC = () => {
                   fill
                   className="object-contain"
                   onError={(e) => {
-                    (e.target as HTMLImageElement).src = '/images/logo-fallback.png';
+                    (e.target as HTMLImageElement).src =
+                      '/images/logo-fallback.png';
                   }}
                 />
               </div>
@@ -127,11 +131,21 @@ const Header: React.FC = () => {
             {/* Action Buttons */}
             <div className="flex items-center space-x-2 md:space-x-4">
               {/* Wishlist */}
-              <Button variant="ghost" size="icon" className="relative">
-                <Heart className="h-5 w-5" />
-              </Button>
+
+              <Link href="/favoritos" className="relative">
+                <Heart className="w-6 h-6" />
+                {favorites.length > 0 && (
+                  <span className="absolute -top-1 -right-2 bg-[#CC9F53] text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                    {favorites.length}
+                  </span>
+                )}
+              </Link>
               <Link href="/carrito">
-                <Button variant="ghost" size="icon" className="relative cursor-pointer">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="relative cursor-pointer"
+                >
                   <ShoppingCart className="h-5 w-5" />
                   {cartItemsCount > 0 && (
                     <Badge

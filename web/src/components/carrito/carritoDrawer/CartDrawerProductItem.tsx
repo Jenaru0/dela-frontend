@@ -1,6 +1,7 @@
 "use client";
 import React from "react";
 import { Trash, Plus, Minus } from "lucide-react";
+import Image from "next/image";
 import { Button } from "@/components/ui/Button";
 import type { CartItem } from "@/context/CarContext";
 
@@ -20,9 +21,11 @@ const CartDrawerProductItem: React.FC<Props> = ({
   removeFromCart,
 }) => (
   <div className="flex items-center rounded-2xl border border-[#F6E9C2]/80 bg-white shadow-lg shadow-[#cc9f5326] p-3 sm:p-4 gap-3">
-    <img
+    <Image
       src={prod.image}
       alt={prod.name}
+      width={56}   // 14 * 4 = 56px
+      height={56}
       className="w-14 h-14 object-contain rounded-xl border border-[#f7ecd8] bg-[#FFF9EC] shadow-inner"
       loading="lazy"
     />
