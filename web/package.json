@@ -8,7 +8,9 @@
     "start": "next start",
     "lint": "next lint",
     "type-check": "tsc --noEmit",
-    "test": "echo \"No tests configured yet\" && exit 0"
+    "test": "echo \"No tests configured yet\" && exit 0",
+    "clean": "rm -rf .next node_modules/.cache",
+    "analyze": "cross-env ANALYZE=true npm run build"
   },
   "dependencies": {
     "@tailwindcss/postcss": "^4.1.8",

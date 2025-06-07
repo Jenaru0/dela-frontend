@@ -1,43 +1,26 @@
 # 🚀 Configuración Dokploy/Nixpacks para Frontend DELA
-# Optimizada para Next.js 14 con Tailwind CSS
+# ✅ Optimizada para Next.js 15 con Tailwind CSS v4
+
+[setup]
+nixpkgs = ["nodejs_18", "npm", "python3", "gcc", "gnumake"]
+
+[install]
+cmd = "npm ci --prefer-offline --no-audit"
+
+[build]
+cmd = "npm run build"
 
 [start]
 cmd = "npm start"
 
-[build]
-cmd = "npm ci && npm run build"
-
-[setup]
-nixpkgs = ["nodejs_18", "npm"]
-
-[env]
+[variables]
 NODE_ENV = "production"
 NEXT_TELEMETRY_DISABLED = "1"
-NPM_CONFIG_CACHE = ".npm"
-
-[phases.install]
-cmd = "npm ci --prefer-offline --no-audit"
-
-[phases.build]
-cmd = "npm run build"
-dependsOn = ["install"]
-
-[phases.start]
-cmd = "npm start"
-dependsOn = ["build"]
-
-# Optimizaciones de cache
-[cache]
-dirs = [".npm", ".next/cache"]
-
-# Variables para producción (ajustar según necesidad)
-[variables]
 PORT = "3000"
 HOSTNAME = "0.0.0.0"
+NPM_CONFIG_CACHE = ".npm"
 
-[variables]
-NIXPACKS_METADATA = "nextjs"
-
-# Configuración específica para evitar problemas con lightningcss
-[phases.setup]
-nixPkgs = ["nodejs_18", "python3", "gcc", "gnumake"]
+# 📦 Cache para optimizar builds
+[staticAssets]
+"public" = "./public"
+".next/static" = "./.next/static"
