@@ -1,4 +1,5 @@
 import type { NextConfig } from 'next';
+import path from 'path';
 
 const nextConfig: NextConfig = {
   // 🚀 Configuración para producción standalone
@@ -39,6 +40,12 @@ const nextConfig: NextConfig = {
   // ⚡ Optimizaciones experimentales
   experimental: {
     optimizePackageImports: ['lucide-react'],
+  },
+
+  // 🔧 Configuración de webpack para aliases
+  webpack: (config) => {
+    config.resolve.alias['@'] = path.resolve(__dirname, 'src');
+    return config;
   },
 
   // 🌐 Headers de seguridad para producción
