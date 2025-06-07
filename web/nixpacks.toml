@@ -1,5 +1,5 @@
-# Configuración Nixpacks para el Frontend
-# Optimizada para Next.js con Tailwind CSS v4
+# 🚀 Configuración Dokploy/Nixpacks para Frontend DELA
+# Optimizada para Next.js 14 con Tailwind CSS
 
 [start]
 cmd = "npm start"
@@ -8,17 +8,32 @@ cmd = "npm start"
 cmd = "npm ci && npm run build"
 
 [setup]
-nixpkgs = ["nodejs_18"]
+nixpkgs = ["nodejs_18", "npm"]
 
 [env]
 NODE_ENV = "production"
+NEXT_TELEMETRY_DISABLED = "1"
+NPM_CONFIG_CACHE = ".npm"
 
 [phases.install]
-cmd = "npm ci"
+cmd = "npm ci --prefer-offline --no-audit"
 
 [phases.build]
 cmd = "npm run build"
 dependsOn = ["install"]
+
+[phases.start]
+cmd = "npm start"
+dependsOn = ["build"]
+
+# Optimizaciones de cache
+[cache]
+dirs = [".npm", ".next/cache"]
+
+# Variables para producción (ajustar según necesidad)
+[variables]
+PORT = "3000"
+HOSTNAME = "0.0.0.0"
 
 [variables]
 NIXPACKS_METADATA = "nextjs"
