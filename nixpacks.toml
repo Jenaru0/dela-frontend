@@ -1,0 +1,20 @@
+# 🚀 Configuración Nixpacks para Frontend DELA
+# Instala dependencias en el directorio web/ correcto
+
+[phases.setup]
+nixPkgs = ["nodejs_18", "npm-8_x"]
+
+[phases.install]
+cmds = ["cd web && npm ci"]
+
+[phases.build]
+cmds = ["cd web && npm run build"]
+
+[start]
+cmd = "cd web && npm start"
+
+[variables]
+NODE_ENV = "production"
+NEXT_TELEMETRY_DISABLED = "1"
+PORT = "3000"
+HOSTNAME = "0.0.0.0"
