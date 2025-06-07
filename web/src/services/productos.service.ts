@@ -1,90 +1,9 @@
-import { Product } from '@/lib/products';
+import { Product, products } from '@/lib/products';
 import { FilterState, ProductsResponse } from '@/types/productos';
+import { CATEGORIAS_MOCK } from '@/constants/productos';
 
-// Mock data - replace with real API calls
-const MOCK_PRODUCTS: Product[] = [
-  {
-    id: '1',
-    name: 'Queso Artesanal del Valle',
-    price: 25.9,
-    oldPrice: 32.0,
-    image: '/images/products/product-1.svg',
-    category: 'Lácteos',
-    rating: 4.8,
-    reviews: 124,
-    isNew: false,
-    isFeatured: true,
-    description: 'Queso artesanal elaborado con leche fresca del valle',
-    stock: 15,
-  },
-  {
-    id: '2',
-    name: 'Miel de Abeja Pura',
-    price: 18.5,
-    image: '/images/products/product-2.svg',
-    category: 'Mieles',
-    rating: 4.9,
-    reviews: 87,
-    isNew: true,
-    isFeatured: true,
-    description: 'Miel pura de abejas del valle, 100% natural',
-    stock: 8,
-  },
-  {
-    id: '3',
-    name: 'Mermelada de Fresa Casera',
-    price: 12.9,
-    oldPrice: 15.5,
-    image: '/images/products/product-3.svg',
-    category: 'Mermeladas',
-    rating: 4.7,
-    reviews: 56,
-    isNew: false,
-    isFeatured: false,
-    description: 'Mermelada casera de fresas frescas del valle',
-    stock: 22,
-  },
-  {
-    id: '4',
-    name: 'Conserva de Duraznos',
-    price: 22.0,
-    image: '/images/products/product-4.svg',
-    category: 'Conservas',
-    rating: 4.6,
-    reviews: 43,
-    isNew: false,
-    isFeatured: true,
-    description: 'Duraznos en almíbar, conserva artesanal',
-    stock: 12,
-  },
-  {
-    id: '5',
-    name: 'Yogurt Natural Cremoso',
-    price: 8.5,
-    image: '/images/products/product-5.svg',
-    category: 'Lácteos',
-    rating: 4.5,
-    reviews: 78,
-    isNew: false,
-    isFeatured: false,
-    description: 'Yogurt natural sin azúcar añadida',
-    stock: 30,
-  },
-  {
-    id: '6',
-    name: 'Miel de Eucalipto',
-    price: 22.0,
-    oldPrice: 28.0,
-    image: '/images/products/product-6.svg',
-    category: 'Mieles',
-    rating: 4.8,
-    reviews: 62,
-    isNew: true,
-    isFeatured: true,
-    description: 'Miel de eucalipto con propiedades medicinales',
-    stock: 15,
-  },
-];
+// Usar productos reales de DELA
+const MOCK_PRODUCTS: Product[] = products;
 
 class ProductosService {
   async fetchProductos(
@@ -92,23 +11,10 @@ class ProductosService {
     page: number = 1
   ): Promise<ProductsResponse> {
     // Simulate API delay
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    await new Promise((resolve) => setTimeout(resolve, 300));
 
-    // In a real app, this would be:
-    // const params = new URLSearchParams({
-    //   busqueda: filters.search,
-    //   categoriaId: filters.category,
-    //   precioMin: filters.priceMin,
-    //   precioMax: filters.priceMax,
-    //   destacado: filters.destacado.toString(),
-    //   disponible: filters.disponible.toString(),
-    //   orderBy: filters.sortBy,
-    //   sortOrder: filters.sortOrder,
-    //   page: page.toString(),
-    //   limit: '12'
-    // });
-    // const response = await fetch(`/api/productos?${params}`);
-    // return response.json();
+    console.log('🔍 ProductosService - Productos originales:', MOCK_PRODUCTS);
+    console.log('🔍 ProductosService - Cantidad:', MOCK_PRODUCTS.length);
 
     // Apply filters locally (this would be done in the backend)
     let filteredProducts = [...MOCK_PRODUCTS];
@@ -123,7 +29,7 @@ class ProductosService {
       );
     }
 
-    if (filters.category) {
+    if (filters.category && filters.category !== 'Todos los Productos') {
       filteredProducts = filteredProducts.filter(
         (p) => p.category === filters.category
       );
@@ -190,6 +96,15 @@ class ProductosService {
     const endIndex = startIndex + limit;
     const paginatedProducts = filteredProducts.slice(startIndex, endIndex);
 
+    console.log(
+      '🔍 ProductosService - Productos filtrados:',
+      paginatedProducts
+    );
+    console.log(
+      '🔍 ProductosService - Primera imagen:',
+      paginatedProducts[0]?.image
+    );
+
     return {
       data: paginatedProducts,
       meta: {
@@ -207,16 +122,7 @@ class ProductosService {
     // Simulate API delay
     await new Promise((resolve) => setTimeout(resolve, 200));
 
-    // In a real app:
-    // const response = await fetch('/api/productos/categorias');
-    // return response.json();
-
-    return [
-      { id: '1', nombre: 'Lácteos' },
-      { id: '2', nombre: 'Conservas' },
-      { id: '3', nombre: 'Mermeladas' },
-      { id: '4', nombre: 'Mieles' },
-    ];
+    return CATEGORIAS_MOCK;
   }
 }
 
