@@ -1,14 +1,14 @@
 # 🚀 Configuración Dokploy/Nixpacks para Frontend DELA
 # ✅ Optimizada para Next.js 15 con Tailwind CSS v4
 
-[setup]
-nixpkgs = ["nodejs_18", "npm", "python3", "gcc", "gnumake"]
+[phases.setup]
+nixPkgs = ["nodejs_18", "npm-8_x", "python3", "gcc", "gnumake"]
 
-[install]
-cmd = "npm ci --prefer-offline --no-audit"
+[phases.install]
+cmds = ["npm ci --include=dev"]
 
-[build]
-cmd = "npm run build"
+[phases.build]
+cmds = ["npm run build"]
 
 [start]
 cmd = "npm start"
@@ -18,9 +18,3 @@ NODE_ENV = "production"
 NEXT_TELEMETRY_DISABLED = "1"
 PORT = "3000"
 HOSTNAME = "0.0.0.0"
-NPM_CONFIG_CACHE = ".npm"
-
-# 📦 Cache para optimizar builds
-[staticAssets]
-"public" = "./public"
-".next/static" = "./.next/static"

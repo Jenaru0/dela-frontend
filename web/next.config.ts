@@ -3,7 +3,7 @@ import type { NextConfig } from 'next';
 const nextConfig: NextConfig = {
   // 🚀 Configuración para producción standalone
   output: 'standalone',
-  
+
   // 🔄 Optimizaciones de compilación
   compress: true,
 
