@@ -2,7 +2,7 @@
 # Instala dependencias en el directorio web/ correcto
 
 [phases.setup]
-nixPkgs = ["nodejs_18", "npm-8_x"]
+nixPkgs = ["nodejs_18"]
 
 [phases.install]
 cmds = ["cd web && npm ci"]
