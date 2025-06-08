@@ -15,5 +15,5 @@ cmd = "cd web && npm start"
 [variables]
 NODE_ENV = "production"
 NEXT_TELEMETRY_DISABLED = "1"
-PORT = "3000"
+PORT = "80"
 HOSTNAME = "0.0.0.0"
