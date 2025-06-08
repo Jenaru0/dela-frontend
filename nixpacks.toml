@@ -1,14 +1,10 @@
 # 🚀 Configuración Nixpacks para Frontend DELA
 
 [phases.setup]
-nixPkgs = ["nodejs_20"]
+nixPkgs = ["nodejs_20", "rustc", "cargo"]
 
 [phases.install]
-# primero instala todo, luego reconstruye lightningcss
-cmds = [
-  "cd web && npm ci",
-  "cd web && npm rebuild lightningcss --build-from-source"
-]
+cmds = ["cd web && npm ci"]
 
 [phases.build]
 cmds = ["cd web && npm run build"]
