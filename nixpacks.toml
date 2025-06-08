@@ -1,7 +1,7 @@
 # 🚀 Configuración Nixpacks para Frontend DELA
 
 [phases.setup]
-nixPkgs = ["nodejs_20", "rustc", "cargo"]
+nixPkgs = ["nodejs_20"]
 
 [phases.install]
 cmds = ["cd web && npm ci"]
@@ -17,3 +17,6 @@ NODE_ENV = "production"
 NEXT_TELEMETRY_DISABLED = "1"
 PORT = "80"
 HOSTNAME = "0.0.0.0"
+
+[providers]
+staticAssets = false
