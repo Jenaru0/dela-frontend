@@ -2,24 +2,21 @@
 # Usando multi-stage build para optimizar el tamaño de la imagen
 
 # ========================================
-# 📦 Stage 1: Dependencies
-# ========================================
-FROM node:20-alpine AS deps
-RUN apk add --no-cache libc6-compat
-WORKDIR /app
-
-# Copiamos solo los archivos de dependencias
-COPY web/package*.json ./
-RUN npm ci --only=production
-
-# ========================================
-# 🔨 Stage 2: Builder
+# 🔨 Stage 1: Builder
 # ========================================
 FROM node:20-alpine AS builder
 WORKDIR /app
 
-# Copiamos las dependencias desde la etapa anterior
-COPY --from=deps /app/node_modules ./node_modules
+# Instalamos libc6-compat para compatibilidad
+RUN apk add --no-cache libc6-compat
+
+# Copiamos package.json primero
+COPY web/package*.json ./
+
+# Instalamos todas las dependencias (incluyendo devDependencies para el build)
+RUN npm ci
+
+# Copiamos el resto del código
 COPY web/ ./
 
 # Variables de entorno para el build
@@ -30,7 +27,7 @@ ENV NEXT_TELEMETRY_DISABLED=1
 RUN npm run build
 
 # ========================================
-# 🚀 Stage 3: Runner (Imagen final)
+# 🚀 Stage 2: Runner (Imagen final)
 # ========================================
 FROM node:20-alpine AS runner
 WORKDIR /app
@@ -47,6 +44,8 @@ RUN adduser --system --uid 1001 nextjs
 
 # Copiamos los archivos necesarios para ejecutar
 COPY --from=builder /app/public ./public
+
+# Verificamos que .next/standalone existe y lo copiamos
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
