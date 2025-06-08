@@ -14,7 +14,8 @@ RUN apk add --no-cache libc6-compat
 COPY web/package*.json ./
 
 # Instalamos todas las dependencias (incluyendo devDependencies para el build)
-RUN npm ci
+# Usamos npm ci con cache para builds más rápidos y suprimimos warnings
+RUN npm ci --no-audit --no-fund --silent
 
 # Copiamos el resto del código
 COPY web/ ./
@@ -23,8 +24,8 @@ COPY web/ ./
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# Construimos la aplicación
-RUN npm run build
+# Construimos la aplicación con logging reducido
+RUN npm run build --silent
 
 # ========================================
 # 🚀 Stage 2: Runner (Imagen final)
@@ -35,7 +36,7 @@ WORKDIR /app
 # Variables de entorno para producción
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
-ENV PORT=80
+ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
 
 # Creamos un usuario no-root por seguridad
@@ -50,7 +51,7 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
 # Exponemos el puerto
-EXPOSE 80
+EXPOSE 3000
 
 # Cambiamos al usuario no-root
 USER nextjs
