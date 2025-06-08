@@ -1,7 +1,7 @@
 # 🚀 Configuración Nixpacks para Frontend DELA
 
 [phases.setup]
-nixPkgs = ["nodejs_21"]
+nixPkgs = ["nodejs_20"]
 
 [phases.install]
 cmds = ["cd web && npm ci"]
