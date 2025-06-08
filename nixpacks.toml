@@ -19,4 +19,4 @@ PORT = "80"
 HOSTNAME = "0.0.0.0"
 
 [providers]
-staticAssets = false
+node = true
