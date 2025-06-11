@@ -12,11 +12,6 @@ export interface FilterState {
   sortOrder: 'asc' | 'desc';
 }
 
-export interface Categoria {
-  id: string;
-  nombre: string;
-}
-
 export interface OpcionOrdenamiento {
   value: string;
   label: string;
@@ -36,9 +31,40 @@ export interface ProductsResponse {
   meta: PaginationMeta;
 }
 
-
 export type ViewMode = 'grid' | 'list';
 
 export interface CartProduct extends Product {
   quantity: number;
+}
+
+// Tipos en español tal como responde tu backend
+export interface Categoria {
+  id: number;
+  nombre: string;
+}
+
+export interface ImagenProducto {
+  id: number;
+  productoId: number;
+  url: string;
+  altText?: string; // <-- asegúrate que exista y se llame así
+  principal: boolean;
+  orden?: number;
+  creadoEn: string;
+}
+
+export interface Producto {
+  id: number;
+  nombre: string;
+  slug: string;
+  descripcion: string;
+  precioUnitario: number | string;
+  precioAnterior?: number | string;
+  stock: number;
+  destacado: boolean;
+  categoria: Categoria;
+  imagenes: ImagenProducto[];
+  unidadMedida?: string;
+  peso?: string | number;
+  infoNutricional?: Record<string, unknown>;
 }

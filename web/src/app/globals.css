@@ -1,5 +1,98 @@
 @import 'tailwindcss';
 
+/* Custom Scrollbar - Professional and Consistent with DELA Design */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #F5F3ED;
+  border-radius: 9999px;
+  border: 1px solid #E5E0C8;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #CC9F53 0%, #B8904A 100%);
+  border-radius: 9999px;
+  border: 1px solid #9A8C61;
+  transition: all 0.3s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #B8904A 0%, #A67B41 100%);
+  box-shadow: 0 2px 4px rgba(204, 159, 83, 0.3);
+}
+
+::-webkit-scrollbar-thumb:active {
+  background: #A67B41;
+}
+
+::-webkit-scrollbar-corner {
+  background: #F5F3ED;
+}
+
+/* Firefox Scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #CC9F53 #F5F3ED;
+}
+
+/* Custom scrollbar variants */
+.scrollbar-thin::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: #CC9F53;
+  border-radius: 9999px;
+  transition: background 0.2s ease;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: #B8904A;
+}
+
+.scrollbar-thick::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+.scrollbar-thick::-webkit-scrollbar-track {
+  background: #FDFCF7;
+  border-radius: 9999px;
+  border: 1px solid #E5E0C8;
+  margin: 2px;
+}
+
+.scrollbar-thick::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #CC9F53 0%, #B8904A 100%);
+  border-radius: 9999px;
+  border: 2px solid #9A8C61;
+  transition: all 0.3s ease;
+}
+
+.scrollbar-thick::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #B8904A 0%, #A67B41 100%);
+  box-shadow: 0 4px 8px rgba(204, 159, 83, 0.4);
+  transform: scale(1.05);
+}
+
+.scrollbar-hidden::-webkit-scrollbar {
+  width: 0px;
+  height: 0px;
+}
+
+.scrollbar-hidden {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
 :root {
   /* Enhanced warm gold color system - Based on #CC9F53 and #F5EFD7 */
   --background: #fafaf8;

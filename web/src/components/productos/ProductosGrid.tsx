@@ -23,17 +23,6 @@ const ProductosGrid: React.FC<ProductosGridProps> = ({
   onPageChange,
   onClearFilters,
 }) => {
-  // Debug temporal - revisar datos de productos
-  console.log('🔍 ProductosGrid - Productos recibidos:', productos);
-  console.log('🔍 ProductosGrid - Cantidad:', productos.length);
-  if (productos.length > 0) {
-    console.log('🔍 ProductosGrid - Primer producto:', productos[0]);
-    console.log(
-      '🔍 ProductosGrid - URL imagen primer producto:',
-      productos[0].image
-    );
-  }
-
   if (loading) {
     return (
       <div className="text-center py-12">

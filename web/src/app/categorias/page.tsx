@@ -11,25 +11,25 @@ const CATEGORIES = [
     name: 'Leche DELA',
     image: '/images/category-fallback.png',
     desc: 'Leche fresca, pasteurizada y llena de nutrientes. Directo de vacas criadas en libertad.',
-    link: '/categorias/leche',
+    link: '/productos',
   },
   {
     name: 'Yogurt DELA',
     image: '/images/categorias/yogurt.jpg',
     desc: 'Yogurt artesanal, natural y cremoso. Perfecto para tus desayunos y snacks.',
-    link: '/categorias/yogurt',
+    link: '/productos',
   },
   {
     name: 'Quesos DELA',
     image: '/images/categorias/quesos.jpg',
     desc: 'Quesos frescos y madurados con recetas tradicionales y el sabor auténtico DELA.',
-    link: '/categorias/quesos',
+    link: '/productos',
   },
   {
     name: 'Helados DELA',
     image: '/images/categorias/helados.jpg',
     desc: 'Helados cremosos, elaborados artesanalmente con ingredientes naturales.',
-    link: '/categorias/helados',
+    link: '/productos',
   },
 ];
 

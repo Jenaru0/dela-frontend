@@ -1,9 +1,9 @@
 'use client';
 
-import { useCart } from '@/context/CarContext';
+import { useCart } from '@/contexts/CarContext';
 import { useRouter } from 'next/navigation';
-import { useCartDrawer } from '@/context/CartDrawerContext';
-import React from 'react';
+import { useCartDrawer } from '@/contexts/CartDrawerContext';
+import React, { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
@@ -12,7 +12,9 @@ import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Heart, ShoppingBag } from 'lucide-react';
 import { formatPrice } from '@/lib/utils';
 import type { Product } from '@/lib/products';
-import { useFavorites } from '@/context/FavoritoContext';
+import { useFavorites } from '@/contexts/FavoritoContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { useAuthModalGlobal } from '@/contexts/AuthModalContext';
 
 interface ProductCardProps {
   product: Product;
@@ -26,31 +28,56 @@ const ProductCard: React.FC<ProductCardProps> = ({
   className,
 }) => {
   const { addFavorite, removeFavorite, isFavorite } = useFavorites();
+  const { isAuthenticated } = useAuth();
+  const { open: openAuthModal } = useAuthModalGlobal();
 
-  // Solo aquí, no afuera ni suelto
   const fav = isFavorite(product.id);
 
   const handleFavoriteClick = () => {
+    if (!isAuthenticated) {
+      openAuthModal('login');
+      return;
+    }
     if (fav) {
       removeFavorite(product.id);
     } else {
-      addFavorite(product);
+      addFavorite(product.id);
     }
   };
-
+  
   const hasDiscount = product.oldPrice && product.oldPrice > product.price;
   const discountPercentage = hasDiscount
     ? Math.round(
         ((product.oldPrice! - product.price) / product.oldPrice!) * 100
       )
     : 0;
-
-  const { addToCart } = useCart();
+  const { addToCart, isLoading } = useCart();
   const { openDrawer } = useCartDrawer();
-
-  const handleAddToCart = () => {
-    addToCart(product);
-    openDrawer();
+  const [isAddingToCart, setIsAddingToCart] = useState(false);  const handleAddToCart = async () => {
+    console.log('🔄 HandleAddToCart called', { 
+      isAuthenticated, 
+      product: { id: product.id, name: product.name },
+      usuario: isAuthenticated ? 'user logged in' : 'no user'
+    });
+    
+    if (!isAuthenticated) {
+      console.log('❌ User not authenticated, opening auth modal');
+      openAuthModal('login');
+      return;
+    }
+    
+    try {
+      setIsAddingToCart(true);
+      console.log('⏳ Adding product to cart...', { productId: product.id, productName: product.name });
+      await addToCart(product);
+      console.log('✅ Product added successfully, opening drawer');
+      openDrawer();
+    } catch (error) {
+      console.error('❌ Error adding to cart:', error);
+      alert(`Error añadiendo al carrito: ${error instanceof Error ? error.message : 'Error desconocido'}`);
+    } finally {
+      setIsAddingToCart(false);
+    }
   };
 
   const router = useRouter();
@@ -140,16 +167,35 @@ const ProductCard: React.FC<ProductCardProps> = ({
             </p>
           )}
         </div>
-      </CardContent>
-
-      <CardFooter className="p-6 pt-0 space-y-3">
-        <Button
-          className="w-full bg-[#CC9F53] hover:bg-[#CC9F53]/90 text-white font-semibold py-3 px-6 rounded-lg shadow-lg hover:shadow-xl hover:shadow-[#CC9F53]/20 transition-all duration-300 transform hover:scale-[1.02] group/btn"
-          size="default"
-          onClick={handleAddToCart}
+      </CardContent>      <CardFooter className="p-6 pt-0 space-y-3">
+        {/* Debug info */}
+        <div className="text-xs text-gray-500">
+          {isAuthenticated ? '✅ Autenticado' : '❌ No autenticado'}
+        </div>
+        
+        {/* Simple test button */}
+        <button 
+          className="w-full bg-red-500 text-white p-2 rounded"
+          onClick={() => {
+            console.log('🔥 SIMPLE BUTTON CLICKED!');
+            alert('Simple button works!');
+          }}
         >
-          <ShoppingBag className="mr-2 h-5 w-5 transition-transform group-hover/btn:scale-110" />
-          Añadir al carrito
+          TEST SIMPLE BUTTON
+        </button>
+        
+        <Button
+          className="w-full bg-[#CC9F53] hover:bg-[#CC9F53]/90 text-white font-semibold py-3 px-6 rounded-lg shadow-lg hover:shadow-xl hover:shadow-[#CC9F53]/20 transition-all duration-300 transform hover:scale-[1.02] group/btn disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+          size="default"
+          onClick={() => {
+            console.log('🔥 BUTTON CLICKED! Simple test');
+            alert('Button clicked!');
+            handleAddToCart();
+          }}
+          disabled={isAddingToCart || isLoading}
+        >
+          <ShoppingBag className={`mr-2 h-5 w-5 transition-transform group-hover/btn:scale-110 ${isAddingToCart ? 'animate-pulse' : ''}`} />
+          {isAddingToCart ? 'Añadiendo...' : 'Añadir al carrito'}
         </Button>
       </CardFooter>
     </Card>

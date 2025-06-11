@@ -103,6 +103,7 @@ const TestimonialsSection: React.FC<TestimonialsSectionProps> = ({
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
+  const [isHydrated, setIsHydrated] = useState(false);
 
   // Calculate items per view based on screen size
   const getItemsPerView = () => {
@@ -116,7 +117,14 @@ const TestimonialsSection: React.FC<TestimonialsSectionProps> = ({
 
   const [itemsPerView, setItemsPerView] = useState(3);
 
+  // Handle hydration
   useEffect(() => {
+    setIsHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isHydrated) return;
+
     const handleResize = () => {
       setItemsPerView(getItemsPerView());
     };
@@ -124,7 +132,7 @@ const TestimonialsSection: React.FC<TestimonialsSectionProps> = ({
     handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  }, [isHydrated]);
 
   const maxIndex = Math.max(0, testimonials.length - itemsPerView);
 

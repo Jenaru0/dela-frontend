@@ -3,9 +3,13 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/badge';
-import { useCart } from '@/context/CarContext';
+import { useAuth } from '@/contexts/AuthContext';
+import AuthModal from '@/components/auth/AuthModal';
+import { useCart } from '@/contexts/CarContext';
+import { useFavorites } from '@/contexts/FavoritoContext';
 import {
   Menu,
   X,
@@ -15,34 +19,114 @@ import {
   Heart,
   Phone,
   Mail,
+  LogOut,
+  Users,
 } from 'lucide-react';
-import { useFavorites } from '@/context/FavoritoContext';
 
 const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const { favorites } = useFavorites();
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authModalMode, setAuthModalMode] = useState<'login' | 'register'>(
+    'login'
+  );
+  const [showUserMenu, setShowUserMenu] = useState(false);
 
-  // --- Carrito ---
+  const { isAuthenticated, usuario, cerrarSesion, isLoading } = useAuth();
   const { cart } = useCart();
-  const cartItemsCount = cart.reduce((acc, item) => acc + item.quantity, 0);
+  const { favorites } = useFavorites();
+  const router = useRouter();
 
+  const cartItemsCount = cart.reduce((acc, item) => acc + item.quantity, 0);
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 10);
     };
 
+    const updateHeaderHeight = () => {
+      const header = document.querySelector('header');
+      const topBar = document.querySelector('.top-bar');
+      if (header && topBar) {
+        const headerRect = header.getBoundingClientRect();
+        const topBarRect = topBar.getBoundingClientRect();
+        const totalHeight = headerRect.height + Math.max(0, topBarRect.bottom);
+        document.documentElement.style.setProperty('--header-height', `${totalHeight}px`);
+      }
+    };
+
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest('.user-menu-container')) {
+        setShowUserMenu(false);
+      }
+    };
+
     window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', updateHeaderHeight);
+    window.addEventListener('resize', updateHeaderHeight);
+    document.addEventListener('click', handleClickOutside);
+
+    // Calcular altura inicial
+    updateHeaderHeight();
+    const timeoutId = setTimeout(updateHeaderHeight, 100);
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('scroll', updateHeaderHeight);
+      window.removeEventListener('resize', updateHeaderHeight);
+      document.removeEventListener('click', handleClickOutside);
+      clearTimeout(timeoutId);
+    };
   }, []);
 
   const navigation = [
     { name: 'Inicio', href: '/' },
     { name: 'Productos', href: '/productos' },
-    { name: 'Categorías', href: '/categorias' },
+    { name: 'Categorías', href: '/#categorias', isScroll: true },
     { name: 'Nosotros', href: '/nosotros' },
     { name: 'Contacto', href: '/contacto' },
+  ];
+
+  const handleNavClick = (
+    e: React.MouseEvent<HTMLAnchorElement>,
+    item: { name: string; href: string; isScroll?: boolean }
+  ) => {
+    if (item.isScroll && item.href === '/#categorias') {
+      e.preventDefault();
+      if (window.location.pathname === '/') {
+        const element = document.getElementById('categorias');
+        if (element) {
+          const headerHeight = 80;
+          const offsetTop = element.offsetTop - headerHeight + 10;
+          window.scrollTo({ top: offsetTop, behavior: 'smooth' });
+        }
+      } else {
+        router.push('/');
+        setTimeout(() => {
+          const element = document.getElementById('categorias');
+          if (element) {
+            const headerHeight = 80;
+            const offsetTop = element.offsetTop - headerHeight + 10;
+            window.scrollTo({ top: offsetTop, behavior: 'smooth' });
+          }
+        }, 100);
+      }
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await cerrarSesion();
+      setShowUserMenu(false);
+    } catch (error) {
+      console.error('Error al cerrar sesión:', error);
+    }
+  };  const userMenuItems = [
+    { icon: User, label: 'Mi Perfil', href: '/perfil' },
+    ...(usuario?.tipoUsuario === 'ADMIN'
+      ? [{ icon: Users, label: 'Panel Administrativo', href: '/admin' }]
+      : []),
   ];
 
   return (
@@ -66,8 +150,7 @@ const Header: React.FC = () => {
         </div>
       </div>
 
-      {/* Main Header */}
-      <header
+      {/* Main Header */}      <header
         className={`sticky top-0 z-50 w-full transition-all duration-300 ${
           isScrolled
             ? 'bg-white/95 backdrop-blur-sm shadow-lg'
@@ -75,8 +158,7 @@ const Header: React.FC = () => {
         }`}
       >
         <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between h-16 md:h-20">
-            {/* Logo */}
+          <div className="flex items-center justify-between h-16 md:h-20">            {/* Logo */}
             <Link href="/" className="flex items-center space-x-3">
               <div className="relative h-10 w-10 md:h-12 md:w-12">
                 <Image
@@ -101,85 +183,176 @@ const Header: React.FC = () => {
             </Link>
 
             {/* Desktop Navigation */}
-            <nav className="hidden lg:flex items-center space-x-8">
+            <nav className="hidden lg:flex items-center space-x-8 lg:ml-8">
               {navigation.map((item) => (
                 <Link
                   key={item.name}
                   href={item.href}
+                  onClick={(e) => handleNavClick(e, item)}
                   className="text-gray-700 hover:text-[#CC9F53] font-medium transition-colors duration-200 relative group"
                 >
                   {item.name}
                   <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#CC9F53] transition-all duration-300 group-hover:w-full"></span>
                 </Link>
-              ))}
-            </nav>
-
+              ))}            </nav>
+            
             {/* Search Bar (Desktop) */}
-            <div className="hidden md:flex items-center flex-1 max-w-md mx-8">
+            <div className="hidden md:flex items-center flex-1 max-w-md mx-4 lg:mx-8">
               <div className="relative w-full">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 z-10" />
                 <input
                   type="text"
                   placeholder="Buscar productos..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full pl-10 pr-4 py-2 border border-[#E6D5A8] rounded-full focus:outline-none focus:ring-2 focus:ring-[#CC9F53] focus:border-transparent transition-all duration-200"
-                />
-              </div>
+                />              </div>
             </div>
+            
+            {/* Action Buttons */}            <div className="flex items-center space-x-2 md:space-x-3">
+              {/* Favoritos */}
+              <div className="w-10 h-10">
+                <Link href="/favoritos">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="relative cursor-pointer w-10 h-10"
+                  >
+                    <Heart className="h-5 w-5" />
+                    {favorites.length > 0 && (
+                      <Badge
+                        variant="default"
+                        className="absolute -top-2 -right-2 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs bg-[#CC9F53] hover:bg-[#B88D42]"
+                      >
+                        {favorites.length}
+                      </Badge>
+                    )}
+                  </Button>
+                </Link>
+              </div>
 
-            {/* Action Buttons */}
-            <div className="flex items-center space-x-2 md:space-x-4">
-              {/* Wishlist */}
+              {/* Carrito */}
+              <div className="w-10 h-10">
+                <Link href="/carrito">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="relative cursor-pointer w-10 h-10"
+                  >
+                    <ShoppingCart className="h-5 w-5" />
+                    {cartItemsCount > 0 && (
+                      <Badge
+                        variant="default"
+                        className="absolute -top-2 -right-2 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs bg-[#CC9F53] hover:bg-[#B88D42]"
+                      >
+                        {cartItemsCount}
+                      </Badge>
+                    )}
+                  </Button>
+                </Link>
+              </div>              {/* Usuario / Autenticación */}
+              <div className="w-10 h-10">
+                {isLoading ? (
+                  <div className="flex items-center justify-center w-10 h-10">
+                    <div className="w-6 h-6 bg-gray-200 rounded-full animate-pulse"></div>
+                  </div>
+                ) : isAuthenticated ? (
+                  <div className="relative user-menu-container">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setShowUserMenu(!showUserMenu)}
+                      className="w-10 h-10"
+                    >                      <div className="flex items-center justify-center w-6 h-6 bg-[#CC9F53] text-white rounded-full text-xs font-medium backdrop-blur-sm border border-white/20 shadow-sm">
+                        {usuario?.nombres?.charAt(0)?.toUpperCase() || 'U'}
+                        {usuario?.apellidos?.charAt(0)?.toUpperCase() || ''}
+                      </div>
+                    </Button>
 
-              <Link href="/favoritos" className="relative">
-                <Heart className="w-6 h-6" />
-                {favorites.length > 0 && (
-                  <span className="absolute -top-1 -right-2 bg-[#CC9F53] text-white text-xs font-bold px-2 py-0.5 rounded-full">
-                    {favorites.length}
-                  </span>
+                    {showUserMenu && (
+                      <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-[#E6D5A8] py-2 z-50">
+                        {/* Información de usuario */}
+                        <div className="px-4 py-3 border-b border-[#E6D5A8]">
+                          <div className="flex items-center space-x-3">                            <div className="flex-none w-10 h-10 bg-[#CC9F53] text-white rounded-full flex items-center justify-center font-bold select-none backdrop-blur-sm border border-white/20 shadow-sm">
+                              {usuario?.nombres?.charAt(0)?.toUpperCase() || 'U'}
+                              {usuario?.apellidos?.charAt(0)?.toUpperCase() || ''}
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium text-[#3A3A3A]">
+                                {usuario?.nombres} {usuario?.apellidos}
+                              </p>
+                              <p className="text-xs text-gray-500">
+                                {usuario?.email}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Opciones */}
+                        <div className="py-1">
+                          {userMenuItems.map((item, index) => (
+                            <Link
+                              key={index}
+                              href={item.href}
+                              onClick={() => setShowUserMenu(false)}
+                              className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-[#F5EFD7]/60 hover:text-[#CC9F53] transition-colors duration-200"
+                            >
+                              <item.icon className="h-4 w-4 mr-3" />
+                              {item.label}
+                            </Link>
+                          ))}
+                        </div>
+
+                        {/* Cerrar sesión */}
+                        <div className="border-t border-[#E6D5A8] mt-1 pt-1">
+                          <button
+                            onClick={handleLogout}
+                            className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors duration-200"
+                          >
+                            <LogOut className="h-4 w-4 mr-3" />
+                            Cerrar Sesión
+                          </button>
+                        </div>
+                      </div>
+                    )}                  </div>                ) : (
+                  <div className="relative group">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => {
+                        setAuthModalMode('login');
+                        setShowAuthModal(true);
+                      }}
+                      className="cursor-pointer w-10 h-10"
+                    >
+                      <User className="h-5 w-5" />
+                    </Button>
+                    {/* Tooltip */}
+                    <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-50">
+                      Iniciar Sesión
+                    </div>
+                  </div>
                 )}
-              </Link>
-              <Link href="/carrito">
+              </div>
+                {/* Botón menú móvil */}
+              <div className="lg:hidden w-10 h-10">
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="relative cursor-pointer"
+                  className="w-10 h-10"
+                  onClick={() => setIsMenuOpen(!isMenuOpen)}
                 >
-                  <ShoppingCart className="h-5 w-5" />
-                  {cartItemsCount > 0 && (
-                    <Badge
-                      variant="default"
-                      className="absolute -top-2 -right-2 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs bg-[#CC9F53] hover:bg-[#B88D42]"
-                    >
-                      {cartItemsCount}
-                    </Badge>
+                  {isMenuOpen ? (
+                    <X className="h-6 w-6" />
+                  ) : (
+                    <Menu className="h-6 w-6" />
                   )}
                 </Button>
-              </Link>
-
-              {/* User Account */}
-              <Button variant="ghost" size="icon">
-                <User className="h-5 w-5" />
-              </Button>
-
-              {/* Mobile Menu Button */}
-              <Button
-                variant="ghost"
-                size="icon"
-                className="lg:hidden"
-                onClick={() => setIsMenuOpen(!isMenuOpen)}
-              >
-                {isMenuOpen ? (
-                  <X className="h-6 w-6" />
-                ) : (
-                  <Menu className="h-6 w-6" />
-                )}
-              </Button>
+              </div>
             </div>
           </div>
 
-          {/* Mobile Search */}
+          {/* Búsqueda móvil */}
           <div className="md:hidden pb-4">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -194,7 +367,7 @@ const Header: React.FC = () => {
           </div>
         </div>
 
-        {/* Mobile Navigation Menu */}
+        {/* Menú móvil desplegable */}
         {isMenuOpen && (
           <div className="lg:hidden border-t border-[#E6D5A8] bg-white">
             <div className="container mx-auto px-4 py-4">
@@ -203,17 +376,64 @@ const Header: React.FC = () => {
                   <Link
                     key={item.name}
                     href={item.href}
-                    className="text-gray-700 hover:text-[#CC9F53] font-medium py-2 border-b border-gray-100 last:border-0 transition-colors duration-200"
-                    onClick={() => setIsMenuOpen(false)}
+                    onClick={(e) => {
+                      handleNavClick(e, item);
+                      setIsMenuOpen(false);
+                    }}
+                    className="text-gray-700 hover:text-[#CC9F53] font-medium py-2 border-b border-gray-100 transition-colors duration-200"
                   >
                     {item.name}
                   </Link>
                 ))}
+
+                {!isLoading && isAuthenticated && usuario && (
+                  <div className="pt-4 border-t border-gray-100">
+                    <div className="flex items-center space-x-3 p-3 bg-[#F5EFD7]/60 rounded-lg mb-3">                      <div className="flex items-center justify-center w-10 h-10 bg-[#CC9F53] text-white rounded-full text-sm font-medium backdrop-blur-sm border border-white/20 shadow-sm">
+                        {usuario.nombres?.charAt(0)?.toUpperCase() || 'U'}
+                        {usuario.apellidos?.charAt(0)?.toUpperCase() || ''}
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-[#3A3A3A]">
+                          {usuario.nombres} {usuario.apellidos}
+                        </p>
+                        <p className="text-xs text-gray-500">{usuario.email}</p>
+                      </div>
+                    </div>
+
+                    <div className="space-y-1">
+                      {userMenuItems.map((item, idx) => (
+                        <Link
+                          key={idx}
+                          href={item.href}
+                          onClick={() => setIsMenuOpen(false)}
+                          className="flex items-center w-full px-3 py-2 text-sm text-gray-700 hover:bg-[#F5EFD7]/60 hover:text-[#CC9F53] transition-colors duration-200 rounded-lg"
+                        >
+                          <item.icon className="h-4 w-4 mr-3" />
+                          {item.label}
+                        </Link>
+                      ))}
+                      <button
+                        onClick={handleLogout}
+                        className="flex items-center w-full px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors duration-200 rounded-lg"
+                      >
+                        <LogOut className="h-4 w-4 mr-3" />
+                        Cerrar Sesión
+                      </button>
+                    </div>
+                  </div>
+                )}
               </nav>
             </div>
           </div>
         )}
       </header>
+
+      {/* Modal de autenticación */}
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        initialMode={authModalMode}
+      />
     </>
   );
 };

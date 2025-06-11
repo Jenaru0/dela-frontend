@@ -1,9 +1,20 @@
 import type { Metadata } from 'next';
+import { Geist, Geist_Mono } from 'next/font/google';
+import { AuthProvider } from '@/contexts/AuthContext';
 import './globals.css';
-import { CartProvider } from '@/context/CarContext';
-import { CartDrawerProvider } from '@/context/CartDrawerContext';
-import { MiniCartDrawer } from '@/components/carrito/carritoDrawer/MiniCartDrawer';
-import { FavoritesProvider } from '@/context/FavoritoContext';
+import '../styles/admin-sidebar.css';
+import { CartProvider } from '@/contexts/CarContext';
+import { CartDrawerProvider } from '@/contexts/CartDrawerContext';
+import ShoppingCartDrawer from '@/components/carrito/ShoppingCartDrawer';
+import { FavoritoProvider } from '@/contexts/FavoritoContext';
+import { AuthModalProvider } from '@/contexts/AuthModalContext';
+import AuthModalMount from '@/components/auth/AuthModalMount';
+
+const geistSans = Geist({ variable: '--font-geist-sans', subsets: ['latin'] });
+const geistMono = Geist_Mono({
+  variable: '--font-geist-mono',
+  subsets: ['latin'],
+});
 
 export const metadata: Metadata = {
   title: 'DELA - Deleites del Valle | Lácteos Artesanales desde 2000',
@@ -15,18 +26,26 @@ export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
-}>) {
-  return (
+}>) {  return (
     <html lang="es">
-      <body className="font-sans antialiased">
-        <CartProvider>
-          <CartDrawerProvider>
-            <FavoritesProvider>
-              <MiniCartDrawer />
-              <main id="main-content">{children}</main>
-            </FavoritesProvider>
-          </CartDrawerProvider>
-        </CartProvider>
+      <head></head>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        suppressHydrationWarning={true}
+      >
+        <AuthProvider>
+          <AuthModalProvider>
+            <CartProvider>
+              <FavoritoProvider>
+                <CartDrawerProvider>
+                  <ShoppingCartDrawer />
+                  <main id="main-content">{children}</main>
+                  <AuthModalMount/>
+                </CartDrawerProvider>
+              </FavoritoProvider>
+            </CartProvider>
+          </AuthModalProvider>
+        </AuthProvider>
       </body>
     </html>
   );

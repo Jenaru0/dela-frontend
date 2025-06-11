@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/Button';
 import { Trash, Plus, Minus } from 'lucide-react';
@@ -6,9 +6,9 @@ import type { CartProduct } from '@/types/productos';
 
 interface CartProductItemProps {
   prod: CartProduct;
-  increaseQty: (id: string) => void;
-  decreaseQty: (id: string) => void;
-  removeFromCart: (id: string) => void;
+  increaseQty: (id: string) => Promise<void>;
+  decreaseQty: (id: string) => Promise<void>;
+  removeFromCart: (id: string) => Promise<void>;
 }
 
 export const CartProductItem: React.FC<CartProductItemProps> = ({
@@ -16,18 +16,53 @@ export const CartProductItem: React.FC<CartProductItemProps> = ({
   increaseQty,
   decreaseQty,
   removeFromCart,
-}) => (
+}) => {
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  const handleIncreaseQty = async () => {
+    try {
+      setIsUpdating(true);
+      await increaseQty(prod.id);
+    } catch (error) {
+      console.error('Error increasing quantity:', error);
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleDecreaseQty = async () => {
+    try {
+      setIsUpdating(true);
+      await decreaseQty(prod.id);
+    } catch (error) {
+      console.error('Error decreasing quantity:', error);
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleRemoveFromCart = async () => {
+    try {
+      setIsUpdating(true);
+      await removeFromCart(prod.id);
+    } catch (error) {
+      console.error('Error removing from cart:', error);
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  return (
   <div
     className="flex items-center bg-white bg-opacity-90 rounded-2xl shadow-xl border border-[#ecd8ab] p-4 transition-all duration-200 group hover:shadow-2xl hover:border-[#CC9F53]"
     style={{ backdropFilter: 'blur(4px)' }}
-  >
-    <div className="w-20 h-20 rounded-4xl bg-[#F5E6C6] flex items-center justify-center mr-4 border-2 border-[#CC9F53] overflow-hidden">
+  >    <div className="w-20 h-20 rounded-4xl bg-[#F5E6C6] flex items-center justify-center mr-4 border-2 border-[#CC9F53] overflow-hidden">
       <Image
         src={prod.image}
         alt={prod.name}
+        className="w-16 h-16 object-contain"
         width={64}
         height={64}
-        className="w-16 h-16 object-contain"
       />
     </div>
 
@@ -47,13 +82,13 @@ export const CartProductItem: React.FC<CartProductItemProps> = ({
       </div>
       <div className="flex items-center mt-3 gap-4">
         {/* Contador mejorado */}
-        <div className="flex items-center bg-white rounded-full shadow-inner border border-[#ecd8ab]">
-          <Button
+        <div className="flex items-center bg-white rounded-full shadow-inner border border-[#ecd8ab]">          <Button
             variant="ghost"
             size="icon"
-            className="px-2 text-[#B88D42] hover:bg-[#FFF8E1] rounded-full"
+            className="px-2 text-[#B88D42] hover:bg-[#FFF8E1] rounded-full disabled:opacity-50"
             title="Restar"
-            onClick={() => decreaseQty(prod.id)}
+            onClick={handleDecreaseQty}
+            disabled={isUpdating}
           >
             <Minus className="w-4 h-4" />
           </Button>
@@ -63,9 +98,10 @@ export const CartProductItem: React.FC<CartProductItemProps> = ({
           <Button
             variant="ghost"
             size="icon"
-            className="px-2 text-[#B88D42] hover:bg-[#FFF8E1] rounded-full"
+            className="px-2 text-[#B88D42] hover:bg-[#FFF8E1] rounded-full disabled:opacity-50"
             title="Sumar"
-            onClick={() => increaseQty(prod.id)}
+            onClick={handleIncreaseQty}
+            disabled={isUpdating}
           >
             <Plus className="w-4 h-4" />
           </Button>
@@ -74,13 +110,15 @@ export const CartProductItem: React.FC<CartProductItemProps> = ({
         <Button
           variant="ghost"
           size="icon"
-          className="ml-2 hover:bg-red-100 transition"
+          className="ml-2 hover:bg-red-100 transition disabled:opacity-50"
           title="Eliminar"
-          onClick={() => removeFromCart(prod.id)}
+          onClick={handleRemoveFromCart}
+          disabled={isUpdating}
         >
-          <Trash className="h-5 w-5 text-red-400 group-hover:text-red-600 transition-all" />
+          <Trash className={`h-5 w-5 text-red-400 group-hover:text-red-600 transition-all ${isUpdating ? 'animate-pulse' : ''}`} />
         </Button>
       </div>
     </div>
   </div>
-);
+  );
+};

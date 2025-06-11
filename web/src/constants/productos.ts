@@ -10,10 +10,10 @@ export const OPCIONES_ORDENAMIENTO: OpcionOrdenamiento[] = [
 ];
 
 export const CATEGORIAS_MOCK: Categoria[] = [
-  { id: '1', nombre: 'Leche' },
-  { id: '2', nombre: 'Yogurt' },
-  { id: '3', nombre: 'Helados' },
-  { id: '4', nombre: 'Todos los Productos' },
+  { id: 1, nombre: 'Lácteos' },
+  { id: 2, nombre: 'Conservas' },
+  { id: 3, nombre: 'Mermeladas' },  
+  { id: 4, nombre: 'Mieles' },
 ];
 
 export const INITIAL_FILTER_STATE = {

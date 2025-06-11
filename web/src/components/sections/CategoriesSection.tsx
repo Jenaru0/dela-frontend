@@ -66,9 +66,8 @@ const CategoriesSection: React.FC<CategoriesSectionProps> = ({
   const displayCategories = showAll
     ? categories
     : categories.filter((cat) => cat.featured).slice(0, 4);
-
   return (
-    <section className="py-16 bg-gradient-to-b from-white to-[#F5EFD7]/20">
+    <section id="categorias" className="py-16 bg-gradient-to-b from-white to-[#F5EFD7]/20">
       <div className="container mx-auto px-4 md:px-6">
         {/* Section Header */}
         <div className="text-center mb-12">
@@ -96,7 +95,7 @@ const CategoriesSection: React.FC<CategoriesSectionProps> = ({
                 name: category.name,
                 image: category.image,
                 productCount: category.productCount,
-                href: `/categorias/${category.id}`,
+                href: `/productos`,
               }}
               animationDelay={index * 100}
             />

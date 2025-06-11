@@ -32,7 +32,12 @@ export const useProductos = () => {
   const fetchCategorias = useCallback(async () => {
     try {
       const data = await productosService.fetchCategorias();
-      setCategorias(data);
+      setCategorias(
+        data.map((cat: { id: string; nombre: string }) => ({
+          ...cat,
+          id: Number(cat.id),
+        }))
+      );
     } catch (error) {
       console.error('Error fetching categorias:', error);
     }
