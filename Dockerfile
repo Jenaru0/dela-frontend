@@ -23,6 +23,9 @@ COPY web/ ./
 # Variables de entorno para el build
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
+# ARG permite pasar la variable durante el build, ENV la hace disponible en runtime
+ARG NEXT_PUBLIC_API_URL=https://delabackend.episundc.pe
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 
 # Construimos la aplicación con logging reducido
 RUN npm run build --silent

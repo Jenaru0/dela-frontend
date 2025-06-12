@@ -54,10 +54,12 @@ npm run start
 ```env
 NODE_ENV=production
 NEXT_TELEMETRY_DISABLED=1
-NEXT_PUBLIC_API_URL=https://tu-api.dominio.com
+NEXT_PUBLIC_API_URL=https://delabackend.episundc.pe
 HOSTNAME=0.0.0.0
 PORT=3000
 ```
+
+**⚠️ IMPORTANTE**: La variable `NEXT_PUBLIC_API_URL` debe estar configurada en Dokploy para que el frontend funcione correctamente. Ver [DOKPLOY_CONFIG.md](./DOKPLOY_CONFIG.md) para instrucciones detalladas.
 
 ### Proceso de Deploy
 
