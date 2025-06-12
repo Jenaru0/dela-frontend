@@ -10,7 +10,8 @@ const nextConfig = {
         hostname: 'dela.com.pe',
         port: '',
         pathname: '/img/**',
-      },      {
+      },
+      {
         protocol: 'https',
         hostname: 'picsum.photos',
         port: '',
@@ -33,7 +34,8 @@ const nextConfig = {
         hostname: 'cdn-icons-png.flaticon.com',
         port: '',
         pathname: '/512/**',
-      },      {
+      },
+      {
         protocol: 'https',
         hostname: 'cdn.miweb.com',
         port: '',

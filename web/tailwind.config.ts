@@ -74,9 +74,7 @@ const config: Config = {
       },
     },
   },
-  plugins: [
-    scrollbar,
-  ],
+  plugins: [scrollbar],
 };
 
 export default config;
