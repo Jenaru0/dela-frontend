@@ -39,58 +39,21 @@ const ProfilePage: React.FC = () => {
   const [isLoadingPedidos, setIsLoadingPedidos] = useState(false);
   const [isLoadingReclamos, setIsLoadingReclamos] = useState(false);
   const [isLoadingResenas, setIsLoadingResenas] = useState(false);
-  
-  const [notification, setNotification] = useState<{
+    const [notification, setNotification] = useState<{
     type: 'success' | 'error';
     message: string;
   } | null>(null);
+  
+  // Estados para controlar si ya se cargaron los datos
+  const [pedidosLoaded, setPedidosLoaded] = useState(false);
+  const [reclamosLoaded, setReclamosLoaded] = useState(false);
+  const [resenasLoaded, setResenasLoaded] = useState(false);
+  
   // Función para mostrar notificaciones
   const showNotification = (type: 'success' | 'error', message: string) => {
-    setNotification({ type, message });
-    setTimeout(() => setNotification(null), 5000);
+    setNotification({ type, message });    setTimeout(() => setNotification(null), 5000);
   };
-  // Cargar mis pedidos
-  const cargarMisPedidos = useCallback(async () => {
-    try {
-      setIsLoadingPedidos(true);
-      const response = await pedidosService.obtenerMisPedidos();
-      setPedidos(response?.data || []);
-    } catch (error) {
-      console.error('Error al cargar pedidos:', error);
-      showNotification('error', 'Error al cargar los pedidos');
-      setPedidos([]); // Set empty array on error
-    } finally {
-      setIsLoadingPedidos(false);
-    }
-  }, []);
-  // Cargar mis reclamos
-  const cargarMisReclamos = useCallback(async () => {
-    try {
-      setIsLoadingReclamos(true);
-      const response = await reclamosService.obtenerMisReclamos();
-      setReclamos(response?.data || []);
-    } catch (error) {
-      console.error('Error al cargar reclamos:', error);
-      showNotification('error', 'Error al cargar los reclamos');
-      setReclamos([]); // Set empty array on error
-    } finally {
-      setIsLoadingReclamos(false);
-    }
-  }, []);
-  // Cargar mis reseñas
-  const cargarMisResenas = useCallback(async () => {
-    try {
-      setIsLoadingResenas(true);
-      const response = await resenasService.obtenerMisResenas();
-      setResenas(response?.data || []);
-    } catch (error) {
-      console.error('Error al cargar reseñas:', error);
-      showNotification('error', 'Error al cargar las reseñas');
-      setResenas([]); // Set empty array on error
-    } finally {
-      setIsLoadingResenas(false);
-    }
-  }, []);
+
   // Verificar suscripción al newsletter
   const checkNewsletterSubscription = useCallback(async () => {
     if (!usuario?.email) return;
@@ -126,7 +89,6 @@ const ProfilePage: React.FC = () => {
       setIsLoadingNewsletter(false);
     }
   };
-
   // Manejar desactivación de cuenta
   const handleDeactivateAccount = async () => {
     const confirmed = window.confirm(
@@ -138,16 +100,24 @@ const ProfilePage: React.FC = () => {
     try {
       setIsDeactivating(true);
       await usuariosService.desactivarCuenta();
-      showNotification('success', 'Cuenta desactivada correctamente');
+      showNotification('success', 'Cuenta desactivada correctamente. Serás redirigido al inicio...');
       
-      // Cerrar sesión después de desactivar
+      // Cerrar sesión inmediatamente después de desactivar
       setTimeout(async () => {
-        await cerrarSesion();
-        window.location.href = '/';
-      }, 2000);
-    } catch (error) {
+        try {
+          await cerrarSesion();
+          window.location.href = '/';
+        } catch (logoutError) {
+          console.error('Error al cerrar sesión:', logoutError);
+          // Si falla el logout, al menos limpiar localStorage y redirigir
+          localStorage.removeItem('token');
+          localStorage.removeItem('usuario');
+          window.location.href = '/';
+        }
+      }, 1500);    } catch (error: unknown) {
       console.error('Error al desactivar cuenta:', error);
-      showNotification('error', 'Error al desactivar la cuenta');
+      const errorMessage = error instanceof Error ? error.message : 'Error al desactivar la cuenta. Por favor, inténtalo de nuevo.';
+      showNotification('error', errorMessage);
     } finally {
       setIsDeactivating(false);
     }
@@ -176,26 +146,67 @@ const ProfilePage: React.FC = () => {
     if (usuario?.email) {
       checkNewsletterSubscription();
     }
-  }, [usuario?.email, checkNewsletterSubscription]);
-
-  // Cargar datos cuando cambie el tab activo
+  }, [usuario?.email, checkNewsletterSubscription]);  // Cargar datos cuando cambie el tab activo
   useEffect(() => {
     if (!isAuthenticated || !usuario) return;
 
-    switch (activeTab) {
-      case 'orders':
-        cargarMisPedidos();
-        break;
-      case 'claims':
-        cargarMisReclamos();
-        break;
-      case 'reviews':
-        cargarMisResenas();
-        break;
-      default:
-        break;
-    }
-  }, [activeTab, isAuthenticated, usuario, cargarMisPedidos, cargarMisReclamos, cargarMisResenas]);
+    const loadData = async () => {
+      switch (activeTab) {
+        case 'orders':
+          if (!isLoadingPedidos && !pedidosLoaded) {
+            try {
+              setIsLoadingPedidos(true);
+              const response = await pedidosService.obtenerMisPedidos();
+              setPedidos(response?.data || []);
+              setPedidosLoaded(true);
+            } catch (error) {
+              console.error('Error al cargar pedidos:', error);
+              showNotification('error', 'Error al cargar pedidos');
+              setPedidos([]);
+            } finally {
+              setIsLoadingPedidos(false);
+            }
+          }
+          break;
+        case 'claims':
+          if (!isLoadingReclamos && !reclamosLoaded) {
+            try {
+              setIsLoadingReclamos(true);
+              const response = await reclamosService.obtenerMisReclamos();
+              setReclamos(response?.data || []);
+              setReclamosLoaded(true);
+            } catch (error) {
+              console.error('Error al cargar reclamos:', error);
+              showNotification('error', 'Error al cargar reclamos');
+              setReclamos([]);
+            } finally {
+              setIsLoadingReclamos(false);
+            }
+          }
+          break;
+        case 'reviews':
+          if (!isLoadingResenas && !resenasLoaded) {
+            try {
+              setIsLoadingResenas(true);
+              const response = await resenasService.obtenerMisResenas();
+              setResenas(response?.data || []);
+              setResenasLoaded(true);
+            } catch (error) {
+              console.error('Error al cargar reseñas:', error);
+              showNotification('error', 'Error al cargar reseñas');
+              setResenas([]);
+            } finally {
+              setIsLoadingResenas(false);
+            }
+          }
+          break;
+        default:
+          break;
+      }
+    };
+
+    loadData();
+  }, [activeTab, isAuthenticated, usuario, isLoadingPedidos, isLoadingReclamos, isLoadingResenas, pedidosLoaded, reclamosLoaded, resenasLoaded]);
   const loadAddresses = async () => {
     try {
       setIsLoadingAddresses(true);
@@ -227,16 +238,16 @@ const ProfilePage: React.FC = () => {
       throw error;
     }
   };
-
   // Manejar cambio de contraseña
   const handleChangePassword = async (currentPassword: string, newPassword: string, confirmPassword: string) => {
     try {
       await authService.cambiarContrasena(currentPassword, newPassword, confirmPassword);
       showNotification('success', 'Contraseña cambiada correctamente');
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error al cambiar contraseña:', error);
-      showNotification('error', 'Error al cambiar la contraseña');
-      throw error;
+      const errorMessage = error instanceof Error ? error.message : 'Error al cambiar la contraseña';
+      showNotification('error', errorMessage);
+      throw error; // Re-throw para que el modal pueda manejar el error específico
     }
   };
 

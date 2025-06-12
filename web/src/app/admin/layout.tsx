@@ -7,6 +7,7 @@ import Layout from '@/components/layout/Layout';
 import AdminSidebar from '../../components/admin/AdminSidebar';
 import { Shield } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import ScrollToTopWrapper from '@/components/common/ScrollToTopWrapper';
 import '@/styles/admin.css';
 
 interface AdminLayoutProps {
@@ -66,20 +67,21 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
         </div>
       </Layout>
     );
-  }
-  return (
+  }  return (
     <Layout>
-      <div className="min-h-screen bg-gradient-to-br from-[#fffbe6] via-[#fffaf1] to-[#fff]">
-        {/* Sidebar */}
-        <AdminSidebar />
-        
-        {/* Contenido Principal - Con padding left para el sidebar de 256px en desktop */}
-        <div className="min-h-screen transition-all duration-300 pl-0 lg:pl-64">
-          <div className="p-6">
-            {children}
+      <ScrollToTopWrapper>
+        <div className="min-h-screen bg-gradient-to-br from-[#fffbe6] via-[#fffaf1] to-[#fff]">
+          {/* Sidebar */}
+          <AdminSidebar />
+          
+          {/* Contenido Principal - Con padding left para el sidebar de 256px en desktop */}
+          <div className="min-h-screen transition-all duration-300 pl-0 lg:pl-64">
+            <div className="p-6">
+              {children}
+            </div>
           </div>
         </div>
-      </div>
+      </ScrollToTopWrapper>
     </Layout>
   );
 };

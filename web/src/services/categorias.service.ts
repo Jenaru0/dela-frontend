@@ -12,6 +12,13 @@ export interface Categoria {
   };
 }
 
+export interface PaginatedResponse<T> {
+  data: T[];
+  total: number;
+  page: number;
+  totalPages: number;
+}
+
 export interface CreateCategoriaDto {
   nombre: string;
   descripcion?: string;
@@ -202,6 +209,62 @@ class CategoriasService {
       };
     } catch (error) {
       console.error('Error al cambiar estado de categoría:', error);
+      throw error;
+    }
+  }  // Obtener categorías con paginación (ADMIN)
+  async obtenerConPaginacion(
+    page: number = 1,
+    limit: number = 10,
+    search?: string,
+  ): Promise<PaginatedResponse<Categoria>> {
+    try {
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: limit.toString(),
+      });
+      
+      if (search) {
+        params.append('search', search);
+      }
+
+      const response = await fetch(
+        `${API_BASE_URL}/categorias/admin/paginacion?${params}`,
+        {
+          method: 'GET',
+          headers: this.getAuthHeaders(),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Error al obtener categorías');
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error al obtener categorías con paginación:', error);
+      throw error;
+    }
+  }  // Obtener todas las categorías para admin (sin paginación)
+  async obtenerTodasAdmin(): Promise<ApiResponse<Categoria[]>> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/categorias`, {
+        method: 'GET',
+        headers: this.getAuthHeaders(),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Error al obtener categorías');
+      }
+
+      const categorias = await response.json();
+      return {
+        mensaje: 'Categorías obtenidas correctamente',
+        data: categorias
+      };
+    } catch (error) {
+      console.error('Error al obtener categorías:', error);
       throw error;
     }
   }

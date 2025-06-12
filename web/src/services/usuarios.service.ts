@@ -58,26 +58,71 @@ class UsuariosService {
       console.error('Error al actualizar perfil:', error);
       throw error;
     }
-  }
-
-  // Obtener todos los usuarios (solo admin)
+  }  // Obtener todos los usuarios (solo admin) - Maneja múltiples páginas
   async obtenerTodos(): Promise<ApiResponse<Usuario[]>> {
     try {
-      const response = await fetch(`${API_BASE_URL}/usuarios`, {
-        method: 'GET',
-        headers: this.getAuthHeaders(),
-      });
+      let allUsers: Usuario[] = [];
+      let currentPage = 1;
+      let hasMorePages = true;
+      const limit = 50; // Límite máximo por página
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Error al obtener usuarios');
+      while (hasMorePages) {
+        const response = await fetch(`${API_BASE_URL}/usuarios?page=${currentPage}&limit=${limit}`, {
+          method: 'GET',
+          headers: this.getAuthHeaders(),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || 'Error al obtener usuarios');
+        }
+
+        const pageData = await response.json();
+        
+        // Agregar usuarios de esta página
+        allUsers = [...allUsers, ...pageData.data];
+        
+        // Verificar si hay más páginas
+        hasMorePages = currentPage < pageData.totalPages;
+        currentPage++;
       }
 
-      return await response.json();
+      // Retornar en el mismo formato que una página normal
+      return {
+        mensaje: 'Lista completa de usuarios obtenida correctamente.',
+        data: allUsers
+      };
     } catch (error) {
       console.error('Error al obtener usuarios:', error);
       throw error;
     }
+  }
+
+  // Obtener usuarios con paginación (ADMIN) - Igual que productos
+  async obtenerConPaginacion(page: number = 1, limit: number = 10, filtros: { search?: string } = {}) {
+    const params = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString()
+    });
+
+    // Agregar filtros que no sean undefined o vacíos
+    Object.entries(filtros).forEach(([key, value]) => {
+      if (value !== undefined && value !== '') {
+        params.append(key, String(value));
+      }
+    });
+
+    const response = await fetch(`${API_BASE_URL}/usuarios?${params.toString()}`, {
+      method: 'GET',
+      headers: this.getAuthHeaders(),
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ message: 'Error desconocido' }));
+      throw new Error(errorData.message || 'Error al obtener usuarios');
+    }
+    
+    return response.json();
   }
   // ========== MÉTODOS DE ADMINISTRACIÓN ==========
   // Crear usuario (admin)
@@ -166,7 +211,6 @@ class UsuariosService {
       throw error;
     }
   }
-
   // Desactivar cuenta del usuario autenticado
   async desactivarCuenta(): Promise<ApiResponse<null>> {
     try {
@@ -176,11 +220,19 @@ class UsuariosService {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Error al desactivar cuenta');
+        let errorMessage = 'Error al desactivar cuenta';
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.message || errorData.mensaje || errorMessage;
+        } catch (parseError) {
+          // Si no se puede parsear el JSON, usar mensaje por defecto
+          console.warn('Error parsing error response:', parseError);
+        }
+        throw new Error(errorMessage);
       }
 
-      return await response.json();    } catch (error) {
+      return await response.json();
+    } catch (error) {
       console.error('Error al desactivar cuenta:', error);
       throw error;
     }

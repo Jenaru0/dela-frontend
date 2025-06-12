@@ -9,8 +9,7 @@ export interface Reclamo {
   descripcion: string;
   estado: EstadoReclamo;
   prioridad: PrioridadReclamo;
-  respuesta?: string;
-  fechaRespuesta?: string;
+  fechaCierre?: string;
   creadoEn: string;
   actualizadoEn: string;
   pedido?: {
@@ -23,6 +22,21 @@ export interface Reclamo {
     apellidos: string;
     email: string;
   };
+  comentarios?: Array<{
+    id: number;
+    comentario: string;
+    esInterno: boolean;
+    creadoEn: string;
+    usuario: {
+      id: number;
+      nombres: string;
+      apellidos: string;
+      tipoUsuario: string;
+    };
+  }>;
+  _count?: {
+    comentarios: number;
+  };
 }
 
 export interface CreateReclamoDto {
@@ -32,9 +46,11 @@ export interface CreateReclamoDto {
 }
 
 export interface UpdateReclamoDto {
+  asunto?: string;
+  descripcion?: string;
   estado?: EstadoReclamo;
   prioridad?: PrioridadReclamo;
-  respuesta?: string;
+  tipoReclamo?: TipoReclamo;
 }
 
 export interface FiltrosReclamosDto {
@@ -122,7 +138,6 @@ class ReclamosService {
       throw error;
     }
   }
-
   // Obtener todos los reclamos (admin)
   async obtenerTodos(filtros?: FiltrosReclamosDto): Promise<ApiResponse<Reclamo[]>> {
     try {
@@ -135,7 +150,7 @@ class ReclamosService {
         });
       }
 
-      const response = await fetch(`${API_BASE_URL}/reclamos?${params.toString()}`, {
+      const response = await fetch(`${API_BASE_URL}/reclamos/admin?${params.toString()}`, {
         method: 'GET',
         headers: this.getAuthHeaders(),
       });
@@ -152,6 +167,56 @@ class ReclamosService {
     }
   }
 
+  // Obtener reclamos con paginación (admin)
+  async obtenerConPaginacion(
+    page: number = 1, 
+    limit: number = 10,
+    search?: string,
+    estado?: EstadoReclamo,
+    prioridad?: PrioridadReclamo,
+    tipoReclamo?: TipoReclamo,
+    fechaInicio?: string,
+    fechaFin?: string
+  ): Promise<{
+    data: Reclamo[];
+    total: number;
+    page: number;
+    totalPages: number;
+  }> {
+    try {
+      const params = new URLSearchParams();
+      params.append('page', page.toString());
+      params.append('limit', limit.toString());
+      
+      if (search) params.append('search', search);
+      if (estado) params.append('estado', estado);
+      if (prioridad) params.append('prioridad', prioridad);
+      if (tipoReclamo) params.append('tipoReclamo', tipoReclamo);
+      if (fechaInicio) params.append('fechaInicio', fechaInicio);
+      if (fechaFin) params.append('fechaFin', fechaFin);
+
+      const response = await fetch(`${API_BASE_URL}/reclamos/admin?${params.toString()}`, {
+        method: 'GET',
+        headers: this.getAuthHeaders(),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Error al obtener reclamos');
+      }
+
+      const result = await response.json();
+      return {
+        data: result.reclamos || result.data || [],
+        total: result.total || 0,
+        page: result.page || page,
+        totalPages: result.totalPages || 1
+      };
+    } catch (error) {
+      console.error('Error al obtener reclamos con paginación:', error);
+      throw error;
+    }
+  }
   // Actualizar reclamo (admin)
   async actualizar(id: number, datos: UpdateReclamoDto): Promise<ApiResponse<Reclamo>> {
     try {
@@ -169,6 +234,55 @@ class ReclamosService {
       return await response.json();
     } catch (error) {
       console.error('Error al actualizar reclamo:', error);
+      throw error;
+    }
+  }
+
+  // Obtener estadísticas de reclamos (admin)
+  async obtenerEstadisticas(): Promise<ApiResponse<{
+    total: number;
+    porEstado: { estado: EstadoReclamo; _count: { id: number } }[];
+    porTipo: { tipoReclamo: TipoReclamo; _count: { id: number } }[];
+    porPrioridad: { prioridad: PrioridadReclamo; _count: { id: number } }[];
+  }>> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/reclamos/admin/estadisticas`, {
+        method: 'GET',
+        headers: this.getAuthHeaders(),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Error al obtener estadísticas');
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error al obtener estadísticas:', error);
+      throw error;
+    }
+  }
+  // Agregar comentario a reclamo (admin)
+  async agregarComentario(
+    reclamoId: number, 
+    comentario: string, 
+    esInterno: boolean = false
+  ): Promise<ApiResponse<{ id: number; comentario: string; esInterno: boolean; creadoEn: string }>> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/reclamos/${reclamoId}/comentarios`, {
+        method: 'POST',
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify({ comentario, esInterno }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Error al agregar comentario');
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error al agregar comentario:', error);
       throw error;
     }
   }

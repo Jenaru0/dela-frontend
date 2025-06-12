@@ -72,7 +72,7 @@ export interface Reclamo {
   titulo: string;
   descripcion: string;
   tipoReclamo: 'PRODUCTO_DEFECTUOSO' | 'ENTREGA_TARDÍA' | 'SERVICIO_CLIENTE' | 'OTRO';
-  estado: 'PENDIENTE' | 'EN_PROCESO' | 'RESUELTO' | 'CERRADO';
+  estado: 'ABIERTO' | 'EN_PROCESO' | 'RESUELTO' | 'RECHAZADO';
   prioridad: 'ALTA' | 'MEDIA' | 'BAJA';
   usuarioId: number;
   usuario?: {

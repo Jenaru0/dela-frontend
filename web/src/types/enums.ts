@@ -7,8 +7,8 @@ export enum TipoUsuario {
 export enum EstadoPedido {
   PENDIENTE = 'PENDIENTE',
   CONFIRMADO = 'CONFIRMADO',
-  PREPARANDO = 'PREPARANDO',
-  EN_CAMINO = 'EN_CAMINO',
+  PROCESANDO = 'PROCESANDO',
+  ENVIADO = 'ENVIADO',
   ENTREGADO = 'ENTREGADO',
   CANCELADO = 'CANCELADO'
 }
@@ -39,7 +39,7 @@ export enum EstadoReclamo {
   ABIERTO = 'ABIERTO',
   EN_PROCESO = 'EN_PROCESO',
   RESUELTO = 'RESUELTO',
-  CERRADO = 'CERRADO'
+  RECHAZADO = 'RECHAZADO'
 }
 
 export enum TipoReclamo {
@@ -167,8 +167,8 @@ export interface Resena {
 export const EstadoPedidoLabels = {
   [EstadoPedido.PENDIENTE]: 'Pendiente',
   [EstadoPedido.CONFIRMADO]: 'Confirmado',
-  [EstadoPedido.PREPARANDO]: 'Preparando',
-  [EstadoPedido.EN_CAMINO]: 'En camino',
+  [EstadoPedido.PROCESANDO]: 'Procesando',
+  [EstadoPedido.ENVIADO]: 'Enviado',
   [EstadoPedido.ENTREGADO]: 'Entregado',
   [EstadoPedido.CANCELADO]: 'Cancelado'
 };
@@ -199,7 +199,7 @@ export const EstadoReclamoLabels = {
   [EstadoReclamo.ABIERTO]: 'Abierto',
   [EstadoReclamo.EN_PROCESO]: 'En proceso',
   [EstadoReclamo.RESUELTO]: 'Resuelto',
-  [EstadoReclamo.CERRADO]: 'Cerrado'
+  [EstadoReclamo.RECHAZADO]: 'Rechazado'
 };
 
 export const PrioridadReclamoLabels = {
@@ -219,8 +219,8 @@ export const EstadoResenaLabels = {
 export const EstadoPedidoColors = {
   [EstadoPedido.PENDIENTE]: 'bg-yellow-100 text-yellow-800',
   [EstadoPedido.CONFIRMADO]: 'bg-blue-100 text-blue-800',
-  [EstadoPedido.PREPARANDO]: 'bg-orange-100 text-orange-800',
-  [EstadoPedido.EN_CAMINO]: 'bg-purple-100 text-purple-800',
+  [EstadoPedido.PROCESANDO]: 'bg-orange-100 text-orange-800',
+  [EstadoPedido.ENVIADO]: 'bg-purple-100 text-purple-800',
   [EstadoPedido.ENTREGADO]: 'bg-green-100 text-green-800',
   [EstadoPedido.CANCELADO]: 'bg-red-100 text-red-800'
 };
@@ -236,7 +236,7 @@ export const EstadoReclamoColors = {
   [EstadoReclamo.ABIERTO]: 'bg-red-100 text-red-800',
   [EstadoReclamo.EN_PROCESO]: 'bg-yellow-100 text-yellow-800',
   [EstadoReclamo.RESUELTO]: 'bg-green-100 text-green-800',
-  [EstadoReclamo.CERRADO]: 'bg-gray-100 text-gray-800'
+  [EstadoReclamo.RECHAZADO]: 'bg-gray-100 text-gray-800'
 };
 
 export const PrioridadReclamoColors = {

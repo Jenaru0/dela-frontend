@@ -90,7 +90,7 @@ export interface PaginatedResponse<T> {
 }
 
 export interface ProductoFilters {
-  search?: string;
+  busqueda?: string; // CORREGIDO: cambiar 'search' por 'busqueda' para coincidir con el backend
   categoriaId?: number;
   estado?: string;
   destacado?: boolean;

@@ -1,15 +1,22 @@
 import { EstadoPedido, MetodoPago, MetodoEnvio } from '@/types/enums';
 
+export interface PaginatedResponse<T> {
+  data: T[];
+  total: number;
+  page: number;
+  totalPages: number;
+}
+
 export interface DetallePedido {
   id: number;
   productoId: number;
   cantidad: number;
-  precio: number;
+  precio: number; // Este viene como precioUnitario del backend, mapeado a precio
   subtotal: number;
   producto: {
     id: number;
     nombre: string;
-    imagen?: string;
+    imagen?: string; // URL de la imagen principal
     precio: number;
   };
 }
@@ -27,7 +34,11 @@ export interface Pedido {
   costoEnvio: number;
   descuento: number;
   total: number;
+  promocionCodigo?: string;
   notasCliente?: string;
+  notasInternas?: string;
+  fechaPedido: string;
+  fechaEntrega?: string;
   creadoEn: string;
   actualizadoEn: string;
   detalles: DetallePedido[];
@@ -45,6 +56,14 @@ export interface Pedido {
     apellidos: string;
     email: string;
   };
+  pagos?: Array<{
+    id: number;
+    monto: number;
+    estado: string;
+    metodoPago: string;
+    referencia: string;
+    creadoEn: string;
+  }>;
 }
 
 export interface CreatePedidoDto {
@@ -145,6 +164,68 @@ class PedidosService {
     }
   }
 
+  // Obtener pedidos con paginación (ADMIN)
+  async obtenerConPaginacion(
+    page: number = 1,
+    limit: number = 10,
+    search?: string,
+    estado?: EstadoPedido,
+    fechaInicio?: string,
+    fechaFin?: string,
+  ): Promise<PaginatedResponse<Pedido>> {
+    try {
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: limit.toString(),
+      });
+      
+      if (search) params.append('search', search);
+      if (estado) params.append('estado', estado);
+      if (fechaInicio) params.append('fechaInicio', fechaInicio);
+      if (fechaFin) params.append('fechaFin', fechaFin);
+
+      const response = await fetch(
+        `${API_BASE_URL}/pedidos/admin/paginacion?${params}`,
+        {
+          method: 'GET',
+          headers: this.getAuthHeaders(),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Error al obtener pedidos');
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error al obtener pedidos con paginación:', error);
+      throw error;
+    }
+  }
+
+  // Obtener todos los pedidos para admin (sin paginación)
+  async obtenerTodosAdmin(): Promise<ApiResponse<Pedido[]>> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/pedidos/admin/todos`, {
+        method: 'GET',
+        headers: this.getAuthHeaders(),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Error al obtener pedidos');
+      }      const result = await response.json();
+      return {
+        mensaje: 'Pedidos obtenidos correctamente',
+        data: result.data || result
+      };
+    } catch (error) {
+      console.error('Error al obtener pedidos:', error);
+      throw error;
+    }
+  }
+
   // Obtener todos los pedidos (admin)
   async obtenerTodos(filtros?: FiltrosPedidosDto): Promise<ApiResponse<Pedido[]>> {
     try {
@@ -172,15 +253,20 @@ class PedidosService {
       console.error('Error al obtener pedidos:', error);
       throw error;
     }
-  }
-
-  // Cambiar estado del pedido (admin)
-  async cambiarEstado(id: number, estado: EstadoPedido): Promise<ApiResponse<Pedido>> {
+  }  // Cambiar estado del pedido (admin)
+  async cambiarEstado(id: number, estado: EstadoPedido, notasInternas?: string): Promise<ApiResponse<Pedido>> {
     try {
+      const body: { estado: EstadoPedido; notasInternas?: string } = { estado };
+      
+      // Si se proporcionan notas internas, incluirlas en el cuerpo
+      if (notasInternas !== undefined) {
+        body.notasInternas = notasInternas;
+      }
+      
       const response = await fetch(`${API_BASE_URL}/pedidos/${id}/estado`, {
         method: 'PATCH',
         headers: this.getAuthHeaders(),
-        body: JSON.stringify({ estado }),
+        body: JSON.stringify(body),
       });
 
       if (!response.ok) {

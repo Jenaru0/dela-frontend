@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/input';
 import { 
@@ -13,17 +13,32 @@ import {
   CheckCircle,
   Package,
   Power,
-  Tag
+  Tag,
+  X
 } from 'lucide-react';
 import { categoriasService, Categoria } from '@/services/categorias.service';
 import CreateCategoriaModal from '@/components/admin/modals/CreateCategoriaModal';
 import EditCategoriaModal from '@/components/admin/modals/EditCategoriaModal';
 import EnhancedCategoriaDetailModal from '@/components/admin/EnhancedCategoriaDetailModal';
 
-const CategoriasAdminPage: React.FC = () => {
-  const [categorias, setCategorias] = useState<Categoria[]>([]);
+const CategoriasAdminPage: React.FC = () => {  const [categorias, setCategorias] = useState<Categoria[]>([]);
+  const [allCategorias, setAllCategorias] = useState<Categoria[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
+  
+  // Paginación
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const itemsPerPage = 10;
+
+  // Filtros
+  const [filters, setFilters] = useState({
+    search: '',
+    estado: '',
+  });
+  const [allFilteredCategorias, setAllFilteredCategorias] = useState<Categoria[]>([]);
+  const [isUsingFrontendPagination, setIsUsingFrontendPagination] = useState(false);
+
   const [notification, setNotification] = useState<{
     type: 'success' | 'error';
     message: string;
@@ -39,13 +54,26 @@ const CategoriasAdminPage: React.FC = () => {
     setNotification({ type, message });
     setTimeout(() => setNotification(null), 5000);
   };
-
-  // Cargar categorías
-  const loadCategories = useCallback(async () => {
+  // Cargar categorías con paginación
+  const loadCategories = useCallback(async (page = 1, search = '') => {
     try {
       setIsLoading(true);
-      const response = await categoriasService.obtenerTodas();
-      setCategorias(response.data);
+      
+      if (isUsingFrontendPagination) {
+        // Usar datos ya filtrados en frontend
+        const startIndex = (page - 1) * itemsPerPage;
+        const endIndex = startIndex + itemsPerPage;
+        setCategorias(allFilteredCategorias.slice(startIndex, endIndex));
+        setTotalPages(Math.ceil(allFilteredCategorias.length / itemsPerPage));
+        setTotalItems(allFilteredCategorias.length);
+      } else {
+        // Usar paginación del backend
+        const response = await categoriasService.obtenerConPaginacion(page, itemsPerPage, search);
+        setCategorias(response.data);
+        setTotalPages(response.totalPages);
+        setTotalItems(response.total);
+        setCurrentPage(response.page);
+      }
     } catch (error) {
       console.error('Error al cargar categorías:', error);
       showNotification('error', 'Error al cargar categorías');
@@ -53,27 +81,102 @@ const CategoriasAdminPage: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
+  }, [isUsingFrontendPagination, allFilteredCategorias, itemsPerPage]);
+
+  // Cargar todas las categorías para estadísticas y filtros especiales
+  const loadAllCategories = useCallback(async () => {
+    try {
+      const response = await categoriasService.obtenerTodasAdmin();
+      setAllCategorias(response.data);
+    } catch (error) {
+      console.error('Error al cargar todas las categorías:', error);
+    }
   }, []);
 
-  useEffect(() => {
-    loadCategories();
+  // Manejar cambio de filtros
+  const handleFilterChange = useCallback(async (newFilters: typeof filters) => {
+    setFilters(newFilters);
+    setCurrentPage(1);
+
+    // Si hay filtros especiales (estado), usar paginación frontend
+    const hasSpecialFilters = newFilters.estado !== '';
+    
+    if (hasSpecialFilters) {
+      let filtered = allCategorias;
+      
+      // Filtro de estado
+      if (newFilters.estado === 'activa') {
+        filtered = filtered.filter(cat => cat.activo);
+      } else if (newFilters.estado === 'inactiva') {
+        filtered = filtered.filter(cat => !cat.activo);
+      }
+      
+      // Filtro de búsqueda local
+      if (newFilters.search) {
+        filtered = filtered.filter(cat =>
+          cat.nombre.toLowerCase().includes(newFilters.search.toLowerCase()) ||
+          (cat.descripcion && cat.descripcion.toLowerCase().includes(newFilters.search.toLowerCase()))
+        );
+      }
+      
+      setAllFilteredCategorias(filtered);
+      setIsUsingFrontendPagination(true);
+      
+      // Mostrar primera página de resultados filtrados
+      const startIndex = 0;
+      const endIndex = itemsPerPage;
+      setCategorias(filtered.slice(startIndex, endIndex));
+      setTotalPages(Math.ceil(filtered.length / itemsPerPage));
+      setTotalItems(filtered.length);
+      setCurrentPage(1);
+      setIsLoading(false);
+    } else {
+      // Solo búsqueda simple, usar backend
+      setIsUsingFrontendPagination(false);
+      await loadCategories(1, newFilters.search);
+    }
+  }, [allCategorias, itemsPerPage, loadCategories]);
+  // Limpiar filtros
+  const clearFilters = useCallback(() => {
+    const clearedFilters = {
+      search: '',
+      estado: '',
+    };
+    setFilters(clearedFilters);
+    setIsUsingFrontendPagination(false);
+    loadCategories(1, '');
   }, [loadCategories]);
 
-  // Filtrar categorías por búsqueda
-  const filteredCategories = categorias.filter(categoria =>
-    categoria.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (categoria.descripcion && categoria.descripcion.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
-  // Cambiar estado de categoría
+  // Contar filtros activos
+  const activeFiltersCount = useMemo(() => {
+    return Object.values(filters).filter(value => value !== '' && value !== undefined).length;
+  }, [filters]);
+
+  // Cambiar página
+  const handlePageChange = useCallback((page: number) => {
+    setCurrentPage(page);
+    if (isUsingFrontendPagination) {
+      const startIndex = (page - 1) * itemsPerPage;
+      const endIndex = startIndex + itemsPerPage;
+      setCategorias(allFilteredCategorias.slice(startIndex, endIndex));
+    } else {
+      loadCategories(page, filters.search);
+    }
+  }, [isUsingFrontendPagination, allFilteredCategorias, itemsPerPage, loadCategories, filters.search]);  useEffect(() => {
+    loadCategories();
+    loadAllCategories();
+  }, [loadCategories, loadAllCategories]);// Cambiar estado de categoría
   const handleToggleEstado = async (id: number, activo: boolean) => {
     try {
       await categoriasService.cambiarEstado(id, !activo);
-      await loadCategories();
+      await loadCategories(currentPage, filters.search);
+      await loadAllCategories();
       showNotification('success', `Categoría ${!activo ? 'activada' : 'desactivada'} correctamente`);
     } catch (error) {
       console.error('Error al cambiar estado:', error);
       showNotification('error', 'Error al cambiar estado de la categoría');
-    }  };
+    }
+  };
 
   const CategoriaRow: React.FC<{ categoria: Categoria; onView: () => void; onEdit: () => void; onToggle: () => void }> = ({ categoria, onView, onEdit, onToggle }) => (
     <tr className="hover:bg-[#F5E6C6]/20 transition-colors duration-200">
@@ -182,18 +285,18 @@ const CategoriasAdminPage: React.FC = () => {
           <Plus className="w-4 h-4" />
           Crear Categoría
         </Button>
-      </div>
-
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      </div>      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <div className="bg-white rounded-xl p-6 shadow-sm border border-[#ecd8ab]/30">
           <div className="flex items-center">
             <div className="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center">
               <FolderOpen className="w-6 h-6 text-blue-600" />
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-[#9A8C61]">Total Categorías</p>
-              <p className="text-2xl font-bold text-[#3A3A3A]">{categorias.length}</p>
+              <p className="text-sm font-medium text-[#9A8C61]">Total</p>
+              <p className="text-2xl font-bold text-[#3A3A3A]">
+                {isUsingFrontendPagination ? allFilteredCategorias.length : totalItems}
+              </p>
             </div>
           </div>
         </div>
@@ -205,7 +308,7 @@ const CategoriasAdminPage: React.FC = () => {
             <div className="ml-4">
               <p className="text-sm font-medium text-[#9A8C61]">Con Productos</p>
               <p className="text-2xl font-bold text-[#3A3A3A]">
-                {categorias.filter(c => c._count?.productos && c._count.productos > 0).length}
+                {allCategorias.filter(c => c._count?.productos && c._count.productos > 0).length}
               </p>
             </div>
           </div>
@@ -217,24 +320,85 @@ const CategoriasAdminPage: React.FC = () => {
             </div>
             <div className="ml-4">              <p className="text-sm font-medium text-[#9A8C61]">Activas</p>
               <p className="text-2xl font-bold text-[#3A3A3A]">
-                {categorias.filter(c => c.activo).length}
+                {allCategorias.filter(c => c.activo).length}
               </p>
             </div>
           </div>
         </div>
-      </div>
-
-      {/* Search */}
+        <div className="bg-white rounded-xl p-6 shadow-sm border border-[#ecd8ab]/30">
+          <div className="flex items-center">
+            <div className="w-12 h-12 bg-red-50 rounded-lg flex items-center justify-center">
+              <AlertCircle className="w-6 h-6 text-red-600" />
+            </div>
+            <div className="ml-4">
+              <p className="text-sm font-medium text-[#9A8C61]">Inactivas</p>
+              <p className="text-2xl font-bold text-[#3A3A3A]">
+                {allCategorias.filter(c => !c.activo).length}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>      {/* Filtros */}
       <div className="bg-white rounded-xl p-6 shadow-sm border border-[#ecd8ab]/30">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#9A8C61] h-5 w-5" />
-          <Input
-            type="text"
-            placeholder="Buscar categorías por nombre o descripción..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 border-[#ecd8ab]/50 focus:border-[#CC9F53] focus:ring-[#CC9F53]/20"
-          />
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+          {/* Búsqueda */}
+          <div className="relative">
+            <label className="block text-xs font-medium text-[#9A8C61] mb-1">
+              Buscar
+            </label>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#9A8C61] h-4 w-4" />
+              <Input
+                type="text"
+                placeholder="Buscar categorías..."
+                value={filters.search}
+                onChange={(e) => {
+                  const newFilters = { ...filters, search: e.target.value };
+                  setFilters(newFilters);
+                  handleFilterChange(newFilters);
+                }}
+                className="pl-10 border-[#ecd8ab]/50 focus:border-[#CC9F53] focus:ring-[#CC9F53]/20 text-sm"
+              />
+            </div>
+          </div>
+          
+          {/* Filtro Estado */}
+          <div>
+            <label className="block text-xs font-medium text-[#9A8C61] mb-1">
+              Estado
+            </label>
+            <select
+              value={filters.estado}
+              onChange={(e) => {
+                const newFilters = { ...filters, estado: e.target.value };
+                setFilters(newFilters);
+                handleFilterChange(newFilters);
+              }}
+              className="w-full px-3 py-2 border border-[#ecd8ab]/50 rounded-md focus:border-[#CC9F53] focus:ring-[#CC9F53]/20 bg-white text-sm"
+            >
+              <option value="">Todos los estados</option>
+              <option value="activa">Activas</option>
+              <option value="inactiva">Inactivas</option>
+            </select>
+          </div>
+
+          {/* Espacios vacíos para mantener la estructura */}
+          <div></div>
+          <div></div>
+
+          {/* Botón Limpiar */}
+          <div className="flex items-end">
+            {activeFiltersCount > 0 && (
+              <Button
+                variant="outline"
+                onClick={clearFilters}
+                className="w-full border-[#CC9F53] text-[#CC9F53] hover:bg-[#CC9F53] hover:text-white text-sm"
+              >
+                <X className="w-4 h-4 mr-1" />
+                Limpiar ({activeFiltersCount})
+              </Button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -245,7 +409,7 @@ const CategoriasAdminPage: React.FC = () => {
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#CC9F53] mx-auto mb-4"></div>
             <p className="text-[#9A8C61]">Cargando categorías...</p>
           </div>
-        ) : filteredCategories.length === 0 ? (
+        ) : categorias.length === 0 ? (
           <div className="p-12 text-center">
             <div className="w-16 h-16 bg-gradient-to-br from-[#CC9F53] to-[#b08a3c] rounded-xl flex items-center justify-center mx-auto mb-4">
               <FolderOpen className="h-8 w-8 text-white" />
@@ -259,30 +423,20 @@ const CategoriasAdminPage: React.FC = () => {
                 : 'No se encontraron categorías que coincidan con tu búsqueda.'
               }
             </p>
-          </div>
-        ) : (
+          </div>        ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-gradient-to-r from-[#F5E6C6]/50 to-[#FAF3E7]/30 border-b border-[#ecd8ab]">
                 <tr>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#3A3A3A]">
-                    Categoría
-                  </th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#3A3A3A]">
-                    Descripción
-                  </th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#3A3A3A]">
-                    Productos
-                  </th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#3A3A3A]">
-                    Estado
-                  </th>
-                  <th className="px-6 py-4 text-right text-sm font-semibold text-[#3A3A3A]">
-                    Acciones                  </th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#3A3A3A]">Categoría</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#3A3A3A]">Descripción</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#3A3A3A]">Productos</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#3A3A3A]">Estado</th>
+                  <th className="px-6 py-4 text-right text-sm font-semibold text-[#3A3A3A]">Acciones</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#ecd8ab]/30">
-                {filteredCategories.map((categoria) => (
+                {categorias.map((categoria: Categoria) => (
                   <CategoriaRow
                     key={categoria.id}
                     categoria={categoria}
@@ -297,12 +451,74 @@ const CategoriasAdminPage: React.FC = () => {
         )}
       </div>
 
-      {/* Modals */}
+      {/* Paginación */}
+      {totalPages > 1 && (
+        <div className="bg-white rounded-xl p-6 shadow-sm border border-[#ecd8ab]/30">
+          <div className="flex items-center justify-between">
+            <div className="text-sm text-[#9A8C61]">
+              Mostrando {Math.min((currentPage - 1) * itemsPerPage + 1, totalItems)} - {Math.min(currentPage * itemsPerPage, totalItems)} de {totalItems} categorías
+            </div>
+            <div className="flex items-center space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+                className="border-[#ecd8ab] text-[#9A8C61] hover:bg-[#F5E6C6]/20"
+              >
+                Anterior
+              </Button>
+              
+              {/* Números de página */}
+              <div className="flex items-center space-x-1">
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                  let pageNum;
+                  if (totalPages <= 5) {
+                    pageNum = i + 1;
+                  } else if (currentPage <= 3) {
+                    pageNum = i + 1;
+                  } else if (currentPage >= totalPages - 2) {
+                    pageNum = totalPages - 4 + i;
+                  } else {
+                    pageNum = currentPage - 2 + i;
+                  }
+                  
+                  return (
+                    <Button
+                      key={pageNum}
+                      variant={currentPage === pageNum ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => handlePageChange(pageNum)}
+                      className={currentPage === pageNum 
+                        ? "bg-[#CC9F53] text-white hover:bg-[#b08a3c]" 
+                        : "border-[#ecd8ab] text-[#9A8C61] hover:bg-[#F5E6C6]/20"
+                      }
+                    >
+                      {pageNum}
+                    </Button>
+                  );
+                })}
+              </div>
+              
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className="border-[#ecd8ab] text-[#9A8C61] hover:bg-[#F5E6C6]/20"
+              >
+                Siguiente
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}      {/* Modals */}
       <CreateCategoriaModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
         onSuccess={() => {
-          loadCategories();
+          loadCategories(currentPage, filters.search);
+          loadAllCategories();
           setIsCreateModalOpen(false);
           showNotification('success', 'Categoría creada correctamente');
         }}
@@ -317,7 +533,8 @@ const CategoriasAdminPage: React.FC = () => {
           setSelectedCategoria(null);
         }}
         onSuccess={() => {
-          loadCategories();
+          loadCategories(currentPage, filters.search);
+          loadAllCategories();
           setIsEditModalOpen(false);
           setSelectedCategoria(null);
           showNotification('success', 'Categoría actualizada correctamente');

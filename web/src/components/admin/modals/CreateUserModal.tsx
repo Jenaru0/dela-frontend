@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { CreateUsuarioDto } from '@/types/usuarios';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/input';
-import { X, User, Mail, Phone, Shield } from 'lucide-react';
+import { X, User, Mail, Phone, Shield, Lock } from 'lucide-react';
 
 interface CreateUserModalProps {
   isOpen: boolean;
@@ -16,11 +16,12 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
   onSave,
 }) => {  const [formData, setFormData] = useState<CreateUsuarioDto>({
     email: '',
+    contrasena: '',
     nombres: '',
     apellidos: '',
     celular: '',
     tipoUsuario: 'CLIENTE', // Cliente por defecto
-  });  const [isLoading, setIsLoading] = useState(false);
+  });const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   // Bloquear scroll del body cuando el modal esté abierto
@@ -45,8 +46,7 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
     setIsLoading(true);
     setErrors({});
 
-    try {
-      // Validaciones básicas
+    try {      // Validaciones básicas
       const newErrors: Record<string, string> = {};
       
       if (!formData.email?.trim()) {
@@ -55,15 +55,21 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
         newErrors.email = 'El email no es válido';
       }
 
+      if (!formData.contrasena?.trim()) {
+        newErrors.contrasena = 'La contraseña es requerida';
+      } else if (formData.contrasena.length < 6) {
+        newErrors.contrasena = 'La contraseña debe tener al menos 6 caracteres';
+      }
+
       if (Object.keys(newErrors).length > 0) {
         setErrors(newErrors);
         return;
       }
 
-      await onSave(formData);
-        // Reset form
+      await onSave(formData);      // Reset form
       setFormData({
         email: '',
+        contrasena: '',
         nombres: '',
         apellidos: '',
         celular: '',
@@ -111,9 +117,7 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
             <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
               {errors.general}
             </div>
-          )}
-
-          {/* Email */}
+          )}          {/* Email */}
           <div className="space-y-2">
             <label className="text-sm font-medium text-neutral-700 flex items-center">
               <Mail className="h-4 w-4 mr-2 text-primary-600" />
@@ -129,6 +133,25 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
             />
             {errors.email && (
               <p className="text-red-500 text-xs">{errors.email}</p>
+            )}
+          </div>
+
+          {/* Contraseña */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-neutral-700 flex items-center">
+              <Lock className="h-4 w-4 mr-2 text-primary-600" />
+              Contraseña *
+            </label>
+            <Input
+              type="password"
+              value={formData.contrasena}
+              onChange={(e) => handleChange('contrasena', e.target.value)}
+              className={errors.contrasena ? 'border-red-300 focus:border-red-500' : ''}
+              placeholder="Mínimo 6 caracteres"
+              required
+            />
+            {errors.contrasena && (
+              <p className="text-red-500 text-xs">{errors.contrasena}</p>
             )}
           </div>
 

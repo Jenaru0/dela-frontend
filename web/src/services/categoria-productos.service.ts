@@ -1,5 +1,4 @@
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || 'https://delabackend.episundc.pe';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export interface ProductoCategoria {
   id: number;
@@ -41,25 +40,18 @@ export interface EstadisticasCategoria {
 }
 
 class CategoriaProductosService {
-  async obtenerProductosPorCategoria(
-    categoriaId: number
-  ): Promise<ProductoCategoria[]> {
+  async obtenerProductosPorCategoria(categoriaId: number): Promise<ProductoCategoria[]> {
     try {
-      const response = await fetch(
-        `${API_BASE_URL}/catalogo/productos?categoriaId=${categoriaId}`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
-      );
+      const response = await fetch(`${API_BASE_URL}/catalogo/productos?categoriaId=${categoriaId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(
-          errorData.message || 'Error al obtener productos de la categoría'
-        );
+        throw new Error(errorData.message || 'Error al obtener productos de la categoría');
       }
 
       const productos = await response.json();
@@ -70,18 +62,13 @@ class CategoriaProductosService {
     }
   }
 
-  async calcularEstadisticas(
-    productos: ProductoCategoria[]
-  ): Promise<EstadisticasCategoria> {
-    const productosActivos = productos.filter((p) => p.estado === 'ACTIVO');
-    const productosInactivos = productos.filter((p) => p.estado !== 'ACTIVO');
-    const productosDestacados = productos.filter((p) => p.destacado);
-
+  async calcularEstadisticas(productos: ProductoCategoria[]): Promise<EstadisticasCategoria> {
+    const productosActivos = productos.filter(p => p.estado === 'ACTIVO');
+    const productosInactivos = productos.filter(p => p.estado !== 'ACTIVO');
+    const productosDestacados = productos.filter(p => p.destacado);
+    
     const stockTotal = productos.reduce((sum, p) => sum + p.stock, 0);
-    const valorInventario = productos.reduce(
-      (sum, p) => sum + p.precioUnitario * p.stock,
-      0
-    );
+    const valorInventario = productos.reduce((sum, p) => sum + (p.precioUnitario * p.stock), 0);
 
     return {
       totalProductos: productos.length,

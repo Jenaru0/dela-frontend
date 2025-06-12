@@ -14,8 +14,9 @@ import {
   Trash2,
   Eye,
   Package,
-  Star,  AlertTriangle,
-  Download,Upload
+  Star,
+  AlertTriangle,
+  X
 } from 'lucide-react';
 import CreateProductoModal from '@/components/admin/CreateProductoModal';
 import EditProductoModal from '@/components/admin/EditProductoModal';
@@ -77,10 +78,9 @@ const ProductosAdminPage: React.FC = () => {
       // Detectar si necesitamos filtros especiales (frontend)
       const needsFrontendFiltering = filters.destacado || filters.estado || filters.stock;
       
-      if (needsFrontendFiltering) {
-        // Obtener TODOS los productos y filtrar en frontend
+      if (needsFrontendFiltering) {        // Obtener TODOS los productos y filtrar en frontend
         const backendFilters = {
-          search: filters.search || undefined,
+          busqueda: filters.search || undefined, // CORREGIDO: usar 'busqueda' en lugar de 'search'
           categoriaId: filters.categoria ? parseInt(filters.categoria) : undefined,
         };
 
@@ -118,12 +118,11 @@ const ProductosAdminPage: React.FC = () => {
         setTotalProducts(allProducts.length);
         setTotalPages(Math.ceil(allProducts.length / itemsPerPage));
         setCurrentPage(page);
-      } else {
-        // Paginación normal del backend (sin filtros especiales)
+      } else {        // Paginación normal del backend (sin filtros especiales)
         const backendFilters = {
-          search: filters.search || undefined,
+          busqueda: filters.search || undefined, // CORREGIDO: usar 'busqueda' en lugar de 'search'
           categoriaId: filters.categoria ? parseInt(filters.categoria) : undefined,
-        };        const response = await productosService.obtenerConPaginacion(page, itemsPerPage, backendFilters);
+        };const response = await productosService.obtenerConPaginacion(page, itemsPerPage, backendFilters);
         
         // Ordenar por ID ascendente como backup
         const sortedProducts = response.data.sort((a: ProductoAdmin, b: ProductoAdmin) => a.id - b.id);
@@ -199,11 +198,29 @@ const ProductosAdminPage: React.FC = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters, currentPage]);
-
   const handleFilterChange = (key: keyof FilterState, value: string | boolean) => {
     setFilters(prev => ({ ...prev, [key]: value }));
     // No necesita resetear currentPage aquí porque lo hace el useEffect
   };
+
+  // Función para limpiar filtros
+  const clearFilters = () => {
+    setFilters({
+      search: '',
+      categoria: '',
+      estado: '',
+      destacado: false,
+      stock: ''
+    });
+  };
+
+  // Contar filtros activos
+  const activeFiltersCount = Object.entries(filters).filter(([key, value]) => {
+    if (key === 'destacado') {
+      return value === true;
+    }
+    return value !== '';
+  }).length;
   const refreshData = () => {
     loadProductos(currentPage, false); // false para no hacer scroll al refrescar
     loadEstadisticas();
@@ -274,19 +291,6 @@ const ProductosAdminPage: React.FC = () => {
         </div>
         <div className="flex gap-2">
           <Button
-            variant="outline"
-            className="border-[#CC9F53] text-[#CC9F53] hover:bg-[#CC9F53] hover:text-white"
-          >
-            <Download className="w-4 h-4 mr-2" />
-            Exportar
-          </Button>
-          <Button
-            variant="outline"
-            className="border-[#CC9F53] text-[#CC9F53] hover:bg-[#CC9F53] hover:text-white"
-          >
-            <Upload className="w-4 h-4 mr-2" />
-            Importar
-          </Button>          <Button
             onClick={() => setIsCreateModalOpen(true)}
             className="bg-gradient-to-r from-[#CC9F53] to-[#b08a3c] hover:from-[#b08a3c] hover:to-[#9a7635] text-white font-semibold px-6 py-2.5 rounded-lg transition-all duration-300 flex items-center gap-2 shadow-lg"
           >
@@ -347,68 +351,110 @@ const ProductosAdminPage: React.FC = () => {
             </div>
           </div>
         </div>
-      </div>
-
-      {/* Search and Filters */}
+      </div>      {/* Filtros */}
       <div className="bg-white rounded-xl p-6 shadow-sm border border-[#ecd8ab]/30">
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-6 gap-4">
+          {/* Búsqueda */}
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#9A8C61] h-5 w-5" />
-            <Input
-              type="text"
-              placeholder="Buscar productos..."
-              value={filters.search}
-              onChange={(e) => handleFilterChange('search', e.target.value)}
-              className="pl-10 border-[#ecd8ab]/50 focus:border-[#CC9F53] focus:ring-[#CC9F53]/20"
-            />
+            <label className="block text-xs font-medium text-[#9A8C61] mb-1">
+              Buscar
+            </label>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#9A8C61] h-4 w-4" />
+              <Input
+                type="text"
+                placeholder="Buscar productos..."
+                value={filters.search}
+                onChange={(e) => handleFilterChange('search', e.target.value)}
+                className="pl-10 border-[#ecd8ab]/50 focus:border-[#CC9F53] focus:ring-[#CC9F53]/20 text-sm"
+              />
+            </div>
           </div>
           
-          <select
-            value={filters.categoria}
-            onChange={(e) => handleFilterChange('categoria', e.target.value)}
-            className="px-3 py-2 border border-[#ecd8ab]/50 rounded-md focus:border-[#CC9F53] focus:ring-[#CC9F53]/20"
-          >
-            <option value="">Todas las categorías</option>
-            {categorias.map((categoria) => (
-              <option key={categoria.id} value={categoria.id}>
-                {categoria.nombre}
-              </option>
-            ))}
-          </select>
+          {/* Filtro Categoría */}
+          <div>
+            <label className="block text-xs font-medium text-[#9A8C61] mb-1">
+              Categoría
+            </label>
+            <select
+              value={filters.categoria}
+              onChange={(e) => handleFilterChange('categoria', e.target.value)}
+              className="w-full px-3 py-2 border border-[#ecd8ab]/50 rounded-md focus:border-[#CC9F53] focus:ring-[#CC9F53]/20 bg-white text-sm"
+            >
+              <option value="">Todas las categorías</option>
+              {categorias.map((categoria) => (
+                <option key={categoria.id} value={categoria.id}>
+                  {categoria.nombre}
+                </option>
+              ))}
+            </select>
+          </div>
 
-          <select
-            value={filters.estado}
-            onChange={(e) => handleFilterChange('estado', e.target.value)}
-            className="px-3 py-2 border border-[#ecd8ab]/50 rounded-md focus:border-[#CC9F53] focus:ring-[#CC9F53]/20"
-          >
-            <option value="">Todos los estados</option>
-            <option value="ACTIVO">Activo</option>
-            <option value="INACTIVO">Inactivo</option>
-          </select>
+          {/* Filtro Estado */}
+          <div>
+            <label className="block text-xs font-medium text-[#9A8C61] mb-1">
+              Estado
+            </label>
+            <select
+              value={filters.estado}
+              onChange={(e) => handleFilterChange('estado', e.target.value)}
+              className="w-full px-3 py-2 border border-[#ecd8ab]/50 rounded-md focus:border-[#CC9F53] focus:ring-[#CC9F53]/20 bg-white text-sm"
+            >
+              <option value="">Todos los estados</option>
+              <option value="ACTIVO">Activo</option>
+              <option value="INACTIVO">Inactivo</option>
+            </select>
+          </div>
 
-          <select
-            value={filters.stock}
-            onChange={(e) => handleFilterChange('stock', e.target.value)}
-            className="px-3 py-2 border border-[#ecd8ab]/50 rounded-md focus:border-[#CC9F53] focus:ring-[#CC9F53]/20"
-          >
-            <option value="">Todos los stocks</option>
-            <option value="con_stock">Con stock</option>
-            <option value="sin_stock">Sin stock</option>
-            <option value="stock_bajo">Stock bajo</option>
-          </select>
+          {/* Filtro Stock */}
+          <div>
+            <label className="block text-xs font-medium text-[#9A8C61] mb-1">
+              Stock
+            </label>
+            <select
+              value={filters.stock}
+              onChange={(e) => handleFilterChange('stock', e.target.value)}
+              className="w-full px-3 py-2 border border-[#ecd8ab]/50 rounded-md focus:border-[#CC9F53] focus:ring-[#CC9F53]/20 bg-white text-sm"
+            >
+              <option value="">Todos los stocks</option>
+              <option value="con_stock">Con stock</option>
+              <option value="sin_stock">Sin stock</option>
+              <option value="stock_bajo">Stock bajo</option>
+            </select>
+          </div>
 
-          <div className="flex items-center">
-            <input
-              type="checkbox"
-              id="destacado"
-              checked={filters.destacado}
-              onChange={(e) => handleFilterChange('destacado', e.target.checked)}
-              className="mr-2"
-            />
-            <label htmlFor="destacado" className="text-sm text-[#3A3A3A]">Solo destacados</label>
+          {/* Filtro Destacado */}
+          <div>
+            <label className="block text-xs font-medium text-[#9A8C61] mb-1">
+              Destacado
+            </label>
+            <div className="flex items-center h-9">
+              <input
+                type="checkbox"
+                id="destacado"
+                checked={filters.destacado}
+                onChange={(e) => handleFilterChange('destacado', e.target.checked)}
+                className="h-4 w-4 text-[#CC9F53] focus:ring-[#CC9F53] border-[#ecd8ab]/50 rounded"
+              />
+              <label htmlFor="destacado" className="ml-2 text-sm text-[#3A3A3A]">Solo destacados</label>
+            </div>
+          </div>
+
+          {/* Botón Limpiar */}
+          <div className="flex items-end">
+            {activeFiltersCount > 0 && (
+              <Button
+                variant="outline"
+                onClick={clearFilters}
+                className="w-full border-[#CC9F53] text-[#CC9F53] hover:bg-[#CC9F53] hover:text-white text-sm"
+              >
+                <X className="w-4 h-4 mr-1" />
+                Limpiar ({activeFiltersCount})
+              </Button>
+            )}
           </div>
         </div>
-      </div>      {/* Products Table */}
+      </div>{/* Products Table */}
       <div className="bg-white rounded-xl shadow-sm border border-[#ecd8ab]/30 overflow-hidden">
         {isLoading ? (
           <div className="p-8 text-center">

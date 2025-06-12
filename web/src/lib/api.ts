@@ -1,7 +1,6 @@
 import { authService } from '@/services/auth.service';
 
-export const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || 'https://delabackend.episundc.pe';
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 // Tipos para la API
 interface ApiErrorData {
@@ -27,11 +26,11 @@ export async function apiRequest(
   options: RequestInit = {}
 ): Promise<Response> {
   const url = `${API_BASE_URL}${endpoint}`;
-
+  
   // Agregar headers de autenticación si están disponibles
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    ...((options.headers as Record<string, string>) || {}),
+    ...(options.headers as Record<string, string> || {}),
   };
 
   const token = authService.getToken();
@@ -54,14 +53,13 @@ export async function apiRequest(
     }
 
     // Si la respuesta no es exitosa, lanzar error
-    if (!response.ok) {
-      let errorData: ApiErrorData;
+    if (!response.ok) {      let errorData: ApiErrorData;
       try {
         errorData = await response.json();
       } catch {
         errorData = { message: 'Error desconocido' };
       }
-
+      
       throw new ApiError(
         errorData.message || `Error HTTP ${response.status}`,
         response.status,
@@ -74,7 +72,7 @@ export async function apiRequest(
     if (error instanceof ApiError) {
       throw error;
     }
-
+    
     // Error de red o conexión
     throw new ApiError('Error de conexión', 0);
   }
@@ -87,10 +85,7 @@ export async function apiGet<T = unknown>(endpoint: string): Promise<T> {
 }
 
 // Helper para peticiones POST
-export async function apiPost<T = unknown>(
-  endpoint: string,
-  data: unknown
-): Promise<T> {
+export async function apiPost<T = unknown>(endpoint: string, data: unknown): Promise<T> {
   const response = await apiRequest(endpoint, {
     method: 'POST',
     body: JSON.stringify(data),
@@ -99,10 +94,7 @@ export async function apiPost<T = unknown>(
 }
 
 // Helper para peticiones PUT
-export async function apiPut<T = unknown>(
-  endpoint: string,
-  data: unknown
-): Promise<T> {
+export async function apiPut<T = unknown>(endpoint: string, data: unknown): Promise<T> {
   const response = await apiRequest(endpoint, {
     method: 'PUT',
     body: JSON.stringify(data),

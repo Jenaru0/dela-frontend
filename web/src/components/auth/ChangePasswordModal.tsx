@@ -72,9 +72,20 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
       }      await onSave(formData.currentPassword, formData.newPassword, formData.confirmPassword);
       setFormData({ currentPassword: '', newPassword: '', confirmPassword: '' });
       onClose();
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error al cambiar contraseña:', error);
-      setErrors({ general: 'Error al cambiar la contraseña' });
+      const errorMessage = error instanceof Error ? error.message : 'Error al cambiar la contraseña';
+      
+      // Si el error es sobre contraseña actual incorrecta, mostrarlo en el campo específico
+      if (errorMessage.includes('contraseña actual es incorrecta') || errorMessage.includes('contraseña actual')) {
+        setErrors({ currentPassword: errorMessage });
+      } else if (errorMessage.includes('nueva contraseña') || errorMessage.includes('6 caracteres')) {
+        setErrors({ newPassword: errorMessage });
+      } else if (errorMessage.includes('no coinciden') || errorMessage.includes('confirmación')) {
+        setErrors({ confirmPassword: errorMessage });
+      } else {
+        setErrors({ general: errorMessage });
+      }
     } finally {
       setIsLoading(false);
     }

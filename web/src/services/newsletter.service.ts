@@ -1,5 +1,4 @@
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || 'https://delabackend.episundc.pe';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 export interface ApiResponse<T> {
   mensaje: string;
@@ -33,9 +32,7 @@ class NewsletterService {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(
-          errorData.message || 'Error al suscribirse al newsletter'
-        );
+        throw new Error(errorData.message || 'Error al suscribirse al newsletter');
       }
 
       return await response.json();
@@ -56,9 +53,7 @@ class NewsletterService {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(
-          errorData.message || 'Error al desuscribirse del newsletter'
-        );
+        throw new Error(errorData.message || 'Error al desuscribirse del newsletter');
       }
 
       return await response.json();
@@ -69,17 +64,12 @@ class NewsletterService {
   }
 
   // Verificar si un email está suscrito
-  async verificarSuscripcion(
-    email: string
-  ): Promise<ApiResponse<{ suscrito: boolean }>> {
+  async verificarSuscripcion(email: string): Promise<ApiResponse<{ suscrito: boolean }>> {
     try {
-      const response = await fetch(
-        `${API_BASE_URL}/newsletter/verificar/${encodeURIComponent(email)}`,
-        {
-          method: 'GET',
-          headers: this.getAuthHeaders(),
-        }
-      );
+      const response = await fetch(`${API_BASE_URL}/newsletter/verificar/${encodeURIComponent(email)}`, {
+        method: 'GET',
+        headers: this.getAuthHeaders(),
+      });
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -114,22 +104,17 @@ class NewsletterService {
   }
 
   // Admin: Obtener estadísticas
-  async obtenerEstadisticas(): Promise<
-    ApiResponse<{
-      total: number;
-      activos: number;
-      inactivos: number;
-      nuevosEsteMes: number;
-    }>
-  > {
+  async obtenerEstadisticas(): Promise<ApiResponse<{
+    total: number;
+    activos: number;
+    inactivos: number;
+    nuevosEsteMes: number;
+  }>> {
     try {
-      const response = await fetch(
-        `${API_BASE_URL}/newsletter/admin/estadisticas`,
-        {
-          method: 'GET',
-          headers: this.getAuthHeaders(),
-        }
-      );
+      const response = await fetch(`${API_BASE_URL}/newsletter/admin/estadisticas`, {
+        method: 'GET',
+        headers: this.getAuthHeaders(),
+      });
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -144,19 +129,13 @@ class NewsletterService {
   }
 
   // Admin: Cambiar estado de suscriptor
-  async cambiarEstado(
-    id: number,
-    activo: boolean
-  ): Promise<ApiResponse<Newsletter>> {
+  async cambiarEstado(id: number, activo: boolean): Promise<ApiResponse<Newsletter>> {
     try {
-      const response = await fetch(
-        `${API_BASE_URL}/newsletter/admin/${id}/estado`,
-        {
-          method: 'PATCH',
-          headers: this.getAuthHeaders(),
-          body: JSON.stringify({ activo }),
-        }
-      );
+      const response = await fetch(`${API_BASE_URL}/newsletter/admin/${id}/estado`, {
+        method: 'PATCH',
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify({ activo }),
+      });
 
       if (!response.ok) {
         const errorData = await response.json();

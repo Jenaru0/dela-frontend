@@ -1,10 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'standalone',
-  env: {
-    NEXT_PUBLIC_API_URL:
-      process.env.NEXT_PUBLIC_API_URL || 'https://delabackend.episundc.pe',
-  },
   images: {
     dangerouslyAllowSVG: true,
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
@@ -14,8 +9,7 @@ const nextConfig = {
         hostname: 'dela.com.pe',
         port: '',
         pathname: '/img/**',
-      },
-      {
+      },      {
         protocol: 'https',
         hostname: 'picsum.photos',
         port: '',
@@ -38,8 +32,7 @@ const nextConfig = {
         hostname: 'cdn-icons-png.flaticon.com',
         port: '',
         pathname: '/512/**',
-      },
-      {
+      },      {
         protocol: 'https',
         hostname: 'cdn.miweb.com',
         port: '',

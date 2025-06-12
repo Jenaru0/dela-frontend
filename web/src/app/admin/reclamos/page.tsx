@@ -7,39 +7,139 @@ import {
   MessageSquare, 
   Search, 
   Eye, 
+  Edit, 
   MessageCircle, 
   Clock, 
   CheckCircle, 
   XCircle,
   AlertTriangle,
   User,
-  AlertCircle as AlertIcon
+  AlertCircle,
+  X,
+  Package
 } from 'lucide-react';
-import { reclamosService, Reclamo } from '@/services/reclamos.service';
-import { EstadoReclamoLabels, EstadoReclamoColors, PrioridadReclamoLabels, PrioridadReclamoColors, TipoReclamoLabels } from '@/types/enums';
+import { reclamosService, Reclamo, UpdateReclamoDto } from '@/services/reclamos.service';
+import { 
+  EstadoReclamo, 
+  EstadoReclamoLabels, 
+  EstadoReclamoColors, 
+  PrioridadReclamo,
+  PrioridadReclamoLabels, 
+  PrioridadReclamoColors, 
+  TipoReclamo,
+  TipoReclamoLabels 
+} from '@/types/enums';
+import EnhancedReclamoDetailModal from '@/components/admin/EnhancedReclamoDetailModal';
+import ReclamoManageModal from '@/components/admin/ReclamoManageModal';
+
+interface FilterState {
+  search: string;
+  estado: string;
+  prioridad: string;
+  tipoReclamo: string;
+  fechaInicio: string;
+  fechaFin: string;
+}
+
+interface ReclamoStats {
+  total: number;
+  abiertos: number;
+  enProceso: number;
+  resueltos: number;
+  criticos: number;
+}
 
 const ReclamosAdminPage: React.FC = () => {
   const [reclamos, setReclamos] = useState<Reclamo[]>([]);
+  const [stats, setStats] = useState<ReclamoStats>({
+    total: 0,
+    abiertos: 0,
+    enProceso: 0,
+    resueltos: 0,
+    criticos: 0,
+  });
   const [isLoading, setIsLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('TODOS');
+  
+  // Paginación
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const itemsPerPage = 10;
+
+  // Filtros
+  const [filters, setFilters] = useState<FilterState>({
+    search: '',
+    estado: '',
+    prioridad: '',
+    tipoReclamo: '',
+    fechaInicio: '',    fechaFin: '',
+  });
   const [notification, setNotification] = useState<{
     type: 'success' | 'error';
     message: string;
   } | null>(null);
 
+  // Estados para los modales
+  const [selectedReclamo, setSelectedReclamo] = useState<Reclamo | null>(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [isManageModalOpen, setIsManageModalOpen] = useState(false);
   // Función para mostrar notificaciones
-  const showNotification = (type: 'success' | 'error', message: string) => {
+  const showNotification = useCallback((type: 'success' | 'error', message: string) => {
     setNotification({ type, message });
     setTimeout(() => setNotification(null), 5000);
+  }, []);
+
+  // Funciones para manejar los modales
+  const handleViewDetails = (reclamo: Reclamo) => {
+    setSelectedReclamo(reclamo);
+    setIsDetailModalOpen(true);
   };
 
-  // Cargar reclamos (ADMIN)
-  const loadClaims = useCallback(async () => {
+  const handleOpenManageModal = (reclamo: Reclamo) => {
+    setSelectedReclamo(reclamo);
+    setIsManageModalOpen(true);
+  };
+
+  const handleCloseModals = () => {
+    setSelectedReclamo(null);
+    setIsDetailModalOpen(false);
+    setIsManageModalOpen(false);
+  };
+  const handleReclamoUpdated = async () => {
+    // Recargar los datos después de actualizar
+    await loadReclamos(currentPage, filters.search, filters.estado, filters.prioridad, filters.tipoReclamo, filters.fechaInicio, filters.fechaFin);
+    await loadStats(); // Recargar estadísticas
+    showNotification('success', 'Reclamo actualizado correctamente');
+  };  // Cargar reclamos con paginación (función simple)
+  const loadReclamos = useCallback(async (
+    page = 1, 
+    search = '', 
+    estado = '', 
+    prioridad = '',
+    tipoReclamo = '',
+    fechaInicio = '', 
+    fechaFin = ''
+  ) => {
     try {
+      console.log('🔍 loadReclamos llamado con:', { page, search, estado, prioridad, tipoReclamo, fechaInicio, fechaFin });
       setIsLoading(true);
-      const response = await reclamosService.obtenerTodos();
+      
+      // Usar paginación del backend
+      const response = await reclamosService.obtenerConPaginacion(
+        page, 
+        itemsPerPage, 
+        search, 
+        estado as EstadoReclamo || undefined,
+        prioridad as PrioridadReclamo || undefined,
+        tipoReclamo as TipoReclamo || undefined,
+        fechaInicio, 
+        fechaFin
+      );
+      console.log('📊 Respuesta de obtenerConPaginacion:', response);
       setReclamos(response.data);
+      setTotalPages(response.totalPages);
+      setTotalItems(response.total);
+      setCurrentPage(response.page);
     } catch (error) {
       console.error('Error al cargar reclamos:', error);
       showNotification('error', 'Error al cargar reclamos');
@@ -47,46 +147,183 @@ const ReclamosAdminPage: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [itemsPerPage, showNotification]);
 
+  // Cargar estadísticas desde el endpoint dedicado
+  const loadStats = useCallback(async () => {
+    try {
+      console.log('📊 Cargando estadísticas desde el backend...');
+      const response = await reclamosService.obtenerEstadisticas();
+      console.log('📊 Respuesta completa de estadísticas:', response);
+      console.log('📊 Tipo de response:', typeof response);
+      console.log('📊 Keys de response:', Object.keys(response || {}));
+      console.log('📊 response.data:', response?.data);
+      console.log('📊 Tipo de response.data:', typeof response?.data);
+      console.log('📊 Keys de response.data:', Object.keys(response?.data || {}));
+      
+      // Las estadísticas están en response.data
+      if (response && response.data?.total !== undefined) {
+        const { total, porEstado, porTipo, porPrioridad } = response.data;
+        
+        console.log('📊 Total:', total);
+        console.log('📊 Por estado:', porEstado);
+        console.log('📊 Por tipo:', porTipo);
+        console.log('📊 Por prioridad:', porPrioridad);
+        
+        // Buscar conteos por estado
+        const abiertos = porEstado?.find((e: { estado: EstadoReclamo; _count: { id: number } }) => e.estado === EstadoReclamo.ABIERTO)?._count?.id || 0;
+        const enProceso = porEstado?.find((e: { estado: EstadoReclamo; _count: { id: number } }) => e.estado === EstadoReclamo.EN_PROCESO)?._count?.id || 0;
+        const resueltos = porEstado?.find((e: { estado: EstadoReclamo; _count: { id: number } }) => e.estado === EstadoReclamo.RESUELTO)?._count?.id || 0;
+        
+        console.log('📊 Conteos por estado - Abiertos:', abiertos, 'En proceso:', enProceso, 'Resueltos:', resueltos);
+        
+        // Buscar conteo de críticos
+        const criticos = porPrioridad?.find((p: { prioridad: PrioridadReclamo; _count: { id: number } }) => p.prioridad === PrioridadReclamo.CRITICA)?._count?.id || 0;
+        
+        console.log('📊 Críticos:', criticos);
+        
+        const newStats = {
+          total: total || 0,
+          abiertos,
+          enProceso,
+          resueltos,
+          criticos,
+        };
+        
+        console.log('✅ Estadísticas finales calculadas:', newStats);
+        setStats(newStats);
+      } else {
+        console.log('❌ No se recibieron datos de estadísticas válidos');
+        console.log('❌ response existe:', !!response);
+        console.log('❌ response.data existe:', !!response?.data);
+        console.log('❌ response.data.total:', response?.data?.total);
+      }
+    } catch (error) {
+      console.error('❌ Error al cargar estadísticas:', error);
+      if (error instanceof Error) {
+        console.error('❌ Detalles del error:', error.message);
+      }
+      // Mantener estadísticas en 0 si hay error
+    }
+  }, []); // Sin dependencias para evitar loops
+
+  // Cargar reclamos iniciales al montar
   useEffect(() => {
-    loadClaims();
-  }, [loadClaims]);
-
-  // Filtrar reclamos
-  const filteredClaims = reclamos.filter(reclamo => {
-    const matchesSearch = reclamo.asunto.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         reclamo.descripcion.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         reclamo.usuario?.nombres?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         reclamo.usuario?.email?.toLowerCase().includes(searchTerm.toLowerCase());
+    const loadInitialData = async () => {
+      console.log('🚀 Cargando datos iniciales...');
+      
+      // Cargar estadísticas globales primero
+      await loadStats();
+      
+      // Luego cargar la primera página
+      try {
+        setIsLoading(true);
+        const response = await reclamosService.obtenerConPaginacion(
+          1, 
+          itemsPerPage, 
+          '', 
+          undefined, // estado como undefined
+          undefined, // prioridad como undefined
+          undefined, // tipoReclamo como undefined
+          '', 
+          ''
+        );
+        setReclamos(response.data);
+        setTotalPages(response.totalPages);
+        setTotalItems(response.total);
+        setCurrentPage(response.page);
+      } catch (error) {
+        console.error('Error al cargar reclamos iniciales:', error);
+        setReclamos([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };    loadInitialData();
+  }, [loadStats]); // Incluir loadStats como dependencia
+  const handleFilterChange = useCallback(async (newFilters: FilterState) => {    console.log('🔍 Aplicando filtros:', newFilters);
+    setFilters(newFilters);
+    setCurrentPage(1);
     
-    const matchesStatus = statusFilter === 'TODOS' || reclamo.estado === statusFilter;
-    
-    return matchesSearch && matchesStatus;
-  });
+    // Usar siempre el backend para filtros (simplificado)
+    await loadReclamos(1, newFilters.search, newFilters.estado, newFilters.prioridad, newFilters.tipoReclamo, newFilters.fechaInicio, newFilters.fechaFin);
+  }, [loadReclamos]);
 
+  // Función para manejar cambio individual de filtros (patrón consistente)
+  const handleSingleFilterChange = (key: keyof FilterState, value: string) => {
+    const newFilters = { ...filters, [key]: value };
+    handleFilterChange(newFilters);
+  };
 
-  const getStatusIcon = (estado: string) => {
+  // Contar filtros activos (patrón consistente)
+  const activeFiltersCount = Object.entries(filters).filter(([, value]) => {
+    return value !== '';
+  }).length;
+  const clearFilters = () => {
+    const emptyFilters: FilterState = {
+      search: '',
+      estado: '',
+      prioridad: '',
+      tipoReclamo: '',
+      fechaInicio: '',
+      fechaFin: '',
+    };
+    handleFilterChange(emptyFilters);
+  };
+  // Cambiar página
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage);
+    loadReclamos(newPage, filters.search, filters.estado, filters.prioridad, filters.tipoReclamo, filters.fechaInicio, filters.fechaFin);
+  };
+
+  // Actualizar reclamo
+  const handleUpdateReclamo = async (id: number, data: UpdateReclamoDto) => {
+    try {
+      await reclamosService.actualizar(id, data);
+      await handleReclamoUpdated();
+    } catch (error) {
+      console.error('Error al actualizar reclamo:', error);
+      showNotification('error', 'Error al actualizar reclamo');
+    }
+  };
+
+  // Agregar comentario
+  const handleAddComment = async (reclamoId: number, comentario: string, esInterno: boolean) => {
+    try {
+      await reclamosService.agregarComentario(reclamoId, comentario, esInterno);
+      
+      // Recargar los datos del reclamo específico
+      const updatedReclamo = await reclamosService.obtenerPorId(reclamoId);
+      setSelectedReclamo(updatedReclamo.data);
+      
+      // Recargar la lista
+      await handleReclamoUpdated();
+      
+      showNotification('success', 'Comentario agregado correctamente');
+    } catch (error) {
+      console.error('Error al agregar comentario:', error);
+      showNotification('error', 'Error al agregar comentario');    }
+  };
+
+  const getStatusIcon = (estado: EstadoReclamo) => {
     switch (estado) {
-      case 'ABIERTO':
-        return <Clock className="w-4 h-4" />;
-      case 'EN_PROCESO':
+      case EstadoReclamo.ABIERTO:
+        return <Clock className="w-4 h-4" />;      case EstadoReclamo.EN_PROCESO:
         return <MessageCircle className="w-4 h-4" />;
-      case 'RESUELTO':
+      case EstadoReclamo.RESUELTO:
         return <CheckCircle className="w-4 h-4" />;
-      case 'RECHAZADO':
+      case EstadoReclamo.RECHAZADO:
         return <XCircle className="w-4 h-4" />;
       default:
         return <MessageSquare className="w-4 h-4" />;
     }
   };
 
-  const getPriorityIcon = (prioridad: string) => {
+  const getPriorityIcon = (prioridad: PrioridadReclamo) => {
     switch (prioridad) {
-      case 'CRITICA':
+      case PrioridadReclamo.CRITICA:
         return <AlertTriangle className="w-4 h-4" />;
-      case 'ALTA':
-        return <AlertIcon className="w-4 h-4" />;
+      case PrioridadReclamo.ALTA:
+        return <AlertCircle className="w-4 h-4" />;
       default:
         return null;
     }
@@ -96,16 +333,16 @@ const ReclamosAdminPage: React.FC = () => {
     <div className="space-y-6">
       {/* Notification */}
       {notification && (
-        <div className={`fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg ${
+        <div className={`fixed top-4 right-4 z-40 p-4 rounded-lg shadow-lg ${
           notification.type === 'success' 
-            ? 'bg-emerald-50 border border-emerald-200 text-emerald-800' 
+            ? 'bg-emerald-50 border border-emerald-200 text-emerald-800'
             : 'bg-red-50 border border-red-200 text-red-800'
         }`}>
           <div className="flex items-center">
             {notification.type === 'success' ? (
               <CheckCircle className="h-5 w-5 mr-2" />
             ) : (
-              <AlertIcon className="h-5 w-5 mr-2" />
+              <XCircle className="h-5 w-5 mr-2" />
             )}
             {notification.message}
           </div>
@@ -123,7 +360,7 @@ const ReclamosAdminPage: React.FC = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
         <div className="bg-white rounded-xl p-6 shadow-sm border border-[#ecd8ab]/30">
           <div className="flex items-center">
             <div className="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center">
@@ -131,20 +368,29 @@ const ReclamosAdminPage: React.FC = () => {
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium text-[#9A8C61]">Total Reclamos</p>
-              <p className="text-2xl font-bold text-[#3A3A3A]">{reclamos.length}</p>
+              <p className="text-2xl font-bold text-[#3A3A3A]">{stats.total}</p>
+            </div>
+          </div>
+        </div>
+        <div className="bg-white rounded-xl p-6 shadow-sm border border-[#ecd8ab]/30">
+          <div className="flex items-center">
+            <div className="w-12 h-12 bg-red-50 rounded-lg flex items-center justify-center">
+              <Clock className="w-6 h-6 text-red-600" />
+            </div>
+            <div className="ml-4">
+              <p className="text-sm font-medium text-[#9A8C61]">Abiertos</p>
+              <p className="text-2xl font-bold text-[#3A3A3A]">{stats.abiertos}</p>
             </div>
           </div>
         </div>
         <div className="bg-white rounded-xl p-6 shadow-sm border border-[#ecd8ab]/30">
           <div className="flex items-center">
             <div className="w-12 h-12 bg-yellow-50 rounded-lg flex items-center justify-center">
-              <Clock className="w-6 h-6 text-yellow-600" />
+              <MessageCircle className="w-6 h-6 text-yellow-600" />
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-[#9A8C61]">Pendientes</p>
-              <p className="text-2xl font-bold text-[#3A3A3A]">
-                {reclamos.filter(r => r.estado === 'ABIERTO' || r.estado === 'EN_PROCESO').length}
-              </p>
+              <p className="text-sm font-medium text-[#9A8C61]">En Proceso</p>
+              <p className="text-2xl font-bold text-[#3A3A3A]">{stats.enProceso}</p>
             </div>
           </div>
         </div>
@@ -155,9 +401,7 @@ const ReclamosAdminPage: React.FC = () => {
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium text-[#9A8C61]">Resueltos</p>
-              <p className="text-2xl font-bold text-[#3A3A3A]">
-                {reclamos.filter(r => r.estado === 'RESUELTO').length}
-              </p>
+              <p className="text-2xl font-bold text-[#3A3A3A]">{stats.resueltos}</p>
             </div>
           </div>
         </div>
@@ -168,39 +412,197 @@ const ReclamosAdminPage: React.FC = () => {
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium text-[#9A8C61]">Críticos</p>
-              <p className="text-2xl font-bold text-[#3A3A3A]">
-                {reclamos.filter(r => r.prioridad === 'CRITICA').length}
-              </p>
+              <p className="text-2xl font-bold text-[#3A3A3A]">{stats.criticos}</p>
             </div>
           </div>
         </div>
-      </div>
-
-      {/* Search and Filters */}
+      </div>      {/* Filters */}
       <div className="bg-white rounded-xl p-6 shadow-sm border border-[#ecd8ab]/30">
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#9A8C61] h-5 w-5" />
+        <div className="grid grid-cols-1 lg:grid-cols-6 gap-4">
+          {/* Búsqueda */}
+          <div className="relative">
+            <label className="block text-xs font-medium text-[#9A8C61] mb-1">
+              Buscar
+            </label>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#9A8C61] h-4 w-4" />
+              <Input
+                type="text"
+                placeholder="Buscar reclamos..."
+                value={filters.search}
+                onChange={(e) => handleSingleFilterChange('search', e.target.value)}
+                className="pl-10 border-[#ecd8ab]/50 focus:border-[#CC9F53] focus:ring-[#CC9F53]/20 text-sm"
+              />
+            </div>
+          </div>
+          
+          {/* Filtro Estado */}
+          <div>
+            <label className="block text-xs font-medium text-[#9A8C61] mb-1">
+              Estado
+            </label>
+            <select
+              value={filters.estado}
+              onChange={(e) => handleSingleFilterChange('estado', e.target.value)}
+              className="w-full px-3 py-2 border border-[#ecd8ab]/50 rounded-md focus:border-[#CC9F53] focus:ring-[#CC9F53]/20 bg-white text-sm"
+            >
+              <option value="">Todos los estados</option>
+              {Object.values(EstadoReclamo).map((estado) => (
+                <option key={estado} value={estado}>
+                  {EstadoReclamoLabels[estado]}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Filtro Prioridad */}
+          <div>
+            <label className="block text-xs font-medium text-[#9A8C61] mb-1">
+              Prioridad
+            </label>
+            <select
+              value={filters.prioridad}
+              onChange={(e) => handleSingleFilterChange('prioridad', e.target.value)}
+              className="w-full px-3 py-2 border border-[#ecd8ab]/50 rounded-md focus:border-[#CC9F53] focus:ring-[#CC9F53]/20 bg-white text-sm"
+            >
+              <option value="">Todas las prioridades</option>
+              {Object.values(PrioridadReclamo).map((prioridad) => (
+                <option key={prioridad} value={prioridad}>
+                  {PrioridadReclamoLabels[prioridad]}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Filtro Tipo */}
+          <div>
+            <label className="block text-xs font-medium text-[#9A8C61] mb-1">
+              Tipo
+            </label>
+            <select
+              value={filters.tipoReclamo}
+              onChange={(e) => handleSingleFilterChange('tipoReclamo', e.target.value)}
+              className="w-full px-3 py-2 border border-[#ecd8ab]/50 rounded-md focus:border-[#CC9F53] focus:ring-[#CC9F53]/20 bg-white text-sm"
+            >
+              <option value="">Todos los tipos</option>
+              {Object.values(TipoReclamo).map((tipo) => (
+                <option key={tipo} value={tipo}>
+                  {TipoReclamoLabels[tipo]}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Fecha Desde */}
+          <div>
+            <label className="block text-xs font-medium text-[#9A8C61] mb-1">
+              Desde
+            </label>
             <Input
-              type="text"
-              placeholder="Buscar por asunto, descripción o cliente..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 border-[#ecd8ab]/50 focus:border-[#CC9F53] focus:ring-[#CC9F53]/20"
+              type="date"
+              value={filters.fechaInicio}
+              max={filters.fechaFin || undefined}
+              onChange={(e) => handleSingleFilterChange('fechaInicio', e.target.value)}
+              className="border-[#ecd8ab]/50 focus:border-[#CC9F53] focus:ring-[#CC9F53]/20 text-sm"
+            />
+          </div>          {/* Fecha Hasta */}
+          <div>
+            <label className="block text-xs font-medium text-[#9A8C61] mb-1">
+              Hasta
+            </label>
+            <Input
+              type="date"
+              value={filters.fechaFin}
+              min={filters.fechaInicio || undefined}
+              onChange={(e) => handleSingleFilterChange('fechaFin', e.target.value)}
+              className="border-[#ecd8ab]/50 focus:border-[#CC9F53] focus:ring-[#CC9F53]/20 text-sm"
             />
           </div>
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-4 py-2 border border-[#ecd8ab]/50 rounded-lg focus:border-[#CC9F53] focus:ring-[#CC9F53]/20"
-          >
-            <option value="TODOS">Todos los estados</option>
-            <option value="ABIERTO">Abierto</option>
-            <option value="EN_PROCESO">En Proceso</option>
-            <option value="RESUELTO">Resuelto</option>
-            <option value="RECHAZADO">Rechazado</option>
-          </select>
+
+          {/* Botón Limpiar */}
+          <div className="flex items-end">
+            {activeFiltersCount > 0 && (
+              <Button
+                variant="outline"
+                onClick={clearFilters}
+                className="w-full border-[#CC9F53] text-[#CC9F53] hover:bg-[#CC9F53] hover:text-white text-sm"
+              >
+                <X className="w-4 h-4 mr-1" />
+                Limpiar ({activeFiltersCount})
+              </Button>
+            )}
+          </div>
         </div>
+        
+        {/* Atajos rápidos de fechas */}
+        <div className="mt-4 pt-4 border-t border-[#ecd8ab]/30">
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="text-sm text-[#9A8C61] font-medium">Atajos rápidos:</span>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  const today = new Date().toISOString().split('T')[0];
+                  const newFilters = { ...filters, fechaInicio: today, fechaFin: today };
+                  handleFilterChange(newFilters);
+                }}
+                className="text-sm px-3 py-1.5 bg-[#F5E6C6]/40 text-[#CC9F53] rounded-md hover:bg-[#F5E6C6]/60 transition-colors border border-[#CC9F53]/20"
+              >
+                Hoy
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const today = new Date();
+                  const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+                  const newFilters = { 
+                    ...filters, 
+                    fechaInicio: weekAgo.toISOString().split('T')[0], 
+                    fechaFin: today.toISOString().split('T')[0] 
+                  };
+                  handleFilterChange(newFilters);
+                }}
+                className="text-sm px-3 py-1.5 bg-[#F5E6C6]/40 text-[#CC9F53] rounded-md hover:bg-[#F5E6C6]/60 transition-colors border border-[#CC9F53]/20"
+              >
+                Últimos 7 días
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const today = new Date();
+                  const monthAgo = new Date(today.getFullYear(), today.getMonth() - 1, today.getDate());
+                  const newFilters = { 
+                    ...filters, 
+                    fechaInicio: monthAgo.toISOString().split('T')[0], 
+                    fechaFin: today.toISOString().split('T')[0] 
+                  };
+                  handleFilterChange(newFilters);
+                }}
+                className="text-sm px-3 py-1.5 bg-[#F5E6C6]/40 text-[#CC9F53] rounded-md hover:bg-[#F5E6C6]/60 transition-colors border border-[#CC9F53]/20"
+              >
+                Últimos 30 días
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const today = new Date();
+                  const yearAgo = new Date(today.getFullYear() - 1, today.getMonth(), today.getDate());
+                  const newFilters = { 
+                    ...filters, 
+                    fechaInicio: yearAgo.toISOString().split('T')[0], 
+                    fechaFin: today.toISOString().split('T')[0] 
+                  };
+                  handleFilterChange(newFilters);
+                }}
+                className="text-sm px-3 py-1.5 bg-[#F5E6C6]/40 text-[#CC9F53] rounded-md hover:bg-[#F5E6C6]/60 transition-colors border border-[#CC9F53]/20"
+              >
+                Último año
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Botón Limpiar anterior se elimina */}
       </div>
 
       {/* Claims Table */}
@@ -210,130 +612,130 @@ const ReclamosAdminPage: React.FC = () => {
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#CC9F53] mx-auto mb-4"></div>
             <p className="text-[#9A8C61]">Cargando reclamos...</p>
           </div>
-        ) : filteredClaims.length === 0 ? (
+        ) : reclamos.length === 0 ? (
           <div className="p-12 text-center">
             <div className="w-16 h-16 bg-gradient-to-br from-[#CC9F53] to-[#b08a3c] rounded-xl flex items-center justify-center mx-auto mb-4">
               <MessageSquare className="h-8 w-8 text-white" />
-            </div>
-            <h3 className="text-lg font-bold text-[#3A3A3A] mb-2">
-              {reclamos.length === 0 ? 'No hay reclamos' : 'Sin resultados'}
+            </div>            <h3 className="text-lg font-bold text-[#3A3A3A] mb-2">
+              Sin resultados
             </h3>
             <p className="text-[#9A8C61] mb-6">
-              {reclamos.length === 0 
-                ? 'Aún no hay reclamos en el sistema.'
-                : 'No se encontraron reclamos que coincidan con tu búsqueda.'
-              }
+              No se encontraron reclamos que coincidan con tu búsqueda.
             </p>
-          </div>
-        ) : (
+          </div>        ) : (
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="w-full min-w-full">
               <thead className="bg-gradient-to-r from-[#F5E6C6]/50 to-[#FAF3E7]/30 border-b border-[#ecd8ab]">
                 <tr>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#3A3A3A]">
+                  <th className="px-3 md:px-4 py-3 text-left text-xs md:text-sm font-semibold text-[#3A3A3A] w-[30%]">
                     Reclamo
                   </th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#3A3A3A]">
+                  <th className="px-3 md:px-4 py-3 text-left text-xs md:text-sm font-semibold text-[#3A3A3A] w-[20%]">
                     Cliente
                   </th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#3A3A3A]">
+                  <th className="px-2 md:px-3 py-3 text-left text-xs md:text-sm font-semibold text-[#3A3A3A] w-[12%]">
                     Tipo
                   </th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#3A3A3A]">
+                  <th className="px-2 md:px-3 py-3 text-left text-xs md:text-sm font-semibold text-[#3A3A3A] w-[10%]">
                     Prioridad
                   </th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#3A3A3A]">
+                  <th className="px-2 md:px-3 py-3 text-left text-xs md:text-sm font-semibold text-[#3A3A3A] w-[10%]">
                     Estado
                   </th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#3A3A3A]">
+                  <th className="px-2 md:px-3 py-3 text-left text-xs md:text-sm font-semibold text-[#3A3A3A] w-[10%]">
                     Fecha
                   </th>
-                  <th className="px-6 py-4 text-right text-sm font-semibold text-[#3A3A3A]">
+                  <th className="px-2 md:px-3 py-3 text-right text-xs md:text-sm font-semibold text-[#3A3A3A] w-[8%]">
                     Acciones
                   </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#ecd8ab]/30">
-                {filteredClaims.map((reclamo) => (
+                {reclamos.map((reclamo) => (
                   <tr key={reclamo.id} className="hover:bg-[#F5E6C6]/20 transition-colors duration-200">
-                    <td className="px-6 py-4">
+                    <td className="px-3 md:px-4 py-3">
                       <div className="flex items-start">
-                        <div className="w-10 h-10 bg-[#F5E6C6]/30 rounded-lg flex items-center justify-center mr-3 flex-shrink-0">
-                          <MessageSquare className="w-5 h-5 text-[#CC9F53]" />
+                        <div className="w-8 h-8 md:w-10 md:h-10 bg-[#F5E6C6]/30 rounded-lg flex items-center justify-center mr-2 md:mr-3 flex-shrink-0">
+                          <MessageSquare className="w-4 h-4 md:w-5 md:h-5 text-[#CC9F53]" />
                         </div>
                         <div className="min-w-0 flex-1">
-                          <p className="font-medium text-[#3A3A3A] truncate">{reclamo.asunto}</p>
-                          <p className="text-sm text-[#9A8C61] truncate max-w-xs">
+                          <p className="font-medium text-[#3A3A3A] text-sm md:text-base truncate">{reclamo.asunto}</p>
+                          <p className="text-xs md:text-sm text-[#9A8C61] truncate max-w-[200px] md:max-w-xs">
                             {reclamo.descripcion}
                           </p>
                           {reclamo.pedidoId && (
-                            <p className="text-xs text-[#CC9F53] mt-1">
-                              Pedido #{reclamo.pedido?.numero || reclamo.pedidoId}
-                            </p>
+                            <div className="flex items-center mt-1">
+                              <Package className="w-3 h-3 text-[#CC9F53] mr-1" />
+                              <p className="text-xs text-[#CC9F53]">
+                                #{reclamo.pedido?.numero || reclamo.pedidoId}
+                              </p>
+                            </div>
                           )}
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-3 md:px-4 py-3">
                       <div className="flex items-center">
-                        <User className="w-4 h-4 text-[#CC9F53] mr-2" />
-                        <div>
-                          <p className="font-medium text-[#3A3A3A]">
+                        <User className="w-3 h-3 md:w-4 md:h-4 text-[#CC9F53] mr-1 md:mr-2 flex-shrink-0" />
+                        <div className="min-w-0">
+                          <p className="font-medium text-[#3A3A3A] text-xs md:text-sm truncate">
                             {reclamo.usuario?.nombres} {reclamo.usuario?.apellidos}
                           </p>
-                          <p className="text-sm text-[#9A8C61]">{reclamo.usuario?.email}</p>
+                          <p className="text-xs text-[#9A8C61] truncate">{reclamo.usuario?.email}</p>
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4">
-                      <span className="text-sm text-[#3A3A3A]">
-                        {TipoReclamoLabels[reclamo.tipoReclamo as keyof typeof TipoReclamoLabels]}
+                    <td className="px-2 md:px-3 py-3">
+                      <span className="text-xs md:text-sm text-[#3A3A3A] truncate block">
+                        {TipoReclamoLabels[reclamo.tipoReclamo]}
                       </span>
                     </td>
-                    <td className="px-6 py-4">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${PrioridadReclamoColors[reclamo.prioridad as keyof typeof PrioridadReclamoColors]}`}>
+                    <td className="px-2 md:px-3 py-3">
+                      <span className={`inline-flex items-center px-1.5 md:px-2.5 py-0.5 rounded-full text-xs font-medium ${PrioridadReclamoColors[reclamo.prioridad]}`}>
                         {getPriorityIcon(reclamo.prioridad)}
-                        <span className={getPriorityIcon(reclamo.prioridad) ? "ml-1" : ""}>
-                          {PrioridadReclamoLabels[reclamo.prioridad as keyof typeof PrioridadReclamoLabels]}
+                        <span className={getPriorityIcon(reclamo.prioridad) ? "ml-1 hidden md:inline" : "hidden md:inline"}>
+                          {PrioridadReclamoLabels[reclamo.prioridad]}
                         </span>
                       </span>
                     </td>
-                    <td className="px-6 py-4">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${EstadoReclamoColors[reclamo.estado as keyof typeof EstadoReclamoColors]}`}>
+                    <td className="px-2 md:px-3 py-3">
+                      <span className={`inline-flex items-center px-1.5 md:px-2.5 py-0.5 rounded-full text-xs font-medium ${EstadoReclamoColors[reclamo.estado]}`}>
                         {getStatusIcon(reclamo.estado)}
-                        <span className="ml-1">{EstadoReclamoLabels[reclamo.estado as keyof typeof EstadoReclamoLabels]}</span>
+                        <span className="ml-1 hidden md:inline">{EstadoReclamoLabels[reclamo.estado]}</span>
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-sm text-[#9A8C61]">
-                      {new Date(reclamo.creadoEn).toLocaleDateString('es-PE', {
-                        year: 'numeric',
-                        month: 'short',
-                        day: 'numeric'
-                      })}
+                    <td className="px-2 md:px-3 py-3 text-xs md:text-sm text-[#9A8C61]">
+                      <div className="hidden md:block">
+                        {new Date(reclamo.creadoEn).toLocaleDateString('es-PE', {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric'
+                        })}
+                      </div>
+                      <div className="md:hidden">
+                        {new Date(reclamo.creadoEn).toLocaleDateString('es-PE', {
+                          month: 'short',
+                          day: 'numeric'
+                        })}
+                      </div>
                     </td>
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end space-x-2">
+                    <td className="px-2 md:px-3 py-3 text-right">
+                      <div className="flex items-center justify-end space-x-1">
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => {
-                            // TODO: Implementar ver detalles
-                            showNotification('success', 'Ver detalles próximamente disponible');
-                          }}
-                          className="hover:bg-[#F5E6C6]/30"
+                          onClick={() => handleViewDetails(reclamo)}
+                          className="hover:bg-[#F5E6C6]/30 p-1 md:p-2"
                         >
-                          <Eye className="h-4 w-4" />
+                          <Eye className="h-3 w-3 md:h-4 md:w-4" />
                         </Button>
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => {
-                            // TODO: Implementar responder/gestionar
-                            showNotification('success', 'Responder reclamo próximamente disponible');
-                          }}
-                          className="hover:bg-[#F5E6C6]/30"
+                          onClick={() => handleOpenManageModal(reclamo)}
+                          className="hover:bg-[#F5E6C6]/30 p-1 md:p-2"
                         >
-                          <MessageCircle className="h-4 w-4" />
+                          <Edit className="h-3 w-3 md:h-4 md:w-4" />
                         </Button>
                       </div>
                     </td>
@@ -342,8 +744,74 @@ const ReclamosAdminPage: React.FC = () => {
               </tbody>
             </table>
           </div>
+        )}        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="px-3 md:px-6 py-4 border-t border-[#ecd8ab]/30 bg-[#FAF3E7]/20">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="text-xs md:text-sm text-[#9A8C61]">
+                Mostrando {((currentPage - 1) * itemsPerPage) + 1} - {Math.min(currentPage * itemsPerPage, totalItems)} de {totalItems} reclamos
+              </div>
+              <div className="flex items-center space-x-1 md:space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className="border-[#ecd8ab] text-[#9A8C61] hover:bg-[#F5E6C6]/30 text-xs md:text-sm px-2 md:px-3"
+                >
+                  Anterior
+                </Button>
+                
+                <div className="flex space-x-1">
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    const pageNum = Math.max(1, Math.min(totalPages - 4, currentPage - 2)) + i;
+                    return (
+                      <Button
+                        key={pageNum}
+                        variant={currentPage === pageNum ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => handlePageChange(pageNum)}
+                        className={`text-xs md:text-sm px-2 md:px-3 ${
+                          currentPage === pageNum
+                            ? "bg-[#CC9F53] text-white"
+                            : "border-[#ecd8ab] text-[#9A8C61] hover:bg-[#F5E6C6]/30"
+                        }`}
+                      >
+                        {pageNum}
+                      </Button>
+                    );
+                  })}
+                </div>
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className="border-[#ecd8ab] text-[#9A8C61] hover:bg-[#F5E6C6]/30 text-xs md:text-sm px-2 md:px-3"
+                >
+                  Siguiente
+                </Button>
+              </div>
+            </div>
+          </div>
         )}
       </div>
+
+      {/* Modals */}
+      <EnhancedReclamoDetailModal
+        isOpen={isDetailModalOpen}
+        onClose={handleCloseModals}
+        reclamo={selectedReclamo}
+        onAddComment={handleAddComment}
+      />
+
+      <ReclamoManageModal
+        isOpen={isManageModalOpen}
+        onClose={handleCloseModals}
+        reclamo={selectedReclamo}
+        onUpdate={handleUpdateReclamo}
+      />
     </div>
   );
 };

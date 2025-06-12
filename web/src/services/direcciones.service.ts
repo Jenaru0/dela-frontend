@@ -110,8 +110,7 @@ class DireccionesService {
       console.error('Error al establecer dirección predeterminada:', error);
       throw error;
     }
-  }
-  // Admin: Obtener todas las direcciones de todos los usuarios
+  }  // Admin: Obtener todas las direcciones de todos los usuarios
   async obtenerTodasAdmin(): Promise<ApiResponse<DireccionClienteConUsuario[]>> {
     try {
       const response = await fetch(`${API_BASE_URL}/direcciones/admin/todas`, {
@@ -127,6 +126,44 @@ class DireccionesService {
       return await response.json();
     } catch (error) {
       console.error('Error al obtener direcciones admin:', error);
+      throw error;
+    }
+  }
+
+  // Admin: Obtener direcciones con paginación
+  async obtenerConPaginacion(
+    page: number = 1,
+    limit: number = 10,
+    filters: { search?: string } = {}
+  ): Promise<{
+    data: DireccionClienteConUsuario[];
+    total: number;
+    page: number;
+    totalPages: number;
+  }> {
+    try {
+      const searchParams = new URLSearchParams({
+        page: page.toString(),
+        limit: limit.toString(),
+      });
+
+      if (filters.search) {
+        searchParams.append('search', filters.search);
+      }
+
+      const response = await fetch(`${API_BASE_URL}/direcciones/admin/paginacion?${searchParams}`, {
+        method: 'GET',
+        headers: this.getAuthHeaders(),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Error al obtener direcciones');
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error al obtener direcciones con paginación:', error);
       throw error;
     }
   }

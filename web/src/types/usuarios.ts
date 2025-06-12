@@ -12,6 +12,7 @@ export interface Usuario {
 
 export interface CreateUsuarioDto {
   email: string;
+  contrasena: string;
   nombres?: string;
   apellidos?: string;
   celular?: string;
