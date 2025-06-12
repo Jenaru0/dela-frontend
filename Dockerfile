@@ -50,11 +50,11 @@ COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-# Exponemos el puerto
+# Aseguramos que el puerto esté disponible
 EXPOSE 3000
 
 # Cambiamos al usuario no-root
 USER nextjs
 
-# Comando de inicio
+# Comando de inicio optimizado para standalone
 CMD ["node", "server.js"]

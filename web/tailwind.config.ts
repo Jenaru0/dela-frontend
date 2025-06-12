@@ -1,4 +1,5 @@
 import type { Config } from 'tailwindcss';
+import scrollbar from 'tailwind-scrollbar';
 
 const config: Config = {
   content: [
@@ -8,6 +9,9 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      spacing: {
+        '64': '16rem',
+      },
       colors: {
         primary: {
           50: '#fefcf7',
@@ -70,7 +74,9 @@ const config: Config = {
       },
     },
   },
-  plugins: [],
+  plugins: [
+    scrollbar,
+  ],
 };
 
 export default config;
