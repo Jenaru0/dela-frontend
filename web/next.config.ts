@@ -43,8 +43,7 @@ const nextConfig = {
         hostname: 'img.freepik.com',
         port: '',
         pathname: '/**',
-      },
-      {
+      },      {
         protocol: 'https',
         hostname: 'res.cloudinary.com',
         port: '',
@@ -52,6 +51,8 @@ const nextConfig = {
       },
     ],
   },
+  // Enable standalone output for Docker deployments
+  output: 'standalone',
 };
 
 export default nextConfig;

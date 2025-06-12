@@ -7,15 +7,14 @@
 FROM node:20-alpine AS builder
 WORKDIR /app
 
-# Instalamos libc6-compat para compatibilidad
+# Instalamos dependencias del sistema necesarias
 RUN apk add --no-cache libc6-compat
 
-# Copiamos package.json primero
+# Copiamos archivos de configuración de paquetes
 COPY web/package*.json ./
 
-# Instalamos todas las dependencias (incluyendo devDependencies para el build)
-# Usamos npm ci con cache para builds más rápidos y suprimimos warnings
-RUN npm ci --no-audit --no-fund --silent
+# Instalamos dependencias
+RUN npm install
 
 # Copiamos el resto del código
 COPY web/ ./
@@ -23,12 +22,13 @@ COPY web/ ./
 # Variables de entorno para el build
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
+ENV BUILD_STANDALONE=true
 # ARG permite pasar la variable durante el build, ENV la hace disponible en runtime
 ARG NEXT_PUBLIC_API_URL=https://delabackend.episundc.pe
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 
-# Construimos la aplicación con logging reducido
-RUN npm run build --silent
+# Construimos la aplicación
+RUN npm run build
 
 # ========================================
 # 🚀 Stage 2: Runner (Imagen final)
