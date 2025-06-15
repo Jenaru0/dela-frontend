@@ -6,6 +6,7 @@ import ProductosPageHeader from '@/components/productos/ProductosPageHeader';
 import ProductosSearchBar from '@/components/productos/ProductosSearchBar';
 import ProductosFilters from '@/components/productos/ProductosFilters';
 import CatalogoCard from '@/components/catalogo/CatalogoCard';
+import CatalogoListCard from '@/components/catalogo/CatalogoListCard';
 import { useCatalogo } from '@/hooks/useCatalogo';
 import { useCart } from '@/contexts/CarContext';
 import { useCartDrawer } from '@/contexts/CartDrawerContext';
@@ -221,10 +222,7 @@ export default function CatalogoProductosPage() {
   return (
     <Layout>
       <div className="min-h-screen bg-gradient-to-b from-[#F5EFD7]/20 to-white">
-        <ProductosPageHeader />
-
-        <div className="container mx-auto px-4 md:px-6 py-8">
-          <ProductosSearchBar
+        <ProductosPageHeader />        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">          <ProductosSearchBar
             filters={filters}
             viewMode={viewMode}
             showFilters={showFilters}
@@ -235,86 +233,106 @@ export default function CatalogoProductosPage() {
             onToggleFilters={() => setShowFilters(!showFilters)}
           />
 
-          <div className="flex flex-col lg:flex-row gap-8">
+          <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
             {showFilters && (
-              <ProductosFilters
-                filters={filters}
-                categorias={categorias}
-                activeFiltersCount={activeFiltersCount}
-                onFilterChange={handleFilterChange}
-                onClearFilters={clearFilters}
-              />
-            )}            <div className="flex-1">
+              <div className={`
+                lg:block
+                ${showFilters ? 'block' : 'hidden'}
+              `}>
+                <ProductosFilters
+                  filters={filters}
+                  categorias={categorias}
+                  activeFiltersCount={activeFiltersCount}
+                  onFilterChange={handleFilterChange}
+                  onClearFilters={clearFilters}
+                />
+              </div>
+            )}
+            <div className="flex-1 min-w-0">
               {loading && (
-                <div className="text-center py-20">
-                  <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-[#CC9F53] mx-auto mb-4"></div>
-                  <h2 className="text-2xl font-bold text-[#3A3A3A] mb-2">
+                <div className="text-center py-16 sm:py-20">
+                  <div className="animate-spin rounded-full h-12 w-12 sm:h-16 sm:w-16 border-b-2 border-[#CC9F53] mx-auto mb-4"></div>
+                  <h2 className="text-xl sm:text-2xl font-bold text-[#3A3A3A] mb-2">
                     Cargando productos...
                   </h2>
-                  <p className="text-gray-600">
+                  <p className="text-gray-600 text-sm sm:text-base">
                     Por favor espera mientras cargamos el catálogo
                   </p>
                 </div>
               )}
 
               {error && (
-                <div className="py-20 text-center text-red-500 text-lg font-bold">
+                <div className="py-16 sm:py-20 text-center text-red-500 text-base sm:text-lg font-bold">
                   Error: {error}
                 </div>
               )}
 
               {!loading && !error && (
-                <>
-                  <div
-                    className={`grid ${
+                <>                  <div
+                    className={`${
                       viewMode === 'grid'
-                        ? 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8'
-                        : 'grid-cols-1 gap-4'
+                        ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4 2xl:grid-cols-4 gap-6'
+                        : 'flex flex-col gap-4'
                     }`}
                   >
                     {productosFiltrados.length === 0 && (
-                      <div className="col-span-full text-center text-gray-500 py-16">
-                        No hay productos.
+                      <div className="col-span-full text-center text-gray-500 py-12 sm:py-16">
+                        <p className="text-sm sm:text-base">No hay productos.</p>
                       </div>
-                    )}
-                    {productosPagina.map((producto) => (
-                      <CatalogoCard
-                        key={producto.id}
-                        product={producto}
-                        showFavorite={true}
-                        showStar={producto.destacado}
-                        onAddToCart={handleAddToCart}
-                        onQuickView={handleQuickView}
-                      />
+                    )}                    {productosPagina.map((producto) => (
+                      viewMode === 'grid' ? (
+                        <CatalogoCard
+                          key={producto.id}
+                          product={producto}
+                          showFavorite={true}
+                          showStar={producto.destacado}
+                          onAddToCart={handleAddToCart}
+                          onQuickView={handleQuickView}
+                        />
+                      ) : (
+                        <CatalogoListCard
+                          key={producto.id}
+                          product={producto}
+                          showFavorite={true}
+                          showStar={producto.destacado}
+                          onAddToCart={handleAddToCart}
+                          onQuickView={handleQuickView}
+                        />
+                      )
                     ))}
                   </div>
+                  
                   {/* Paginación */}
                   {totalPages > 1 && (
-                    <div className="flex justify-center items-center gap-2 mt-10">
+                    <div className="flex justify-center items-center gap-1 sm:gap-2 mt-8 sm:mt-10 px-4">
                       <button
-                        className="rounded-full px-3 py-2 bg-white border border-[#CC9F53] text-[#CC9F53] font-bold shadow-sm hover:bg-[#FFF9EC] transition disabled:opacity-40 disabled:cursor-not-allowed"
+                        className="rounded-full px-2 sm:px-3 py-1 sm:py-2 bg-white border border-[#CC9F53] text-[#CC9F53] font-bold shadow-sm hover:bg-[#FFF9EC] transition disabled:opacity-40 disabled:cursor-not-allowed text-sm sm:text-base"
                         onClick={() => setPage((p) => Math.max(1, p - 1))}
                         disabled={page === 1}
                         aria-label="Página anterior"
                       >
                         <span className="inline-block align-middle">←</span>
                       </button>
-                      {Array.from({ length: totalPages }, (_, i) => (
-                        <button
-                          key={i}
-                          className={`rounded-full w-9 h-9 font-bold border-2 mx-1 transition-all duration-150
-          ${page === i + 1
-            ? 'bg-[#CC9F53] text-white border-[#CC9F53] shadow'
-            : 'bg-white text-[#CC9F53] border-[#CC9F53] hover:bg-[#FFF9EC]'}
-        `}
-                          onClick={() => setPage(i + 1)}
-                          aria-current={page === i + 1 ? 'page' : undefined}
-                        >
-                          {i + 1}
-                        </button>
-                      ))}
+                      
+                      <div className="flex gap-1 overflow-x-auto max-w-xs sm:max-w-none">
+                        {Array.from({ length: totalPages }, (_, i) => (
+                          <button
+                            key={i}
+                            className={`rounded-full w-7 h-7 sm:w-9 sm:h-9 font-bold border-2 transition-all duration-150 text-sm sm:text-base flex-shrink-0
+                              ${page === i + 1
+                                ? 'bg-[#CC9F53] text-white border-[#CC9F53] shadow'
+                                : 'bg-white text-[#CC9F53] border-[#CC9F53] hover:bg-[#FFF9EC]'}
+                            `}
+                            onClick={() => setPage(i + 1)}
+                            aria-current={page === i + 1 ? 'page' : undefined}
+                          >
+                            {i + 1}
+                          </button>
+                        ))}
+                      </div>
+                      
                       <button
-                        className="rounded-full px-3 py-2 bg-white border border-[#CC9F53] text-[#CC9F53] font-bold shadow-sm hover:bg-[#FFF9EC] transition disabled:opacity-40 disabled:cursor-not-allowed"
+                        className="rounded-full px-2 sm:px-3 py-1 sm:py-2 bg-white border border-[#CC9F53] text-[#CC9F53] font-bold shadow-sm hover:bg-[#FFF9EC] transition disabled:opacity-40 disabled:cursor-not-allowed text-sm sm:text-base"
                         onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                         disabled={page === totalPages}
                         aria-label="Página siguiente"

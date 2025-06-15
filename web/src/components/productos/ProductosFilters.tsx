@@ -18,21 +18,22 @@ const ProductosFilters: React.FC<ProductosFiltersProps> = ({
   activeFiltersCount,
   onFilterChange,
   onClearFilters,
-}) => {
-  return (
-    <div className="lg:w-80">
-      <div className="bg-white rounded-lg border p-6 sticky top-4">
+}) => {  return (
+    <div className="w-full lg:w-80">
+      <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6 sticky top-4">
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-lg font-semibold text-neutral-900">Filtros</h3>
+          <h3 className="text-lg font-semibold text-gray-900">
+            Filtros
+          </h3>
           {activeFiltersCount > 0 && (
             <Button
               variant="ghost"
               size="sm"
               onClick={onClearFilters}
-              className="text-amber-600 hover:text-amber-700 hover:bg-amber-50"
+              className="text-gray-600 hover:text-gray-800 hover:bg-gray-100 text-sm font-medium"
             >
               <X className="h-4 w-4 mr-1" />
-              Limpiar
+              Limpiar ({activeFiltersCount})
             </Button>
           )}
         </div>
@@ -40,32 +41,36 @@ const ProductosFilters: React.FC<ProductosFiltersProps> = ({
         <div className="space-y-6">
           {/* Categorías */}
           <div>
-            <label className="block text-sm font-medium text-neutral-700 mb-3">
-              Categoría
-            </label>
+            <h4 className="text-sm font-medium text-gray-900 mb-3">
+              Categorías
+            </h4>
             <div className="space-y-2">
-              <label className="flex items-center">
+              <label className="flex items-center p-2 hover:bg-gray-50 rounded-lg cursor-pointer transition-colors">
                 <input
                   type="radio"
                   name="category"
                   value=""
                   checked={filters.category === ''}
                   onChange={(e) => onFilterChange('category', e.target.value)}
-                  className="mr-2"
+                  className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 focus:ring-2"
                 />
-                Todas las categorías
+                <span className="ml-3 text-sm text-gray-700">
+                  Todas las categorías
+                </span>
               </label>
               {categorias.map((categoria) => (
-                <label key={categoria.id} className="flex items-center">
+                <label key={categoria.id} className="flex items-center p-2 hover:bg-gray-50 rounded-lg cursor-pointer transition-colors">
                   <input
                     type="radio"
                     name="category"
                     value={categoria.nombre}
                     checked={filters.category === categoria.nombre}
                     onChange={(e) => onFilterChange('category', e.target.value)}
-                    className="mr-2"
+                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 focus:ring-2"
                   />
-                  {categoria.nombre}
+                  <span className="ml-3 text-sm text-gray-700">
+                    {categoria.nombre}
+                  </span>
                 </label>
               ))}
             </div>
@@ -73,47 +78,62 @@ const ProductosFilters: React.FC<ProductosFiltersProps> = ({
 
           {/* Rango de Precios */}
           <div>
-            <label className="block text-sm font-medium text-neutral-700 mb-3">
+            <h4 className="text-sm font-medium text-gray-900 mb-3">
               Rango de Precios
-            </label>
-            <div className="flex gap-2">
-              <Input
-                type="number"
-                placeholder="Min"
-                value={filters.priceMin}
-                onChange={(e) => onFilterChange('priceMin', e.target.value)}
-                className="w-full"
-              />
-              <Input
-                type="number"
-                placeholder="Max"
-                value={filters.priceMax}
-                onChange={(e) => onFilterChange('priceMax', e.target.value)}
-                className="w-full"
-              />
+            </h4>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm">S/</span>
+                <Input
+                  type="number"
+                  placeholder="Mín"
+                  value={filters.priceMin}
+                  onChange={(e) => onFilterChange('priceMin', e.target.value)}
+                  className="pl-8 h-10 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                />
+              </div>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm">S/</span>
+                <Input
+                  type="number"
+                  placeholder="Máx"
+                  value={filters.priceMax}
+                  onChange={(e) => onFilterChange('priceMax', e.target.value)}
+                  className="pl-8 h-10 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                />
+              </div>
             </div>
           </div>
 
-          {/* Checkboxes */}
-          <div className="space-y-3">
-            <label className="flex items-center">
-              <input
-                type="checkbox"
-                checked={filters.destacado}
-                onChange={(e) => onFilterChange('destacado', e.target.checked)}
-                className="mr-2"
-              />
-              Solo productos destacados
-            </label>
-            <label className="flex items-center">
-              <input
-                type="checkbox"
-                checked={filters.disponible}
-                onChange={(e) => onFilterChange('disponible', e.target.checked)}
-                className="mr-2"
-              />
-              Solo productos disponibles
-            </label>
+          {/* Opciones adicionales */}
+          <div>
+            <h4 className="text-sm font-medium text-gray-900 mb-3">
+              Opciones adicionales
+            </h4>
+            <div className="space-y-3">
+              <label className="flex items-center p-2 hover:bg-gray-50 rounded-lg cursor-pointer transition-colors">
+                <input
+                  type="checkbox"
+                  checked={filters.destacado}
+                  onChange={(e) => onFilterChange('destacado', e.target.checked)}
+                  className="w-4 h-4 text-yellow-600 bg-gray-100 border-gray-300 rounded focus:ring-yellow-500 focus:ring-2"
+                />
+                <span className="ml-3 text-sm text-gray-700">
+                  Solo productos destacados
+                </span>
+              </label>
+              <label className="flex items-center p-2 hover:bg-gray-50 rounded-lg cursor-pointer transition-colors">
+                <input
+                  type="checkbox"
+                  checked={filters.disponible}
+                  onChange={(e) => onFilterChange('disponible', e.target.checked)}
+                  className="w-4 h-4 text-green-600 bg-gray-100 border-gray-300 rounded focus:ring-green-500 focus:ring-2"
+                />
+                <span className="ml-3 text-sm text-gray-700">
+                  Solo productos disponibles
+                </span>
+              </label>
+            </div>
           </div>
         </div>
       </div>

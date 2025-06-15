@@ -126,20 +126,21 @@ export default function ProductDetailPage() {
       setIsAddingToCart(false);
     }
   };
-
   return (
     <Layout>
-      <section className="max-w-5xl mx-auto px-4 sm:px-8 py-10">
-        <div className="bg-white rounded-3xl shadow-2xl border border-[#ECD8AB]/30 p-6 md:p-10 flex flex-col md:flex-row gap-10 md:gap-16 items-center md:items-start relative overflow-hidden">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
+        <div className="bg-white rounded-2xl sm:rounded-3xl shadow-2xl border border-[#ECD8AB]/30 p-4 sm:p-6 md:p-8 lg:p-10 flex flex-col lg:flex-row gap-6 sm:gap-8 md:gap-10 lg:gap-16 items-center lg:items-start relative overflow-hidden">
           {/* Decoración de fondo */}
-          <div className="absolute -top-10 -left-10 w-40 h-40 bg-[#F5EFD7]/60 rounded-full blur-2xl z-0" />
-          <div className="absolute -bottom-10 -right-10 w-52 h-52 bg-[#CC9F53]/10 rounded-full blur-2xl z-0" />
+          <div className="absolute -top-10 -left-10 w-32 h-32 sm:w-40 sm:h-40 bg-[#F5EFD7]/60 rounded-full blur-2xl z-0" />
+          <div className="absolute -bottom-10 -right-10 w-40 h-40 sm:w-52 sm:h-52 bg-[#CC9F53]/10 rounded-full blur-2xl z-0" />
+          
           {/* Galería de imágenes */}
-          <div className="relative z-10 w-full max-w-xs flex flex-col gap-3">
+          <div className="relative z-10 w-full max-w-sm lg:max-w-md xl:max-w-lg flex flex-col gap-3">
             <ProductoGallery imagenes={product.imagenes} nombre={product.nombre} />
           </div>
+          
           {/* Info producto */}
-          <div className="relative z-10 flex-1 flex flex-col gap-6 items-end w-full">
+          <div className="relative z-10 flex-1 flex flex-col gap-4 sm:gap-6 items-center lg:items-end w-full">
             <ProductoInfo
               producto={product}
               precioUnitario={precioUnitario}
@@ -147,41 +148,46 @@ export default function ProductDetailPage() {
               hasDiscount={hasDiscount}
               discount={discount}
             />
-            {/* Acciones alineadas a la derecha */}
-            <div className="mt-4 flex flex-row gap-3 max-w-xs w-full justify-end">
+            
+            {/* Acciones */}
+            <div className="mt-4 flex flex-col sm:flex-row gap-3 w-full sm:max-w-md lg:max-w-xs xl:max-w-sm justify-center lg:justify-end">
               <Button
                 onClick={handleAddToCart}
                 disabled={isAddingToCart}
-                className="flex-1 bg-gradient-to-r from-[#C59D5F] via-[#CC9F53] to-[#FFD795] hover:from-[#B88D42] hover:to-[#C59D5F] text-white font-extrabold py-3 rounded-xl text-lg shadow-lg flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed min-w-0"
+                className="flex-1 bg-gradient-to-r from-[#C59D5F] via-[#CC9F53] to-[#FFD795] hover:from-[#B88D42] hover:to-[#C59D5F] text-white font-extrabold py-2.5 sm:py-3 rounded-xl text-sm sm:text-lg shadow-lg flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed min-w-0"
               >
                 {isAddingToCart ? (
                   <>
-                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    Añadiendo...
+                    <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <span className="hidden sm:inline">Añadiendo...</span>
+                    <span className="sm:hidden">Añadiendo...</span>
                   </>
                 ) : (
                   <>
-                    Añadir al carrito
+                    <span className="hidden sm:inline">Añadir al carrito</span>
+                    <span className="sm:hidden">Añadir</span>
                     {added && (
-                      <CheckCircle className="ml-2 w-5 h-5 text-white animate-bounce" />
+                      <CheckCircle className="ml-2 w-4 h-4 sm:w-5 sm:h-5 text-white animate-bounce" />
                     )}
                   </>
                 )}
               </Button>
               <Button
                 variant="outline"
-                className="flex-1 text-[#C59D5F] border-[#CC9F53] hover:bg-[#FFFBE8] font-semibold min-w-0"
+                className="flex-1 text-[#C59D5F] border-[#CC9F53] hover:bg-[#FFFBE8] font-semibold text-sm sm:text-base py-2.5 sm:py-3 min-w-0"
                 onClick={() => router.push('/productos')}
               >
-                Seguir comprando
+                <span className="hidden sm:inline">Seguir comprando</span>
+                <span className="sm:hidden">Continuar</span>
               </Button>
             </div>
           </div>
         </div>
       </section>
+      
       {/* Productos relacionados */}
       {product.categoria?.id && (
-        <div className="max-w-5xl mx-auto px-4 sm:px-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-6 sm:pb-10">
           <ProductosRelacionados categoriaId={product.categoria.id} productoId={product.id} />
         </div>
       )}
