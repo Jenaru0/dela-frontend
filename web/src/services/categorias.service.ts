@@ -5,6 +5,7 @@ export interface Categoria {
   nombre: string;
   descripcion?: string;
   slug: string;
+  imagenUrl?: string;
   activo: boolean;
   creadoEn: string;
   _count?: {

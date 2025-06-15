@@ -110,25 +110,30 @@ class ProductosService {
       console.error('Error al obtener productos:', error);
       throw error;
     }
-  }
-
-  // Obtener productos públicos (para frontend)
+  }  // Obtener productos públicos (para frontend)
   async obtenerPublicos(
     filters?: FilterState,
     page: number = 1,
     limit: number = 12
   ): Promise<ProductsResponse> {
     try {
-      const params = new URLSearchParams({
-        page: page.toString(),
-        limit: limit.toString(),
-        ...(filters?.search && { busqueda: filters.search }),
-        ...(filters?.category && { categoriaId: filters.category }),
-        ...(filters?.priceMin && { precioMin: filters.priceMin.toString() }),
-        ...(filters?.priceMax && { precioMax: filters.priceMax.toString() }),
-      });
+      // Solo enviar parámetros que acepta el catálogo
+      const params = new URLSearchParams();
+      
+      if (filters?.search) {
+        params.append('busqueda', filters.search);
+      }
+      if (filters?.category) {
+        params.append('categoriaId', filters.category);
+      }
+      // No enviamos page, limit, precioMin, precioMax ya que el catálogo no los maneja
 
-      const response = await fetch(`${API_BASE_URL}/productos?${params}`, {
+      const queryString = params.toString();
+      const url = queryString 
+        ? `${API_BASE_URL}/catalogo/productos?${queryString}`
+        : `${API_BASE_URL}/catalogo/productos`;
+
+      const response = await fetch(url, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -140,7 +145,30 @@ class ProductosService {
         throw new Error(errorData.message || 'Error al obtener productos');
       }
 
-      return await response.json();
+      const data = await response.json();
+      
+      // Adaptar la respuesta del catálogo al formato esperado
+      if (Array.isArray(data)) {
+        // Si es un array directo (del catálogo), crear estructura de paginación
+        const startIndex = (page - 1) * limit;
+        const endIndex = startIndex + limit;
+        const paginatedData = data.slice(startIndex, endIndex);
+        
+        return {
+          data: paginatedData,
+          meta: {
+            total: data.length,
+            page,
+            limit,
+            totalPages: Math.ceil(data.length / limit),
+            hasNextPage: endIndex < data.length,
+            hasPrevPage: page > 1,
+          }
+        };
+      } else {
+        // Si ya tiene el formato correcto con meta
+        return data;
+      }
     } catch (error) {
       console.error('Error al obtener productos:', error);
       throw error;
