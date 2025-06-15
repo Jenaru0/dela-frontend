@@ -95,11 +95,11 @@ const Footer: React.FC = () => {
             {/* Company Info */}
             <div className="lg:col-span-1">
               <Link href="/" className="flex items-center space-x-3 mb-6">
-                <div className="relative h-12 w-12">
-                  <Image
+                <div className="relative h-12 w-12">                  <Image
                     src="/images/logo-white.svg"
                     alt="DELA Logo"
                     fill
+                    sizes="120px"
                     className="object-contain"
                     onError={(e) => {
                       e.currentTarget.src = '/images/logo-fallback-white.png';
@@ -243,33 +243,29 @@ const Footer: React.FC = () => {
 
             {/* Payment Methods */}
             <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-400">Métodos de pago:</span>
-              <div className="flex space-x-2">
-                <div className="bg-white rounded p-1">
-                  <Image
-                    src="/images/visa.svg"
-                    alt="Visa"
-                    width={32}
-                    height={20}
-                    className="object-contain"
+              <span className="text-sm text-gray-400">Métodos de pago:</span>              <div className="flex space-x-2">
+                <div className="bg-white rounded p-1 w-10 h-7 flex items-center justify-center">
+                  <div 
+                    className="w-8 h-5 bg-contain bg-center bg-no-repeat"
+                    style={{ backgroundImage: "url('/images/visa.svg')" }}
+                    aria-label="Visa"
+                    title="Visa"
                   />
                 </div>
-                <div className="bg-white rounded p-1">
-                  <Image
-                    src="/images/mastercard.svg"
-                    alt="Mastercard"
-                    width={32}
-                    height={20}
-                    className="object-contain"
+                <div className="bg-white rounded p-1 w-10 h-7 flex items-center justify-center">
+                  <div 
+                    className="w-8 h-5 bg-contain bg-center bg-no-repeat"
+                    style={{ backgroundImage: "url('/images/mastercard.svg')" }}
+                    aria-label="Mastercard"
+                    title="Mastercard"
                   />
                 </div>
-                <div className="bg-white rounded p-1">
-                  <Image
-                    src="/images/paypal.svg"
-                    alt="PayPal"
-                    width={32}
-                    height={20}
-                    className="object-contain"
+                <div className="bg-white rounded p-1 w-10 h-7 flex items-center justify-center">
+                  <div 
+                    className="w-8 h-5 bg-contain bg-center bg-no-repeat"
+                    style={{ backgroundImage: "url('/images/paypal.svg')" }}
+                    aria-label="PayPal"
+                    title="PayPal"
                   />
                 </div>
               </div>

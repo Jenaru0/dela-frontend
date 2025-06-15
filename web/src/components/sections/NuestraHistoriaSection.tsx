@@ -33,11 +33,11 @@ export default function NuestraHistoriaSection() {
           {/* LOGO DE DELEITES DEL VALLE: GRANDE, centrado, con hover y sin productos flotantes */}
           <div className="flex items-center justify-center lg:justify-end w-full">
             <div className="relative h-[420px] w-[420px] md:h-[540px] md:w-[540px] lg:h-[650px] lg:w-[650px] group">
-              <div className="absolute inset-0 rounded-full bg-gradient-to-br from-[#CC9F53]/20 to-[#F5EFD7]/20 animate-pulse" />
-              <Image
+              <div className="absolute inset-0 rounded-full bg-gradient-to-br from-[#CC9F53]/20 to-[#F5EFD7]/20 animate-pulse" />              <Image
                 src="/images/logo-recurso-1.svg"
                 alt="Deleites del Valle — Fundado 2000"
                 fill
+                sizes="(max-width: 768px) 420px, (max-width: 1024px) 540px, 650px"
                 className="object-contain drop-shadow-2xl transition-transform duration-700 group-hover:scale-110"
                 priority
               />

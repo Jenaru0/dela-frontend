@@ -46,12 +46,11 @@ const CategoryCard: React.FC<CategoryCardProps> = ({
           <div className="absolute inset-0 bg-gradient-to-br from-[#F5EFD7]/20 via-transparent to-[#CC9F53]/10" />
 
           {/* Subtle pattern overlay */}
-          <div className="absolute inset-0 opacity-[0.03] bg-[url('/images/pattern-bg.svg')] bg-cover bg-center" />
-
-          <Image
+          <div className="absolute inset-0 opacity-[0.03] bg-[url('/images/pattern-bg.svg')] bg-cover bg-center" />          <Image
             src={categoryImage}
             alt={categoryName}
             fill
+            sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
             className="object-cover transition-all duration-500 group-hover:scale-110 group-hover:rotate-1"
             onError={(e) => {
               e.currentTarget.src = '/images/category-fallback.png';

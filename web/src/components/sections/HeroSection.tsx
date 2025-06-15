@@ -96,11 +96,11 @@ const HeroSection: React.FC = () => {
             <div className="relative">
               {/* Main product image */}
               <div className="relative h-[400px] w-[400px] md:h-[500px] md:w-[500px] lg:h-[600px] lg:w-[600px]">
-                <div className="absolute inset-0 rounded-full bg-gradient-to-br from-[#CC9F53]/20 to-[#F5EFD7]/20 animate-pulse" />
-                <Image
+                <div className="absolute inset-0 rounded-full bg-gradient-to-br from-[#CC9F53]/20 to-[#F5EFD7]/20 animate-pulse" />                <Image
                   src="https://dela.com.pe/img/logoRecurso%201.svg"
                   alt="Productos artesanales DELA"
                   fill
+                  sizes="(max-width: 768px) 400px, (max-width: 1024px) 500px, 600px"
                   className="object-contain drop-shadow-2xl transition-transform duration-700 hover:scale-105"
                   priority
                   onError={(e) => {

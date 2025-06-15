@@ -114,12 +114,11 @@ const CatalogoCard: React.FC<CatalogoCardProps> = ({
               }`}
             />
           </Button>
-        )}
-
-        <Image
+        )}        <Image
           src={product.image || '/images/product-placeholder.png'}
           alt={product.name || 'Producto'}
           fill
+          sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
           className="object-contain p-8 transition-all duration-500 group-hover:scale-110 group-hover:rotate-1"
           style={{ zIndex: 1 }}
         />

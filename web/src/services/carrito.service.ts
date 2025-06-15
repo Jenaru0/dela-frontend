@@ -63,15 +63,12 @@ export interface UpdateCartItemRequest {
 }
 
 class CarritoService {  private getAuthHeaders() {
-    const token = localStorage.getItem('token');
-    console.log('Getting auth headers, token:', token ? 'present' : 'missing');
-    
+    const token = localStorage.getItem('token');    
     return {
       'Content-Type': 'application/json',
       'Authorization': token ? `Bearer ${token}` : '',
     };
   }
-
   async getCart(): Promise<Cart> {
     const response = await fetch(`${API_BASE_URL}/carrito`, {
       method: 'GET',
@@ -79,7 +76,10 @@ class CarritoService {  private getAuthHeaders() {
     });
 
     if (!response.ok) {
-      throw new Error('Error al obtener el carrito');
+      if (response.status === 401) {
+        throw new Error('401: Unauthorized - Token may be invalid or expired');
+      }
+      throw new Error(`Error al obtener el carrito: ${response.status} ${response.statusText}`);
     }
 
     return response.json();

@@ -7,7 +7,12 @@ export async function getFavoritos(token: string): Promise<Favorito[]> {
     headers: { Authorization: `Bearer ${token}` },
     cache: 'no-store',
   });
-  if (!res.ok) throw new Error('Error al cargar favoritos');
+  if (!res.ok) {
+    if (res.status === 401) {
+      throw new Error('401: Unauthorized - Token may be invalid or expired');
+    }
+    throw new Error(`Error al cargar favoritos: ${res.status} ${res.statusText}`);
+  }
   return res.json();
 }
 

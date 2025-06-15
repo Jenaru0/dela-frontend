@@ -91,12 +91,11 @@ const ProductCard: React.FC<ProductCardProps> = ({
       className={`group relative overflow-hidden transition-all duration-500 hover:scale-[1.03] hover:shadow-xl hover:shadow-[#CC9F53]/10 border-[#E6D5A8]/30 hover:border-[#CC9F53]/40 bg-white ${className}`}
     >
       <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-[#F5EFD7]/80 via-white to-[#F5EFD7]/40">
-        <div className="absolute inset-0 opacity-5 bg-[url('/images/pattern-bg.svg')] bg-cover bg-center" />
-
-        <Image
+        <div className="absolute inset-0 opacity-5 bg-[url('/images/pattern-bg.svg')] bg-cover bg-center" />        <Image
           src={product.image}
           alt={product.name}
           fill
+          sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
           className="object-contain p-6 transition-all duration-500 group-hover:scale-110 group-hover:rotate-1"
         />
 

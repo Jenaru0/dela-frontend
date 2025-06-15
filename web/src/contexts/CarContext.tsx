@@ -66,11 +66,17 @@ export function CartProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  };
-  // Load cart on auth change
+  };  // Load cart on auth change
   useEffect(() => {
     const loadCart = async () => {
       if (!isAuthenticated || !usuario) {
+        setCart([]);
+        return;
+      }
+
+      // Double check token exists
+      const token = localStorage.getItem('token');
+      if (!token) {
         setCart([]);
         return;
       }
@@ -82,7 +88,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
         setCart(localCart);
       } catch (error) {
         console.error('Error loading cart:', error);
-        // Keep local cart on error
+        // If it's an auth error, don't retry and clear the cart
+        if (error instanceof Error && error.message.includes('401')) {
+          setCart([]);
+        }
+        // Keep local cart on other errors
       } finally {
         setIsLoading(false);
       }

@@ -32,7 +32,6 @@ export const FavoritoProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     setIsHydrated(true);
   }, []);
-
   const fetchFavoritos = async () => {
     if (!isAuthenticated || !token || !isHydrated) {
       setFavorites([]);
@@ -42,8 +41,12 @@ export const FavoritoProvider = ({ children }: { children: ReactNode }) => {
     try {
       const favs = await getFavoritos(token);
       setFavorites(favs);
-    } catch {
-      setFavorites([]);
+    } catch (error) {
+      console.error('Error fetching favorites:', error);
+      // If it's an auth error, clear favorites
+      if (error instanceof Error && error.message.includes('401')) {
+        setFavorites([]);
+      }
     }
     setIsLoading(false);
   };

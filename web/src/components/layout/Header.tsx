@@ -160,11 +160,11 @@ const Header: React.FC = () => {
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-16 md:h-20">            {/* Logo */}
             <Link href="/" className="flex items-center space-x-3">
-              <div className="relative h-10 w-10 md:h-12 md:w-12">
-                <Image
+              <div className="relative h-10 w-10 md:h-12 md:w-12">                <Image
                   src="https://dela.com.pe/img/lodo-dela-header.png"
                   alt="DELA Logo"
                   fill
+                  sizes="(max-width: 768px) 40px, 48px"
                   className="object-contain"
                   onError={(e) => {
                     (e.target as HTMLImageElement).src =
