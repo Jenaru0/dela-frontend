@@ -3,7 +3,6 @@
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Button } from '@/components/ui/Button';
 import {
   Facebook,
   Instagram,
@@ -13,7 +12,6 @@ import {
   Phone,
   MapPin,
   Clock,
-  ArrowRight,
 } from 'lucide-react';
 
 const Footer: React.FC = () => {
@@ -31,14 +29,13 @@ const Footer: React.FC = () => {
     { icon: Twitter, href: 'https://twitter.com/dela.peru', label: 'TikTok' },
     { icon: Youtube, href: 'https://threads.net/@dela.peru', label: 'Threads' },
   ];
-
   const productCategories = [
-    'Leche DELA',
-    'Yogurt DELA',
-    'Quesos DELA',
-    'Helados DELA',
-    'Productos Lácteos',
-    'Productos Frescos',
+    { name: 'Leche DELA', search: 'leche' },
+    { name: 'Yogurt DELA', search: 'yogurt' },
+    { name: 'Quesos DELA', search: 'queso' },
+    { name: 'Helados DELA', search: 'helado' },
+    { name: 'Productos Lácteos', search: 'lacteo' },
+    { name: 'Productos Frescos', search: 'fresco' },
   ];
 
   const quickLinks = [
@@ -56,38 +53,8 @@ const Footer: React.FC = () => {
     { name: 'Política de Cookies', href: '/cookies' },
     { name: 'Devoluciones', href: '/devoluciones' },
   ];
-
   return (
     <footer className="bg-[#3A3A3A] text-white">
-      {/* Newsletter Section */}
-      <div className="bg-[#CC9F53] py-12">
-        <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto text-center">
-            <h3 className="text-2xl md:text-3xl font-bold text-white mb-4">
-              ¡Mantente al día con nuestras novedades!
-            </h3>
-            <p className="text-white/90 mb-6 text-lg">
-              Recibe ofertas especiales, nuevos productos y recetas exclusivas
-              directamente en tu email.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
-              <input
-                type="email"
-                placeholder="Tu email aquí..."
-                className="flex-1 px-4 py-3 rounded-lg border-0 focus:outline-none focus:ring-2 focus:ring-white/50 text-gray-900"
-              />
-              <Button
-                variant="secondary"
-                className="bg-white text-[#CC9F53] hover:bg-gray-100 px-6 py-3 rounded-lg font-semibold"
-              >
-                Suscribirse
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* Main Footer */}
       <div className="py-16">
         <div className="container mx-auto px-4">
@@ -151,32 +118,23 @@ const Footer: React.FC = () => {
                   </span>
                 </div>
               </div>
-            </div>
-
-            {/* Product Categories */}
-            <div>
-              <h3 className="text-lg font-semibold mb-6 text-white">
+            </div>            {/* Product Categories */}
+            <div>              <h3 className="text-lg font-semibold mb-6 !text-white">
                 Nuestros Productos
-              </h3>
-              <ul className="space-y-3">
+              </h3>              <ul className="space-y-3">
                 {productCategories.map((category) => (
-                  <li key={category}>
+                  <li key={category.name}>
                     <Link
-                      href={`/productos/${category
-                        .toLowerCase()
-                        .replace(/\s+/g, '-')}`}
+                      href={`/productos?search=${encodeURIComponent(category.search)}`}
                       className="text-gray-300 hover:text-[#CC9F53] transition-colors duration-200 text-sm"
                     >
-                      {category}
+                      {category.name}
                     </Link>
                   </li>
                 ))}
               </ul>
-            </div>
-
-            {/* Quick Links */}
-            <div>
-              <h3 className="text-lg font-semibold mb-6 text-white">
+            </div>            {/* Quick Links */}
+            <div>              <h3 className="text-lg font-semibold mb-6 !text-white">
                 Enlaces Rápidos
               </h3>
               <ul className="space-y-3">
@@ -191,11 +149,8 @@ const Footer: React.FC = () => {
                   </li>
                 ))}
               </ul>
-            </div>
-
-            {/* Social & Legal */}
-            <div>
-              <h3 className="text-lg font-semibold mb-6 text-white">
+            </div>            {/* Social & Legal */}
+            <div>              <h3 className="text-lg font-semibold mb-6 !text-white">
                 Síguenos
               </h3>
 
@@ -211,10 +166,8 @@ const Footer: React.FC = () => {
                     <social.icon className="h-5 w-5" />
                   </Link>
                 ))}
-              </div>
-
-              {/* Legal Links */}
-              <h4 className="text-sm font-semibold mb-4 text-white">Legal</h4>
+              </div>              {/* Legal Links */}
+              <h4 className="text-sm font-semibold mb-4 !text-white">Legal</h4>
               <ul className="space-y-2">
                 {legalLinks.map((link) => (
                   <li key={link.name}>
@@ -237,7 +190,7 @@ const Footer: React.FC = () => {
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
             <div className="text-sm text-gray-400">
-              © 2024 DELA Corp SAC. Todos los derechos reservados. RUC:
+              © 2025 DELA Corp SAC. Todos los derechos reservados. RUC:
               20000000001
             </div>
 

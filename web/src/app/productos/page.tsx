@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import Layout from '@/components/layout/Layout';
 import ProductosPageHeader from '@/components/productos/ProductosPageHeader';
 import ProductosSearchBar from '@/components/productos/ProductosSearchBar';
@@ -10,7 +10,7 @@ import CatalogoListCard from '@/components/catalogo/CatalogoListCard';
 import { useCatalogo } from '@/hooks/useCatalogo';
 import { useCart } from '@/contexts/CarContext';
 import { useCartDrawer } from '@/contexts/CartDrawerContext';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Product } from '@/lib/products';
 
 import type { FilterState } from '@/types/productos';
@@ -47,10 +47,24 @@ export default function CatalogoProductosPage() {
   const { addToCart } = useCart();
   const { openDrawer } = useCartDrawer();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState<FilterState>(initialFilters);
   const [page, setPage] = useState(1);
+  // Leer parámetros de URL al cargar la página
+  useEffect(() => {
+    const searchParam = searchParams.get('search');
+    const categoriaParam = searchParams.get('categoria');
+    
+    if (searchParam || categoriaParam) {
+      setFilters(prev => ({
+        ...prev,
+        search: searchParam || '',
+        category: categoriaParam || ''
+      }));
+    }
+  }, [searchParams]);
 
   // Extraer categorías únicas
   const categorias = useMemo(() => {

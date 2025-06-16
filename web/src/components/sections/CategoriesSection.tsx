@@ -114,8 +114,7 @@ const CategoriesSection: React.FC<CategoriesSectionProps> = ({
                 <div className="bg-gray-200 h-3 rounded w-3/4"></div>
               </div>
             ))
-          ) : (
-            displayCategories.map((category, index) => (
+          ) : (            displayCategories.map((category, index) => (
               <CategoryCard
                 key={category.id}
                 category={{
@@ -123,7 +122,7 @@ const CategoriesSection: React.FC<CategoriesSectionProps> = ({
                   name: 'nombre' in category ? category.nombre : category.name,
                   image: category.image,
                   productCount: category.productCount || 0,
-                  href: `/productos`,
+                  href: `/productos?categoria=${encodeURIComponent('nombre' in category ? category.nombre : category.name)}`,
                 }}
                 animationDelay={index * 100}
               />
