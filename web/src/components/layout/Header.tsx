@@ -38,8 +38,7 @@ const Header: React.FC = () => {
   const { favorites } = useFavorites();
   const router = useRouter();
 
-  const cartItemsCount = cart.reduce((acc, item) => acc + item.quantity, 0);
-  useEffect(() => {
+  const cartItemsCount = cart.reduce((acc, item) => acc + item.quantity, 0);  useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 10);
     };
@@ -62,9 +61,16 @@ const Header: React.FC = () => {
       }
     };
 
+    // Throttle para evitar demasiadas llamadas a updateHeaderHeight
+    let headerHeightTimeout: NodeJS.Timeout;
+    const throttledUpdateHeaderHeight = () => {
+      clearTimeout(headerHeightTimeout);
+      headerHeightTimeout = setTimeout(updateHeaderHeight, 16); // ~60fps
+    };
+
     window.addEventListener('scroll', handleScroll);
-    window.addEventListener('scroll', updateHeaderHeight);
-    window.addEventListener('resize', updateHeaderHeight);
+    window.addEventListener('scroll', throttledUpdateHeaderHeight);
+    window.addEventListener('resize', throttledUpdateHeaderHeight);
     document.addEventListener('click', handleClickOutside);
 
     // Calcular altura inicial
@@ -73,10 +79,11 @@ const Header: React.FC = () => {
 
     return () => {
       window.removeEventListener('scroll', handleScroll);
-      window.removeEventListener('scroll', updateHeaderHeight);
-      window.removeEventListener('resize', updateHeaderHeight);
+      window.removeEventListener('scroll', throttledUpdateHeaderHeight);
+      window.removeEventListener('resize', throttledUpdateHeaderHeight);
       document.removeEventListener('click', handleClickOutside);
       clearTimeout(timeoutId);
+      clearTimeout(headerHeightTimeout);
     };
   }, []);
 

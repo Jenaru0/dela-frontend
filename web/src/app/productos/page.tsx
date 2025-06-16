@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState, useMemo, Suspense } from 'react';
+import React, { useState, useMemo, useCallback, Suspense } from 'react';
 import Layout from '@/components/layout/Layout';
 import ProductosPageHeader from '@/components/productos/ProductosPageHeader';
 import ProductosSearchBar from '@/components/productos/ProductosSearchBar';
 import ProductosFilters from '@/components/productos/ProductosFilters';
+import ActiveFilters from '@/components/productos/ActiveFilters';
 import SearchParamsHandler from '@/components/productos/SearchParamsHandler';
 import CatalogoCard from '@/components/catalogo/CatalogoCard';
 import CatalogoListCard from '@/components/catalogo/CatalogoListCard';
@@ -52,14 +53,13 @@ export default function CatalogoProductosPage() {
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState<FilterState>(initialFilters);
   const [page, setPage] = useState(1);
-
   // Función para manejar cambios en los parámetros de URL
-  const handleParamsChange = (newFilters: Partial<FilterState>) => {
+  const handleParamsChange = useCallback((newFilters: Partial<FilterState>) => {
     setFilters(prev => ({
       ...prev,
       ...newFilters
     }));
-  };
+  }, []);
 
   // Extraer categorías únicas
   const categorias = useMemo(() => {
@@ -189,11 +189,16 @@ export default function CatalogoProductosPage() {
   ) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
     setPage(1); // Reinicia la página al cambiar filtros
-  };
-  const clearFilters = () => {
+  };  const clearFilters = useCallback(() => {
     setFilters(initialFilters);
     setPage(1); // Reinicia la página al limpiar filtros
-  };
+    
+    // Limpiar los parámetros de URL
+    const url = new URL(window.location.href);
+    url.searchParams.delete('search');
+    url.searchParams.delete('categoria');
+    router.replace(url.pathname, { scroll: false });
+  }, [router]);
 
   const handleSortChange = (sortValue: string) => {
     const [sortBy, sortOrderRaw] = sortValue.split(':');
@@ -244,6 +249,13 @@ export default function CatalogoProductosPage() {
             onSortChange={handleSortChange}
             onViewModeChange={setViewMode}
             onToggleFilters={() => setShowFilters(!showFilters)}
+          />
+
+          {/* Mostrar filtros activos */}
+          <ActiveFilters
+            filters={filters}
+            onFilterChange={handleFilterChange}
+            onClearFilters={clearFilters}
           />
 
           <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">

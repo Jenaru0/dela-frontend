@@ -4,8 +4,8 @@
 import React from 'react'
 
 const stats = [
-  { label: 'Años de experiencia',  value: '20+',    icon: '📆' },
-  { label: 'Productos lácteos',     value: '20+',    icon: '🥛' },
+  { label: 'Años de experiencia',  value: '25+',    icon: '📆' },
+  { label: 'Productos lácteos',     value: '28+',    icon: '🥛' },
   { label: 'Animales en finca',     value: '2000+',  icon: '🐄' },
   { label: 'Tiendas activas',       value: '2',      icon: '📍' },
 ]

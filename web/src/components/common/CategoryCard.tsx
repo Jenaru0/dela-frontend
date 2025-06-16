@@ -22,13 +22,13 @@ const CategoryCard: React.FC<CategoryCardProps> = ({
   category,
   className,
   animationDelay,
-}) => {
-  // Handle both interface formats: nombre/imagen (legacy) and name/image (new)
+}) => {  // Handle both interface formats: nombre/imagen (legacy) and name/image (new)
   const categoryName = category.name || category.nombre || 'Categoría';
   const categoryImage =
     category.image || category.imagen || '/images/category-fallback.png';
-  const categoryId = category.id || categoryName.toLowerCase();
-  const href = category.href || `/categorias/${categoryId}`;
+  
+  // Usar la página de productos con filtro de categoría
+  const href = category.href || `/productos?categoria=${encodeURIComponent(categoryName)}`;
 
   return (
     <Link
