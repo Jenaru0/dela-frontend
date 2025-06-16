@@ -5,7 +5,6 @@ import Layout from '@/components/layout/Layout';
 import ProductosPageHeader from '@/components/productos/ProductosPageHeader';
 import ProductosSearchBar from '@/components/productos/ProductosSearchBar';
 import ProductosFilters from '@/components/productos/ProductosFilters';
-import ActiveFilters from '@/components/productos/ActiveFilters';
 import SearchParamsHandler from '@/components/productos/SearchParamsHandler';
 import CatalogoCard from '@/components/catalogo/CatalogoCard';
 import CatalogoListCard from '@/components/catalogo/CatalogoListCard';
@@ -248,15 +247,7 @@ export default function CatalogoProductosPage() {
             onFilterChange={handleFilterChange}
             onSortChange={handleSortChange}
             onViewModeChange={setViewMode}
-            onToggleFilters={() => setShowFilters(!showFilters)}
-          />
-
-          {/* Mostrar filtros activos */}
-          <ActiveFilters
-            filters={filters}
-            onFilterChange={handleFilterChange}
-            onClearFilters={clearFilters}
-          />
+            onToggleFilters={() => setShowFilters(!showFilters)}          />
 
           <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
             {showFilters && (
