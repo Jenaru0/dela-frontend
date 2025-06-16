@@ -12,7 +12,7 @@ import { fetchCatalogoProductoById } from '@/services/catalogo.service';
 import type { Producto } from '@/types/productos';
 import { ProductoGallery } from '@/components/producto/ProductoGallery';
 import { ProductoInfo } from '@/components/producto/ProductoInfo';
-import { ProductosRelacionados } from '@/components/producto/ProductosRelacionados';
+import ProductosRelacionados from '@/components/producto/ProductosRelacionados';
 
 export default function ProductDetailPage() {
   const params = useParams();
@@ -228,12 +228,13 @@ export default function ProductDetailPage() {
             </div>
           </div>
         </div>
-      </section>
-        {/* Productos relacionados */}
-      {product.categoria?.id && (
+      </section>        {/* Productos relacionados */}
+      {product && (
         <section className="bg-gray-50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-            <ProductosRelacionados categoriaId={product.categoria.id} productoId={product.id} />
+            <ProductosRelacionados 
+              productoId={product.id} 
+            />
           </div>
         </section>
       )}

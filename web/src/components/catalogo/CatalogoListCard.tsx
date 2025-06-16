@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/Button';
-import { Star, Heart, ShoppingBag, Eye } from 'lucide-react';
+import { Star, Heart, ShoppingBag } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useFavorites } from '@/contexts/FavoritoContext';
 import { useAuthModalGlobal } from '@/contexts/AuthModalContext';
@@ -53,9 +53,10 @@ const CatalogoListCard: React.FC<CatalogoListCardProps> = ({
       addFavorite(product.id);
     }
   };
-
   // Handler para añadir al carrito con auth
-  const handleAddToCart = async () => {
+  const handleAddToCart = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.stopPropagation(); // Prevenir que se active el click de la tarjeta
+    
     if (!isAuthenticated) {
       openAuthModal('login');
       return;
@@ -71,9 +72,10 @@ const CatalogoListCard: React.FC<CatalogoListCardProps> = ({
         setIsAddingToCart(false);
       }
     }
-  };  return (
+  };return (
     <div
-      className={`group relative rounded-lg bg-white shadow-sm border border-gray-200 overflow-hidden transition-all duration-300 hover:shadow-md hover:border-gray-300 w-full ${className}`}
+      className={`group relative rounded-lg bg-white shadow-sm border border-gray-200 overflow-hidden transition-all duration-300 hover:shadow-md hover:border-gray-300 w-full cursor-pointer ${className}`}
+      onClick={() => onQuickView?.(product)}
     >
       <div className="flex items-center p-5 gap-5">
         {/* Imagen del producto */}
@@ -126,22 +128,8 @@ const CatalogoListCard: React.FC<CatalogoListCardProps> = ({
                 {product.priceFormatted ?? 'Precio no disponible'}
               </span>
             </div>
-          </div>
-
-          {/* Acciones */}
+          </div>          {/* Acciones */}
           <div className="flex items-center justify-between">            <div className="flex items-center gap-2">
-              {/* Botón de vista rápida */}
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-9 px-3 text-sm bg-white/95 text-[#CC9F53] hover:bg-[#CC9F53] hover:text-white shadow-lg font-medium transition-all duration-300 border border-[#CC9F53]/20 hover:border-[#CC9F53]"
-                onClick={() => onQuickView?.(product)}
-              >
-                <Eye className="w-4 h-4 mr-1.5" />
-                <span className="hidden sm:inline">Vista rápida</span>
-                <span className="sm:hidden">Ver</span>
-              </Button>
-
               {/* Botón añadir al carrito */}
               <Button
                 size="sm"

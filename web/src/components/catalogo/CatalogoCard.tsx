@@ -53,9 +53,10 @@ const CatalogoCard: React.FC<CatalogoCardProps> = ({
     }
   };
   const [isAddingToCart, setIsAddingToCart] = useState(false);
-
   // Handler para añadir al carrito con auth
-  const handleAddToCart = async () => {
+  const handleAddToCart = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.stopPropagation(); // Prevenir que se active el click de la tarjeta
+    
     if (!isAuthenticated) {
       openAuthModal('login'); // <-- Abre el modal de login/registro
       return;
@@ -71,10 +72,10 @@ const CatalogoCard: React.FC<CatalogoCardProps> = ({
         setIsAddingToCart(false);
       }
     }
-  };
-  return (
+  };return (
     <div
-      className={`group relative rounded-2xl bg-white shadow-md border border-[#F5EFD7] overflow-hidden transition-all duration-500 hover:scale-[1.03] hover:shadow-xl hover:shadow-[#CC9F53]/10 w-full ${className}`}
+      className={`group relative rounded-2xl bg-white shadow-md border border-[#F5EFD7] overflow-hidden transition-all duration-500 hover:scale-[1.03] hover:shadow-xl hover:shadow-[#CC9F53]/10 w-full cursor-pointer ${className}`}
+      onClick={() => onQuickView?.(product)}
     >
       <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-[#F5EFD7]/80 via-white to-[#F5EFD7]/40">
         {/* Marca y Estrella */}
@@ -122,33 +123,9 @@ const CatalogoCard: React.FC<CatalogoCardProps> = ({
           sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
           className="object-contain p-4 sm:p-8 transition-all duration-500 group-hover:scale-110 group-hover:rotate-1"
           style={{ zIndex: 1 }}
-        />
-
-        <span className="absolute bottom-2 sm:bottom-3 left-2 sm:left-3 bg-[#CC9F53]/90 text-white text-[10px] sm:text-xs font-semibold rounded-lg px-2 sm:px-3 py-[2px] z-10 shadow-sm backdrop-blur-sm">
+        />        <span className="absolute bottom-2 sm:bottom-3 left-2 sm:left-3 bg-[#CC9F53]/90 text-white text-[10px] sm:text-xs font-semibold rounded-lg px-2 sm:px-3 py-[2px] z-10 shadow-sm backdrop-blur-sm">
           {product.category}
         </span>
-
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
-          <Button
-            variant="ghost"
-            size="sm"
-            className={`
-              bg-white/95 text-[#CC9F53]
-              hover:bg-[#CC9F53] hover:text-white
-              shadow-lg font-medium
-              transition-all duration-300
-              opacity-0 scale-95
-              group-hover:opacity-100 group-hover:scale-100
-              pointer-events-auto
-              text-xs sm:text-sm px-2 sm:px-4 py-1 sm:py-2
-            `}
-            style={{ transition: 'all 0.23s cubic-bezier(.68,-0.6,.32,1.6)' }}
-            onClick={() => onQuickView?.(product)}
-          >
-            <span className="hidden sm:inline">Vista rápida</span>
-            <span className="sm:hidden">Ver</span>
-          </Button>
-        </div>
       </div>
 
       <div className="px-3 sm:px-5 pt-2 pb-2 flex flex-col gap-1">        <h3 className="font-bold text-sm sm:text-base text-[#2d2418] line-clamp-2">
