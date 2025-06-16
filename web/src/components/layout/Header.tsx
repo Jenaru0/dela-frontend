@@ -10,10 +10,10 @@ import { useAuth } from '@/contexts/AuthContext';
 import AuthModal from '@/components/auth/AuthModal';
 import { useCart } from '@/contexts/CarContext';
 import { useFavorites } from '@/contexts/FavoritoContext';
+import SmartSearchBar from './SmartSearchBar';
 import {
   Menu,
   X,
-  Search,
   ShoppingCart,
   User,
   Heart,
@@ -26,7 +26,6 @@ import {
 const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authModalMode, setAuthModalMode] = useState<'login' | 'register'>(
     'login'
@@ -202,18 +201,9 @@ const Header: React.FC = () => {
                   <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#CC9F53] transition-all duration-300 group-hover:w-full"></span>
                 </Link>
               ))}            </nav>
-            
-            {/* Search Bar (Desktop) */}
+              {/* Search Bar (Desktop) */}
             <div className="hidden md:flex items-center flex-1 max-w-md mx-4 lg:mx-8">
-              <div className="relative w-full">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 z-10" />
-                <input
-                  type="text"
-                  placeholder="Buscar productos..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-[#E6D5A8] rounded-full focus:outline-none focus:ring-2 focus:ring-[#CC9F53] focus:border-transparent transition-all duration-200"
-                />              </div>
+              <SmartSearchBar className="w-full" />
             </div>
             
             {/* Action Buttons */}            <div className="flex items-center space-x-2 md:space-x-3">
@@ -357,20 +347,9 @@ const Header: React.FC = () => {
                 </Button>
               </div>
             </div>
-          </div>
-
-          {/* Búsqueda móvil */}
+          </div>          {/* Búsqueda móvil */}
           <div className="md:hidden pb-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Buscar productos..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-[#E6D5A8] rounded-full focus:outline-none focus:ring-2 focus:ring-[#CC9F53] focus:border-transparent"
-              />
-            </div>
+            <SmartSearchBar className="w-full" />
           </div>
         </div>
 

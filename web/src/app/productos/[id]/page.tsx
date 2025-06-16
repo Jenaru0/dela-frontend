@@ -162,13 +162,12 @@ export default function ProductDetailPage() {
                   precioAnterior={precioAnterior}
                   hasDiscount={hasDiscount}
                   discount={discount}
-                />
-                  {/* Acciones principales */}
-                <div className="mt-8 space-y-4">
+                />                  {/* Acciones principales */}
+                <div className="mt-8 flex flex-col sm:flex-row gap-4">
                   <Button
                     onClick={handleAddToCart}
                     disabled={isAddingToCart}
-                    className="w-full bg-[#CC9F53] hover:bg-[#b08a3c] text-white font-semibold py-4 px-6 rounded-lg text-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    className="flex-1 bg-[#CC9F53] hover:bg-[#b08a3c] text-white font-semibold py-4 px-6 rounded-lg text-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
                     {isAddingToCart ? (
                       <>
@@ -188,7 +187,7 @@ export default function ProductDetailPage() {
                   
                   <Button
                     variant="outline"
-                    className="w-full border-2 border-[#CC9F53] text-[#CC9F53] hover:bg-[#CC9F53] hover:text-white font-semibold py-3 px-6 rounded-lg text-base transition-all duration-300"
+                    className="flex-1 border-2 border-[#CC9F53] text-[#CC9F53] hover:bg-[#CC9F53] hover:text-white font-semibold py-3 px-6 rounded-lg text-base transition-all duration-300"
                     onClick={() => router.push('/productos')}
                   >
                     Seguir comprando
