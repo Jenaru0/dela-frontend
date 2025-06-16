@@ -1,16 +1,17 @@
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, Suspense } from 'react';
 import Layout from '@/components/layout/Layout';
 import ProductosPageHeader from '@/components/productos/ProductosPageHeader';
 import ProductosSearchBar from '@/components/productos/ProductosSearchBar';
 import ProductosFilters from '@/components/productos/ProductosFilters';
+import SearchParamsHandler from '@/components/productos/SearchParamsHandler';
 import CatalogoCard from '@/components/catalogo/CatalogoCard';
 import CatalogoListCard from '@/components/catalogo/CatalogoListCard';
 import { useCatalogo } from '@/hooks/useCatalogo';
 import { useCart } from '@/contexts/CarContext';
 import { useCartDrawer } from '@/contexts/CartDrawerContext';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { Product } from '@/lib/products';
 
 import type { FilterState } from '@/types/productos';
@@ -47,24 +48,18 @@ export default function CatalogoProductosPage() {
   const { addToCart } = useCart();
   const { openDrawer } = useCartDrawer();
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState<FilterState>(initialFilters);
   const [page, setPage] = useState(1);
-  // Leer parámetros de URL al cargar la página
-  useEffect(() => {
-    const searchParam = searchParams.get('search');
-    const categoriaParam = searchParams.get('categoria');
-    
-    if (searchParam || categoriaParam) {
-      setFilters(prev => ({
-        ...prev,
-        search: searchParam || '',
-        category: categoriaParam || ''
-      }));
-    }
-  }, [searchParams]);
+
+  // Función para manejar cambios en los parámetros de URL
+  const handleParamsChange = (newFilters: Partial<FilterState>) => {
+    setFilters(prev => ({
+      ...prev,
+      ...newFilters
+    }));
+  };
 
   // Extraer categorías únicas
   const categorias = useMemo(() => {
@@ -232,11 +227,15 @@ export default function CatalogoProductosPage() {
   const handleQuickView = (product: CatalogoCardProps['product']) => {
     router.push(`/productos/${product.id}`);
   };
-
   return (
     <Layout>
+      {/* Manejo de parámetros de URL */}
+      <Suspense fallback={null}>
+        <SearchParamsHandler onParamsChange={handleParamsChange} />
+      </Suspense>
+      
       <div className="min-h-screen bg-gradient-to-b from-[#F5EFD7]/20 to-white">
-        <ProductosPageHeader />        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">          <ProductosSearchBar
+        <ProductosPageHeader /><div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">          <ProductosSearchBar
             filters={filters}
             viewMode={viewMode}
             showFilters={showFilters}
