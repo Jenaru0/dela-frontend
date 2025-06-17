@@ -1,10 +1,9 @@
 import React from 'react';
 import CatalogoCard from './CatalogoCard';
 import { Swiper, SwiperSlide } from 'swiper/react';
-import { Navigation, Autoplay } from 'swiper/modules';
+import { Autoplay } from 'swiper/modules';
 import 'swiper/css';
-import 'swiper/css/navigation';
-import './catalogo-carrusel.css'; // Importa estilos custom para flechas
+import './catalogo-carrusel.css';
 
 interface CatalogoDestacadosGridProps {
   productos: CatalogoCardProduct[];
@@ -40,21 +39,18 @@ const CatalogoDestacadosGrid: React.FC<CatalogoDestacadosGridProps> = ({
           Descubre nuestra selección de productos artesanales más populares
         </p>
         <Swiper
-          modules={[Navigation, Autoplay]}
+          modules={[Autoplay]}
           spaceBetween={32}
           slidesPerView={1}
           speed={900}
-          autoplay={{ delay: 3000, disableOnInteraction: false, pauseOnMouseEnter: true }}
+          autoplay={{ delay: 2400, disableOnInteraction: false, pauseOnMouseEnter: true }}
           loop={true}
+          grabCursor={true}
           breakpoints={{
             640: { slidesPerView: 1 },
             768: { slidesPerView: 2 },
             1024: { slidesPerView: 3 },
             1280: { slidesPerView: 4 },
-          }}
-          navigation={{
-            nextEl: '.swiper-button-next',
-            prevEl: '.swiper-button-prev',
           }}
           className="!pb-16"
         >
@@ -71,9 +67,6 @@ const CatalogoDestacadosGrid: React.FC<CatalogoDestacadosGridProps> = ({
               </div>
             </SwiperSlide>
           ))}
-          {/* Flechas custom */}
-          <div className="swiper-button-prev custom-swiper-arrow hidden md:flex" />
-          <div className="swiper-button-next custom-swiper-arrow hidden md:flex" />
         </Swiper>
       </div>
     </section>

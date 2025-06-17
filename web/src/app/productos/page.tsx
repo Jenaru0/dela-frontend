@@ -318,43 +318,28 @@ export default function CatalogoProductosPage() {
                     ))}
                   </div>
                   
-                  {/* Paginación */}
+                  {/* Paginación tipo "3 OF 10" */}
                   {totalPages > 1 && (
-                    <div className="flex justify-center items-center gap-1 sm:gap-2 mt-8 sm:mt-10 px-4">
-                      <button
-                        className="rounded-full px-2 sm:px-3 py-1 sm:py-2 bg-white border border-[#CC9F53] text-[#CC9F53] font-bold shadow-sm hover:bg-[#FFF9EC] transition disabled:opacity-40 disabled:cursor-not-allowed text-sm sm:text-base"
-                        onClick={() => setPage((p) => Math.max(1, p - 1))}
-                        disabled={page === 1}
-                        aria-label="Página anterior"
-                      >
-                        <span className="inline-block align-middle">←</span>
-                      </button>
-                      
-                      <div className="flex gap-1 overflow-x-auto max-w-xs sm:max-w-none">
-                        {Array.from({ length: totalPages }, (_, i) => (
-                          <button
-                            key={i}
-                            className={`rounded-full w-7 h-7 sm:w-9 sm:h-9 font-bold border-2 transition-all duration-150 text-sm sm:text-base flex-shrink-0
-                              ${page === i + 1
-                                ? 'bg-[#CC9F53] text-white border-[#CC9F53] shadow'
-                                : 'bg-white text-[#CC9F53] border-[#CC9F53] hover:bg-[#FFF9EC]'}
-                            `}
-                            onClick={() => setPage(i + 1)}
-                            aria-current={page === i + 1 ? 'page' : undefined}
-                          >
-                            {i + 1}
-                          </button>
-                        ))}
+                    <div className="flex justify-center items-center mt-10">
+                      <div className="flex items-center bg-white/95 border border-[#e7d7b6] rounded-full shadow px-4 py-1 gap-2 min-w-[150px]">
+                        <button
+                          className="w-8 h-8 flex items-center justify-center rounded-full border-none text-[#CC9F53] hover:bg-[#FFF9EC] transition disabled:opacity-40 disabled:cursor-not-allowed text-xl"
+                          onClick={() => setPage((p) => Math.max(1, p - 1))}
+                          disabled={page === 1}
+                          aria-label="Página anterior"
+                        >
+                          <span className="inline-block align-middle" style={{ color: '#CC9F53' }}>&#60;</span>
+                        </button>
+                        <span className="font-poppins font-semibold text-base text-[#2d2418] tracking-wide select-none" style={{ minWidth: 70, textAlign: 'center', letterSpacing: '0.08em' }}>{page} <span className="text-[#CC9F53] font-semibold uppercase tracking-widest">OF</span> {totalPages}</span>
+                        <button
+                          className="w-8 h-8 flex items-center justify-center rounded-full border-none text-[#CC9F53] hover:bg-[#FFF9EC] transition disabled:opacity-40 disabled:cursor-not-allowed text-xl"
+                          onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                          disabled={page === totalPages}
+                          aria-label="Página siguiente"
+                        >
+                          <span className="inline-block align-middle" style={{ color: '#CC9F53' }}>&#62;</span>
+                        </button>
                       </div>
-                      
-                      <button
-                        className="rounded-full px-2 sm:px-3 py-1 sm:py-2 bg-white border border-[#CC9F53] text-[#CC9F53] font-bold shadow-sm hover:bg-[#FFF9EC] transition disabled:opacity-40 disabled:cursor-not-allowed text-sm sm:text-base"
-                        onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                        disabled={page === totalPages}
-                        aria-label="Página siguiente"
-                      >
-                        <span className="inline-block align-middle">→</span>
-                      </button>
                     </div>
                   )}
                 </>
