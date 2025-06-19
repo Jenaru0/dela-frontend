@@ -11,42 +11,55 @@ import { useStats } from '@/hooks/useStats';
 const HeroSection: React.FC = () => {
   const { productos, loading } = useCatalogo();
   const { totalProductos, loading: statsLoading } = useStats();
-  
+
   // Calcular años de experiencia dinámicamente (fundado en 2000)
   const añosExperiencia = new Date().getFullYear() - 2000;
-    // Obtener productos para mostrar (prioritarios: destacados, sino cualquiera)
-  const productosDestacados = productos?.filter(p => p.destacado).slice(0, 2) || [];
-  const productosDisponibles = productos?.filter(p => p.disponible !== false).slice(0, 2) || [];
-  
+  // Obtener productos para mostrar (prioritarios: destacados, sino cualquiera)
+  const productosDestacados =
+    productos?.filter((p) => p.destacado).slice(0, 2) || [];
+  const productosDisponibles =
+    productos?.filter((p) => p.disponible !== false).slice(0, 2) || [];
+
   // Usar productos destacados si existen, sino usar cualquier producto disponible
-  const productosParaMostrar = productosDestacados.length > 0 ? productosDestacados : productosDisponibles;
-    // Solo mostrar productos si ya se cargaron los datos
-  const displayProducts = loading 
+  const productosParaMostrar =
+    productosDestacados.length > 0 ? productosDestacados : productosDisponibles;
+  // Solo mostrar productos si ya se cargaron los datos
+  const displayProducts = loading
     ? null // No mostrar nada mientras carga
-    : productosParaMostrar.length >= 2 
+    : productosParaMostrar.length >= 2
     ? [
-        { 
-          name: productosParaMostrar[0].name, 
-          price: productosParaMostrar[0].priceFormatted || `S/${productosParaMostrar[0].price?.toFixed(2) || '0.00'}` 
+        {
+          name: productosParaMostrar[0].name,
+          price:
+            productosParaMostrar[0].priceFormatted ||
+            `S/${productosParaMostrar[0].price?.toFixed(2) || '0.00'}`,
+          image: productosParaMostrar[0].image,
         },
-        { 
-          name: productosParaMostrar[1].name, 
-          price: productosParaMostrar[1].priceFormatted || `S/${productosParaMostrar[1].price?.toFixed(2) || '0.00'}` 
-        }
+        {
+          name: productosParaMostrar[1].name,
+          price:
+            productosParaMostrar[1].priceFormatted ||
+            `S/${productosParaMostrar[1].price?.toFixed(2) || '0.00'}`,
+          image: productosParaMostrar[1].image,
+        },
       ]
     : productosParaMostrar.length === 1
     ? [
-        { 
-          name: productosParaMostrar[0].name, 
-          price: productosParaMostrar[0].priceFormatted || `S/${productosParaMostrar[0].price?.toFixed(2) || '0.00'}` 
+        {
+          name: productosParaMostrar[0].name,
+          price:
+            productosParaMostrar[0].priceFormatted ||
+            `S/${productosParaMostrar[0].price?.toFixed(2) || '0.00'}`,
+          image: productosParaMostrar[0].image,
         },
-        { name: 'Producto DELA', price: 'S/12.90' } // Fallback para el segundo
+        { name: 'Producto DELA', price: 'S/12.90' }, // Fallback para el segundo
       ]
     : productos && productos.length === 0 // Si ya cargó pero no hay productos
     ? [
         { name: 'Leche Premium DELA', price: 'S/8.50' }, // Fallbacks por si no hay productos en BD
-        { name: 'Yogurt Griego DELA', price: 'S/12.90' }      ]
-    : null; // Aún cargando o hay productos pero no disponibles  
+        { name: 'Yogurt Griego DELA', price: 'S/12.90' },
+      ]
+    : null; // Aún cargando o hay productos pero no disponibles
   return (
     <section className="relative min-h-[90vh] overflow-hidden bg-gradient-to-br from-[#F5EFD7] via-white to-[#F5EFD7]/50">
       {/* Background Pattern */}
@@ -113,7 +126,8 @@ const HeroSection: React.FC = () => {
                   Nuestra Historia
                 </Button>
               </Link>
-            </div>            {/* Stats */}
+            </div>{' '}
+            {/* Stats */}
             <div className="flex items-center gap-8 pt-6 border-t border-[#E6D5A8]">
               <div className="text-center">
                 <div className="text-2xl font-bold text-[#CC9F53]">
@@ -122,7 +136,9 @@ const HeroSection: React.FC = () => {
                 <div className="text-sm text-gray-600">Productos Lácteos</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-[#CC9F53]">{añosExperiencia}+</div>
+                <div className="text-2xl font-bold text-[#CC9F53]">
+                  {añosExperiencia}+
+                </div>
                 <div className="text-sm text-gray-600">Años de Experiencia</div>
               </div>
               <div className="text-center">
@@ -137,7 +153,8 @@ const HeroSection: React.FC = () => {
             <div className="relative">
               {/* Main product image */}
               <div className="relative h-[400px] w-[400px] md:h-[500px] md:w-[500px] lg:h-[600px] lg:w-[600px]">
-                <div className="absolute inset-0 rounded-full bg-gradient-to-br from-[#CC9F53]/20 to-[#F5EFD7]/20 animate-pulse" />                <Image
+                <div className="absolute inset-0 rounded-full bg-gradient-to-br from-[#CC9F53]/20 to-[#F5EFD7]/20 animate-pulse" />{' '}
+                <Image
                   src="https://dela.com.pe/img/logoRecurso%201.svg"
                   alt="Productos artesanales DELA"
                   fill
@@ -148,30 +165,55 @@ const HeroSection: React.FC = () => {
                     e.currentTarget.src = '/images/hero-fallback.svg';
                   }}
                 />
-              </div>              {/* Floating product cards - Solo mostrar si hay productos disponibles */}
+              </div>{' '}
+              {/* Floating product card - top left */}
               {displayProducts && displayProducts[0] && (
-                <div className="absolute -top-4 -left-4 lg:-left-8 bg-white rounded-xl shadow-lg p-3 animate-bounce">
+                <div className="absolute top-4 left-2 sm:top-8 sm:left-4 lg:top-12 lg:left-8 bg-white rounded-xl shadow-lg p-2 sm:p-3 animate-bounce max-w-[180px] sm:max-w-none">
                   <div className="flex items-center gap-2">
-                    <div className="h-8 w-8 rounded bg-[#F5EFD7]" />
-                    <div>
-                      <div className="text-xs font-semibold text-[#3A3A3A]">
+                    <div className="h-11 w-11 sm:h-8 sm:w-8 rounded relative overflow-hidden flex-shrink-0">
+                      <Image
+                        src={
+                          displayProducts[0].image ||
+                          '/images/product-placeholder.png'
+                        }
+                        alt="Productos artesanales DELA"
+                        className="object-cover"
+                        fill
+                      />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-xs font-semibold text-[#3A3A3A] truncate">
                         {displayProducts[0].name}
                       </div>
-                      <div className="text-xs text-[#CC9F53]">{displayProducts[0].price}</div>
+                      <div className="text-xs text-[#CC9F53]">
+                        {displayProducts[0].price}
+                      </div>
                     </div>
                   </div>
                 </div>
               )}
-
+              {/* Floating product card - bottom right */}
               {displayProducts && displayProducts[1] && (
-                <div className="absolute -bottom-4 -right-4 lg:-right-8 bg-white rounded-xl shadow-lg p-3 animate-bounce delay-1000">
+                <div className="absolute bottom-4 right-2 sm:bottom-8 sm:right-4 lg:bottom-12 lg:right-8 bg-white rounded-xl shadow-lg p-2 sm:p-3 animate-bounce delay-1000 max-w-[180px] sm:max-w-none">
                   <div className="flex items-center gap-2">
-                    <div className="h-8 w-8 rounded bg-[#F5EFD7]" />
-                    <div>
-                      <div className="text-xs font-semibold text-[#3A3A3A]">
+                    <div className="h-11 w-11 sm:h-8 sm:w-8 rounded relative overflow-hidden flex-shrink-0">
+                      <Image
+                        src={
+                          displayProducts[1].image ||
+                          '/images/product-placeholder.png'
+                        }
+                        alt="Productos artesanales DELA"
+                        className="object-cover"
+                        fill
+                      />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-xs font-semibold text-[#3A3A3A] truncate">
                         {displayProducts[1].name}
                       </div>
-                      <div className="text-xs text-[#CC9F53]">{displayProducts[1].price}</div>
+                      <div className="text-xs text-[#CC9F53]">
+                        {displayProducts[1].price}
+                      </div>
                     </div>
                   </div>
                 </div>
