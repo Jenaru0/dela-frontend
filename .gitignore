@@ -45,6 +45,10 @@ lerna-debug.log*
 # Turborepo cache
 .turbo/
 
+# TypeScript build info
+*.tsbuildinfo
+tsconfig.tsbuildinfo
+
 # IDE
 .vscode/
 .idea/
