@@ -1,14 +1,19 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Users, ShoppingBag, Package, MessageSquare } from 'lucide-react';
+import { Users, ShoppingBag, Package, MessageSquare, Star, AlertTriangle, ClipboardList, CheckCircle } from 'lucide-react';
 import { usuariosService } from '@/services/usuarios.service';
+import { productosService } from '@/services/productos-admin.service';
+import { pedidosService } from '@/services/pedidos.service';
+import { reclamosService } from '@/services/reclamos.service';
 
 interface StatsData {
   totalUsuarios: number;
   usuariosClientes: number;
   usuariosAdmin: number;
-  // Agregar más cuando tengamos los servicios
+  totalProductos: number;
+  totalPedidos: number;
+  totalReclamos: number;
 }
 
 const DashboardStats: React.FC = () => {
@@ -16,6 +21,9 @@ const DashboardStats: React.FC = () => {
     totalUsuarios: 0,
     usuariosClientes: 0,
     usuariosAdmin: 0,
+    totalProductos: 0,
+    totalPedidos: 0,
+    totalReclamos: 0,
   });
   const [loading, setLoading] = useState(true);
 
@@ -25,22 +33,46 @@ const DashboardStats: React.FC = () => {
 
   const loadStats = async () => {
     try {
+      setLoading(true);
+      
+      // Cargar estadísticas de usuarios
       const usuariosResponse = await usuariosService.obtenerTodos();
       const usuarios = usuariosResponse.data;
       
-      setStats({
+      // Cargar estadísticas de productos
+      const productosResponse = await productosService.obtenerTodos();
+      const productos = productosResponse.data;
+        // Cargar estadísticas de pedidos
+      let pedidos: any[] = [];
+      try {
+        const pedidosResponse = await pedidosService.obtenerTodos();
+        pedidos = pedidosResponse.data || [];
+      } catch (error) {
+        console.warn('Error al cargar pedidos:', error);
+      }
+      
+      // Cargar estadísticas de reclamos
+      let reclamos: any[] = [];
+      try {
+        const reclamosResponse = await reclamosService.obtenerTodos();
+        reclamos = reclamosResponse.data || [];
+      } catch (error) {
+        console.warn('Error al cargar reclamos:', error);
+      }
+        setStats({
         totalUsuarios: usuarios.length,
         usuariosClientes: usuarios.filter(u => u.tipoUsuario === 'CLIENTE').length,
         usuariosAdmin: usuarios.filter(u => u.tipoUsuario === 'ADMIN').length,
+        totalProductos: productos.length,
+        totalPedidos: pedidos.length,
+        totalReclamos: reclamos.length,
       });
     } catch (error) {
       console.error('Error al cargar estadísticas:', error);
     } finally {
       setLoading(false);
     }
-  };
-
-  const statsCards = [
+  };  const statsCards = [
     {
       title: 'Total Usuarios',
       value: stats.totalUsuarios,
@@ -67,7 +99,7 @@ const DashboardStats: React.FC = () => {
     },
     {
       title: 'Productos',
-      value: 0, // TODO: Implementar cuando tengamos el servicio
+      value: stats.totalProductos,
       icon: ShoppingBag,
       color: 'from-yellow-500 to-yellow-600',
       bgColor: 'bg-yellow-50',
@@ -75,7 +107,7 @@ const DashboardStats: React.FC = () => {
     },
     {
       title: 'Pedidos',
-      value: 0, // TODO: Implementar cuando tengamos el servicio
+      value: stats.totalPedidos,
       icon: Package,
       color: 'from-indigo-500 to-indigo-600',
       bgColor: 'bg-indigo-50',
@@ -83,17 +115,15 @@ const DashboardStats: React.FC = () => {
     },
     {
       title: 'Reclamos',
-      value: 0, // TODO: Implementar cuando tengamos el servicio
+      value: stats.totalReclamos,
       icon: MessageSquare,
       color: 'from-red-500 to-red-600',
       bgColor: 'bg-red-50',
       textColor: 'text-red-600'
     }
-  ];
-
-  if (loading) {
+  ];  if (loading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {[...Array(6)].map((_, i) => (
           <div key={i} className="bg-white rounded-xl p-6 shadow-sm border border-[#ecd8ab]/30 animate-pulse">
             <div className="flex items-center">
@@ -107,10 +137,8 @@ const DashboardStats: React.FC = () => {
         ))}
       </div>
     );
-  }
-
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+  }  return (
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
       {statsCards.map((card, index) => {
         const Icon = card.icon;
         return (

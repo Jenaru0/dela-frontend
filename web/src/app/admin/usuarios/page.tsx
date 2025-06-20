@@ -272,14 +272,14 @@ const UsuariosAdminPage: React.FC = () => {
 
   // Cambiar estado de usuario (activar/desactivar)
   const handleToggleUserStatus = async (userId: number, currentStatus: boolean) => {
-    const action = currentStatus ? 'desactivar' : 'activar';
+    const action = currentStatus ? 'desactivado' : 'activado';
     if (!confirm(`¿Estás seguro de que quieres ${action} este usuario?`)) {
       return;
     }
 
     try {
       await usuariosService.cambiarEstado(userId, !currentStatus);
-      showNotification('success', `Usuario ${action}ado correctamente`);
+      showNotification('success', `Usuario ${action} correctamente`);
       refreshData();
     } catch (error) {
       console.error(`Error al ${action} usuario:`, error);
