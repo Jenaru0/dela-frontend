@@ -17,9 +17,9 @@ import {
   X
 } from 'lucide-react';
 import { categoriasService, Categoria } from '@/services/categorias.service';
-import CreateCategoriaModal from '@/components/admin/modals/CreateCategoriaModal';
-import EditCategoriaModal from '@/components/admin/modals/EditCategoriaModal';
-import EnhancedCategoriaDetailModal from '@/components/admin/EnhancedCategoriaDetailModal';
+import CreateCategoriaModal from '@/components/admin/modals/categoria/CreateCategoriaModal';
+import EditCategoriaModal from '@/components/admin/modals/categoria/EditCategoriaModal';
+import EnhancedCategoriaDetailModal from '@/components/admin/modals/categoria/EnhancedCategoriaDetailModal';
 
 const CategoriasAdminPage: React.FC = () => {  const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [allCategorias, setAllCategorias] = useState<Categoria[]>([]);

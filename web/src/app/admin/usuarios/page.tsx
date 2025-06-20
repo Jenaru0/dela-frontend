@@ -21,9 +21,9 @@ import {
 } from 'lucide-react';
 import { usuariosService } from '@/services/usuarios.service';
 import { Usuario, CreateUsuarioDto, UpdateUsuarioDto } from '@/types/usuarios';
-import CreateUserModal from '@/components/admin/modals/CreateUserModal';
-import EditUserModal from '@/components/admin/modals/EditUserModal';
-import EnhancedUserDetailModal from '@/components/admin/EnhancedUserDetailModal';
+import CreateUserModal from '@/components/admin/modals/usuario/CreateUserModal';
+import EditUserModal from '@/components/admin/modals/usuario/EditUserModal';
+import EnhancedUserDetailModal from '@/components/admin/modals/usuario/EnhancedUserDetailModal';
 
 // Interfaces para filtros (siguiendo patrón de productos)
 interface FilterState {

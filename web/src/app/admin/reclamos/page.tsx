@@ -29,8 +29,8 @@ import {
   TipoReclamo,
   TipoReclamoLabels 
 } from '@/types/enums';
-import EnhancedReclamoDetailModal from '@/components/admin/EnhancedReclamoDetailModal';
-import ReclamoManageModal from '@/components/admin/ReclamoManageModal';
+import EnhancedReclamoDetailModal from '@/components/admin/modals/reclamo/EnhancedReclamoDetailModal';
+import ReclamoManageModal from '@/components/admin/modals/reclamo/ReclamoManageModal';
 
 interface FilterState {
   search: string;

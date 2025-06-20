@@ -18,9 +18,9 @@ import {
   AlertTriangle,
   X
 } from 'lucide-react';
-import CreateProductoModal from '@/components/admin/CreateProductoModal';
-import EditProductoModal from '@/components/admin/EditProductoModal';
-import EnhancedProductoDetailModal from '@/components/admin/EnhancedProductoDetailModal';
+import CreateProductoModal from '@/components/admin/modals/producto/CreateProductoModal';
+import EditProductoModal from '@/components/admin/modals/producto/EditProductoModal';
+import EnhancedProductoDetailModal from '@/components/admin/modals/producto/EnhancedProductoDetailModal';
 
 interface FilterState {
   search: string;

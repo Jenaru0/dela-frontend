@@ -18,8 +18,8 @@ import {
 } from 'lucide-react';
 import { pedidosService, Pedido } from '@/services/pedidos.service';
 import { EstadoPedido, EstadoPedidoLabels, EstadoPedidoColors, MetodoPagoLabels, MetodoEnvioLabels } from '@/types/enums';
-import EnhancedPedidoDetailModal from '@/components/admin/EnhancedPedidoDetailModal';
-import PedidoChangeStatusModal from '@/components/admin/PedidoChangeStatusModal';
+import EnhancedPedidoDetailModal from '@/components/admin/modals/orders/EnhancedPedidoDetailModal';
+import PedidoChangeStatusModal from '@/components/admin/modals/orders/PedidoChangeStatusModal';
 
 interface FilterState {
   search: string;

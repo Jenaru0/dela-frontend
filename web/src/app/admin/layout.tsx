@@ -4,7 +4,7 @@ import React, { useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import Layout from '@/components/layout/Layout';
-import AdminSidebar from '../../components/admin/AdminSidebar';
+import AdminSidebar from '@/components/admin/layout/AdminSidebar';
 import { Shield } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import ScrollToTopWrapper from '@/components/common/ScrollToTopWrapper';
