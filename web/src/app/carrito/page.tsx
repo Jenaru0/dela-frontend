@@ -9,6 +9,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { CartProductItem } from '@/components/carrito/CartProductItem';
 import { CartSummary } from '@/components/carrito/CartSummary';
 import { CartEmpty } from '@/components/carrito/CartEmpty';
+import ClearCartModal from '@/components/carrito/ClearCartModal';
 import { Button } from '@/components/ui/Button';
 export default function CarritoPage() {
   const {
@@ -18,9 +19,9 @@ export default function CarritoPage() {
     removeFromCart,
     clearCart,
   } = useCart();
-
   const { isAuthenticated, usuario, isLoading } = useAuth();
   const [isClearingCart, setIsClearingCart] = useState(false);
+  const [isClearModalOpen, setIsClearModalOpen] = useState(false);
 
   const handleClearCart = async () => {
     try {
@@ -150,16 +151,11 @@ export default function CarritoPage() {
                         </h3>
                         <p className="text-gray-600 text-sm">Gestiona los productos de tu compra</p>
                       </div>
-                    </div>
-                      <Button
+                    </div>                      <Button
                       variant="outline"
                       className="text-red-600 border-red-300 hover:bg-red-50 hover:border-red-400 transition-all duration-200 w-full sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed"
                       disabled={isClearingCart}
-                      onClick={() => {
-                        if (confirm(`¿Estás seguro de que quieres vaciar el carrito? Se eliminarán ${cart.length} productos.`)) {
-                          handleClearCart();
-                        }
-                      }}
+                      onClick={() => setIsClearModalOpen(true)}
                     >
                       <Trash2 className={`w-4 h-4 mr-2 ${isClearingCart ? 'animate-pulse' : ''}`} />
                       {isClearingCart ? 'Vaciando...' : 'Vaciar carrito'}
@@ -168,10 +164,21 @@ export default function CarritoPage() {
                 </div>
               </div>
               <CartSummary subtotal={subtotal} envio={envio} />
-            </div>
-          )}
+            </div>          )}
         </div>
       </div>
+
+      {/* Clear Cart Modal */}
+      <ClearCartModal
+        isOpen={isClearModalOpen}
+        onClose={() => setIsClearModalOpen(false)}
+        onConfirm={() => {
+          setIsClearModalOpen(false);
+          handleClearCart();
+        }}
+        cartCount={cart.length}
+        isLoading={isClearingCart}
+      />
     </Layout>
   );
 }

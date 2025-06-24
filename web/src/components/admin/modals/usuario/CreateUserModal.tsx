@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { CreateUsuarioDto } from '@/types/usuarios';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/input';
-import { X, User, Mail, Phone, Shield, Lock } from 'lucide-react';
+import { X, User, Mail, Phone, Shield, Lock, Eye, EyeOff } from 'lucide-react';
 
 interface CreateUserModalProps {
   isOpen: boolean;
@@ -21,7 +21,11 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
     apellidos: '',
     celular: '',
     tipoUsuario: 'CLIENTE', // Cliente por defecto
-  });const [isLoading, setIsLoading] = useState(false);
+  });
+  const [confirmarContrasena, setConfirmarContrasena] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   // Bloquear scroll del body cuando el modal esté abierto
@@ -53,12 +57,16 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
         newErrors.email = 'El email es requerido';
       } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
         newErrors.email = 'El email no es válido';
-      }
-
-      if (!formData.contrasena?.trim()) {
+      }      if (!formData.contrasena?.trim()) {
         newErrors.contrasena = 'La contraseña es requerida';
       } else if (formData.contrasena.length < 6) {
         newErrors.contrasena = 'La contraseña debe tener al menos 6 caracteres';
+      }
+
+      if (!confirmarContrasena?.trim()) {
+        newErrors.confirmarContrasena = 'La confirmación de contraseña es requerida';
+      } else if (formData.contrasena !== confirmarContrasena) {
+        newErrors.confirmarContrasena = 'Las contraseñas no coinciden';
       }
 
       if (Object.keys(newErrors).length > 0) {
@@ -75,6 +83,9 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
         celular: '',
         tipoUsuario: 'CLIENTE',
       });
+      setConfirmarContrasena('');
+      setShowPassword(false);
+      setShowConfirmPassword(false);
       onClose();
     } catch (error) {
       console.error('Error al crear usuario:', error);
@@ -83,11 +94,17 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
       setIsLoading(false);
     }
   };
-
   const handleChange = (field: keyof CreateUsuarioDto, value: string | number) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: '' }));
+    }
+  };
+
+  const handleConfirmarContrasenaChange = (value: string) => {
+    setConfirmarContrasena(value);
+    if (errors.confirmarContrasena) {
+      setErrors(prev => ({ ...prev, confirmarContrasena: '' }));
     }
   };
   if (!isOpen) return null;
@@ -134,24 +151,65 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
             {errors.email && (
               <p className="text-red-500 text-xs">{errors.email}</p>
             )}
-          </div>
-
-          {/* Contraseña */}
+          </div>          {/* Contraseña */}
           <div className="space-y-2">
             <label className="text-sm font-medium text-neutral-700 flex items-center">
               <Lock className="h-4 w-4 mr-2 text-primary-600" />
               Contraseña *
             </label>
-            <Input
-              type="password"
-              value={formData.contrasena}
-              onChange={(e) => handleChange('contrasena', e.target.value)}
-              className={errors.contrasena ? 'border-red-300 focus:border-red-500' : ''}
-              placeholder="Mínimo 6 caracteres"
-              required
-            />
+            <div className="relative">
+              <Input
+                type={showPassword ? "text" : "password"}
+                value={formData.contrasena}
+                onChange={(e) => handleChange('contrasena', e.target.value)}
+                className={errors.contrasena ? 'border-red-300 focus:border-red-500 pr-10' : 'pr-10'}
+                placeholder="Mínimo 6 caracteres"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center hover:text-primary-600 transition-colors"
+              >
+                {showPassword ? (
+                  <EyeOff className="h-4 w-4 text-neutral-400" />
+                ) : (
+                  <Eye className="h-4 w-4 text-neutral-400" />
+                )}
+              </button>
+            </div>
             {errors.contrasena && (
               <p className="text-red-500 text-xs">{errors.contrasena}</p>
+            )}
+          </div>          {/* Confirmar Contraseña */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-neutral-700 flex items-center">
+              <Lock className="h-4 w-4 mr-2 text-primary-600" />
+              Confirmar Contraseña *
+            </label>
+            <div className="relative">
+              <Input
+                type={showConfirmPassword ? "text" : "password"}
+                value={confirmarContrasena}
+                onChange={(e) => handleConfirmarContrasenaChange(e.target.value)}
+                className={errors.confirmarContrasena ? 'border-red-300 focus:border-red-500 pr-10' : 'pr-10'}
+                placeholder="Repite la contraseña"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center hover:text-primary-600 transition-colors"
+              >
+                {showConfirmPassword ? (
+                  <EyeOff className="h-4 w-4 text-neutral-400" />
+                ) : (
+                  <Eye className="h-4 w-4 text-neutral-400" />
+                )}
+              </button>
+            </div>
+            {errors.confirmarContrasena && (
+              <p className="text-red-500 text-xs">{errors.confirmarContrasena}</p>
             )}
           </div>
 

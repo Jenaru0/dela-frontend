@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Users, ShoppingBag, Package, MessageSquare, Star, AlertTriangle, ClipboardList, CheckCircle } from 'lucide-react';
+import { Users, ShoppingBag, Package, MessageSquare } from 'lucide-react';
 import { usuariosService } from '@/services/usuarios.service';
 import { productosService } from '@/services/productos-admin.service';
 import { pedidosService } from '@/services/pedidos.service';
@@ -41,9 +41,8 @@ const DashboardStats: React.FC = () => {
       
       // Cargar estadísticas de productos
       const productosResponse = await productosService.obtenerTodos();
-      const productos = productosResponse.data;
-        // Cargar estadísticas de pedidos
-      let pedidos: any[] = [];
+      const productos = productosResponse.data;        // Cargar estadísticas de pedidos
+      let pedidos: unknown[] = [];
       try {
         const pedidosResponse = await pedidosService.obtenerTodos();
         pedidos = pedidosResponse.data || [];
@@ -52,7 +51,7 @@ const DashboardStats: React.FC = () => {
       }
       
       // Cargar estadísticas de reclamos
-      let reclamos: any[] = [];
+      let reclamos: unknown[] = [];
       try {
         const reclamosResponse = await reclamosService.obtenerTodos();
         reclamos = reclamosResponse.data || [];

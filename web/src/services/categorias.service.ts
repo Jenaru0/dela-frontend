@@ -56,7 +56,7 @@ class CategoriasService {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Error al obtener categorías');
+        throw new Error(errorData.mensaje || 'Error al obtener categorías');
       }
 
       const categorias = await response.json();
@@ -77,12 +77,10 @@ class CategoriasService {
         headers: {
           'Content-Type': 'application/json',
         },
-      });
-
-      if (!response.ok) {
+      });      if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Error al obtener categorías activas');
-      }      const categorias = await response.json();
+        throw new Error(errorData.mensaje || 'Error al obtener categorías activas');
+      }const categorias = await response.json();
       // Filter only active categories on frontend for now
       const activeCategorias = categorias.filter((cat: Categoria) => cat.activo);
       return {
@@ -99,11 +97,9 @@ class CategoriasService {
       const response = await fetch(`${API_BASE_URL}/categorias/${id}`, {
         method: 'GET',
         headers: this.getAuthHeaders(),
-      });
-
-      if (!response.ok) {
+      });      if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Error al obtener categoría');
+        throw new Error(errorData.mensaje || 'Error al obtener categoría');
       }
 
       const categoria = await response.json();
@@ -122,11 +118,9 @@ class CategoriasService {
         method: 'POST',
         headers: this.getAuthHeaders(),
         body: JSON.stringify(datos),
-      });
-
-      if (!response.ok) {
+      });      if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Error al crear categoría');
+        throw new Error(errorData.mensaje || 'Error al crear categoría');
       }
 
       const categoria = await response.json();
@@ -145,11 +139,9 @@ class CategoriasService {
         method: 'PATCH',
         headers: this.getAuthHeaders(),
         body: JSON.stringify(datos),
-      });
-
-      if (!response.ok) {
+      });      if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Error al actualizar categoría');
+        throw new Error(errorData.mensaje || 'Error al actualizar categoría');
       }
 
       const categoria = await response.json();
@@ -167,11 +159,9 @@ class CategoriasService {
       const response = await fetch(`${API_BASE_URL}/categorias/${id}`, {
         method: 'DELETE',
         headers: this.getAuthHeaders(),
-      });
-
-      if (!response.ok) {
+      });      if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Error al eliminar categoría');
+        throw new Error(errorData.mensaje || 'Error al eliminar categoría');
       }
 
       return {
@@ -196,11 +186,9 @@ class CategoriasService {
         method: 'PATCH',
         headers: this.getAuthHeaders(),
         body: JSON.stringify({ activo }),
-      });
-
-      if (!response.ok) {
+      });      if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Error al cambiar estado de categoría');
+        throw new Error(errorData.mensaje || 'Error al cambiar estado de categoría');
       }
 
       const categoria = await response.json();
@@ -234,11 +222,9 @@ class CategoriasService {
           method: 'GET',
           headers: this.getAuthHeaders(),
         }
-      );
-
-      if (!response.ok) {
+      );      if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Error al obtener categorías');
+        throw new Error(errorData.mensaje || 'Error al obtener categorías');
       }
 
       return await response.json();
@@ -252,11 +238,9 @@ class CategoriasService {
       const response = await fetch(`${API_BASE_URL}/categorias`, {
         method: 'GET',
         headers: this.getAuthHeaders(),
-      });
-
-      if (!response.ok) {
+      });      if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Error al obtener categorías');
+        throw new Error(errorData.mensaje || 'Error al obtener categorías');
       }
 
       const categorias = await response.json();

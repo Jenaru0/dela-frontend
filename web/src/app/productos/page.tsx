@@ -54,9 +54,9 @@ export default function CatalogoProductosPage() {
   const [page, setPage] = useState(1);
   // Función para manejar cambios en los parámetros de URL
   const handleParamsChange = useCallback((newFilters: Partial<FilterState>) => {
-    setFilters(prev => ({
+    setFilters((prev) => ({
       ...prev,
-      ...newFilters
+      ...newFilters,
     }));
   }, []);
 
@@ -188,10 +188,11 @@ export default function CatalogoProductosPage() {
   ) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
     setPage(1); // Reinicia la página al cambiar filtros
-  };  const clearFilters = useCallback(() => {
+  };
+  const clearFilters = useCallback(() => {
     setFilters(initialFilters);
     setPage(1); // Reinicia la página al limpiar filtros
-    
+
     // Limpiar los parámetros de URL
     const url = new URL(window.location.href);
     url.searchParams.delete('search');
@@ -237,9 +238,12 @@ export default function CatalogoProductosPage() {
       <Suspense fallback={null}>
         <SearchParamsHandler onParamsChange={handleParamsChange} />
       </Suspense>
-      
+
       <div className="min-h-screen bg-gradient-to-b from-[#F5EFD7]/20 to-white">
-        <ProductosPageHeader /><div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">          <ProductosSearchBar
+        <ProductosPageHeader />
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+          {' '}
+          <ProductosSearchBar
             filters={filters}
             viewMode={viewMode}
             showFilters={showFilters}
@@ -247,14 +251,16 @@ export default function CatalogoProductosPage() {
             onFilterChange={handleFilterChange}
             onSortChange={handleSortChange}
             onViewModeChange={setViewMode}
-            onToggleFilters={() => setShowFilters(!showFilters)}          />
-
+            onToggleFilters={() => setShowFilters(!showFilters)}
+          />
           <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
             {showFilters && (
-              <div className={`
+              <div
+                className={`
                 lg:block
                 ${showFilters ? 'block' : 'hidden'}
-              `}>
+              `}
+              >
                 <ProductosFilters
                   filters={filters}
                   categorias={categorias}
@@ -284,7 +290,9 @@ export default function CatalogoProductosPage() {
               )}
 
               {!loading && !error && (
-                <>                  <div
+                <>
+                  {' '}
+                  <div
                     className={`${
                       viewMode === 'grid'
                         ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4 2xl:grid-cols-4 gap-6'
@@ -293,9 +301,12 @@ export default function CatalogoProductosPage() {
                   >
                     {productosFiltrados.length === 0 && (
                       <div className="col-span-full text-center text-gray-500 py-12 sm:py-16">
-                        <p className="text-sm sm:text-base">No hay productos.</p>
+                        <p className="text-sm sm:text-base">
+                          No hay productos.
+                        </p>
                       </div>
-                    )}                    {productosPagina.map((producto) => (
+                    )}{' '}
+                    {productosPagina.map((producto) =>
                       viewMode === 'grid' ? (
                         <CatalogoCard
                           key={producto.id}
@@ -315,9 +326,8 @@ export default function CatalogoProductosPage() {
                           onQuickView={handleQuickView}
                         />
                       )
-                    ))}
+                    )}
                   </div>
-                  
                   {/* Paginación tipo "3 OF 10" */}
                   {totalPages > 1 && (
                     <div className="flex justify-center items-center mt-10">
@@ -328,16 +338,41 @@ export default function CatalogoProductosPage() {
                           disabled={page === 1}
                           aria-label="Página anterior"
                         >
-                          <span className="inline-block align-middle" style={{ color: '#CC9F53' }}>&#60;</span>
+                          <span
+                            className="inline-block align-middle"
+                            style={{ color: '#CC9F53' }}
+                          >
+                            &#60;
+                          </span>
                         </button>
-                        <span className="font-poppins font-semibold text-base text-[#2d2418] tracking-wide select-none" style={{ minWidth: 70, textAlign: 'center', letterSpacing: '0.08em' }}>{page} <span className="text-[#CC9F53] font-semibold uppercase tracking-widest">OF</span> {totalPages}</span>
+                        <span
+                          className="font-poppins font-semibold text-base text-[#2d2418] tracking-wide select-none"
+                          style={{
+                            minWidth: 70,
+                            textAlign: 'center',
+                            letterSpacing: '0.08em',
+                          }}
+                        >
+                          {page}{' '}
+                          <span className="text-[#CC9F53] font-semibold uppercase tracking-widest">
+                            OF
+                          </span>{' '}
+                          {totalPages}
+                        </span>
                         <button
                           className="w-8 h-8 flex items-center justify-center rounded-full border-none text-[#CC9F53] hover:bg-[#FFF9EC] transition disabled:opacity-40 disabled:cursor-not-allowed text-xl"
-                          onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                          onClick={() =>
+                            setPage((p) => Math.min(totalPages, p + 1))
+                          }
                           disabled={page === totalPages}
                           aria-label="Página siguiente"
                         >
-                          <span className="inline-block align-middle" style={{ color: '#CC9F53' }}>&#62;</span>
+                          <span
+                            className="inline-block align-middle"
+                            style={{ color: '#CC9F53' }}
+                          >
+                            &#62;
+                          </span>
                         </button>
                       </div>
                     </div>
