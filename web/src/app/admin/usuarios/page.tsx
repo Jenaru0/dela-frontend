@@ -587,7 +587,7 @@ const UsuariosAdminPage: React.FC = () => {
                     Acciones
                   </th>
                 </tr>
-              </thead>{' '}
+              </thead>
               <tbody className="divide-y divide-[#ecd8ab]/30">
                 {usuarios.map((user) => {
                   return (
@@ -616,7 +616,7 @@ const UsuariosAdminPage: React.FC = () => {
                           <div className="flex items-center text-sm text-[#9A8C61]">
                             <Mail className="h-4 w-4 mr-2 text-[#CC9F53]" />
                             {user.email}
-                          </div>{' '}
+                          </div>
                           {user.celular && (
                             <div className="flex items-center text-sm text-[#9A8C61]">
                               <Phone className="h-4 w-4 mr-2 text-[#CC9F53]" />
@@ -636,7 +636,7 @@ const UsuariosAdminPage: React.FC = () => {
                           <Shield className="h-3 w-3 mr-1" />
                           {user.tipoUsuario === 'CLIENTE' ? 'Cliente' : 'Admin'}
                         </span>
-                      </td>{' '}
+                      </td>
                       <td className="px-6 py-4">
                         <span
                           className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
@@ -665,7 +665,6 @@ const UsuariosAdminPage: React.FC = () => {
                       </td>
                       <td className="px-6 py-4 text-right">
                         <div className="flex items-center justify-end space-x-2">
-                          {' '}
                           <Button
                             variant="ghost"
                             size="sm"
@@ -687,7 +686,7 @@ const UsuariosAdminPage: React.FC = () => {
                             className="hover:bg-[#F5E6C6]/30 hover:text-[#CC9F53] transition-colors duration-200"
                           >
                             <Edit className="h-4 w-4" />
-                          </Button>{' '}
+                          </Button>
                           <Button
                             variant="ghost"
                             size="sm"
@@ -707,7 +706,7 @@ const UsuariosAdminPage: React.FC = () => {
                               <UserX className="h-4 w-4" />
                             ) : (
                               <UserCheck className="h-4 w-4" />
-                            )}{' '}
+                            )}
                           </Button>
                         </div>
                       </td>
@@ -725,7 +724,7 @@ const UsuariosAdminPage: React.FC = () => {
           <div className="flex items-center justify-between">
             <div className="text-sm text-[#9A8C61]">
               Mostrando {(currentPage - 1) * itemsPerPage + 1} a{' '}
-              {Math.min(currentPage * itemsPerPage, totalUsers)} de {totalUsers}{' '}
+              {Math.min(currentPage * itemsPerPage, totalUsers)} de {totalUsers}
               usuarios
             </div>
             <div className="flex items-center space-x-2">
@@ -797,13 +796,13 @@ const UsuariosAdminPage: React.FC = () => {
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
         onSave={handleCreateUser}
-      />{' '}
+      />
       <EditUserModal
         usuario={selectedUser}
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
         onSave={handleUpdateUser}
-      />{' '}
+      />
       {/* User Detail Modal */}
       {selectedUser && (
         <EnhancedUserDetailModal

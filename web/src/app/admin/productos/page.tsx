@@ -859,7 +859,7 @@ const ProductosAdminPage: React.FC = () => {
           </div>
         </div>
       </div>{' '}
-      {/* Products Table */}{' '}
+      {/* Products Table */}
       <div className="bg-white rounded-xl shadow-sm border border-[#ecd8ab]/30 overflow-hidden relative">
         {isLoading ? (
           <div className="p-8 text-center">
@@ -1144,7 +1144,8 @@ const ProductosAdminPage: React.FC = () => {
           </div>
         </div>
       )}
-      {/* TODO: Agregar modales cuando estén implementados */}{' '}      {isCreateModalOpen && (
+      {/* TODO: Agregar modales cuando estén implementados */}
+      {isCreateModalOpen && (
         <CreateProductoModal
           isOpen={isCreateModalOpen}
           onClose={() => setIsCreateModalOpen(false)}
@@ -1175,7 +1176,7 @@ const ProductosAdminPage: React.FC = () => {
             }
           }}
         />
-      )}{' '}
+      )}
       {isViewModalOpen && selectedProducto && (
         <EnhancedProductoDetailModal
           isOpen={isViewModalOpen}
