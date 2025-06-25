@@ -472,7 +472,7 @@ const ProductosAdminPage: React.FC = () => {
             Crear Producto
           </Button>
         </div>
-      </div>{' '}
+      </div>
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-7 gap-4">        <div
           className={`bg-white rounded-xl p-4 shadow-sm border transition-all duration-200 cursor-pointer ${
@@ -631,7 +631,7 @@ const ProductosAdminPage: React.FC = () => {
               </p>
             </div>
           </div>
-        </div>{' '}
+        </div>
         <div
           className={`bg-white rounded-xl p-4 shadow-sm border transition-all duration-200 cursor-pointer ${
             filters.stock === 'sin_stock'
@@ -706,7 +706,7 @@ const ProductosAdminPage: React.FC = () => {
               </p>
             </div>
           </div>
-        </div>{' '}
+        </div>
         <div
           className={`bg-white rounded-xl p-4 shadow-sm border transition-all duration-200 cursor-pointer ${
             filters.stock === 'stock_bajo'
@@ -858,7 +858,7 @@ const ProductosAdminPage: React.FC = () => {
             )}
           </div>
         </div>
-      </div>{' '}
+      </div>
       {/* Products Table */}
       <div className="bg-white rounded-xl shadow-sm border border-[#ecd8ab]/30 overflow-hidden relative">
         {isLoading ? (
@@ -979,7 +979,7 @@ const ProductosAdminPage: React.FC = () => {
                               </span>
                             )}
                         </div>
-                      </td>{' '}
+                      </td>
                       <td className="px-6 py-4">
                         <span
                           className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
@@ -1002,7 +1002,6 @@ const ProductosAdminPage: React.FC = () => {
                         </span>
                       </td>
                       <td className="px-6 py-4">
-                        {' '}
                         <span
                           className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                             producto.estado === 'ACTIVO'
@@ -1021,7 +1020,6 @@ const ProductosAdminPage: React.FC = () => {
                       </td>
                       <td className="px-6 py-4 text-right">
                         <div className="flex items-center justify-end space-x-2">
-                          {' '}
                           <Button
                             variant="ghost"
                             size="sm"
