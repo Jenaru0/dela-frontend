@@ -3,21 +3,29 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/input';
-import { 
-  Package, 
-  Search, 
-  Eye, 
-  Edit, 
-  CheckCircle, 
+import {
+  Package,
+  Search,
+  Eye,
+  Edit,
+  CheckCircle,
   AlertCircle,
   Clock,
   Truck,
   XCircle,
   User,
-  X
+  X,
 } from 'lucide-react';
 import { pedidosService, Pedido } from '@/services/pedidos.service';
-import { EstadoPedido, EstadoPedidoLabels, EstadoPedidoColors, MetodoPago, MetodoPagoLabels, MetodoEnvio, MetodoEnvioLabels } from '@/types/enums';
+import {
+  EstadoPedido,
+  EstadoPedidoLabels,
+  EstadoPedidoColors,
+  MetodoPago,
+  MetodoPagoLabels,
+  MetodoEnvio,
+  MetodoEnvioLabels,
+} from '@/types/enums';
 import EnhancedPedidoDetailModal from '@/components/admin/modals/orders/EnhancedPedidoDetailModal';
 import PedidoChangeStatusModal from '@/components/admin/modals/orders/PedidoChangeStatusModal';
 
@@ -34,7 +42,7 @@ const PedidosAdminPage: React.FC = () => {
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
   const [allPedidos, setAllPedidos] = useState<Pedido[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  
+
   // Paginación
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -51,7 +59,8 @@ const PedidosAdminPage: React.FC = () => {
     fechaFin: '',
   });
   const [allFilteredPedidos, setAllFilteredPedidos] = useState<Pedido[]>([]);
-  const [isUsingFrontendPagination, setIsUsingFrontendPagination] = useState(false);
+  const [isUsingFrontendPagination, setIsUsingFrontendPagination] =
+    useState(false);
   const [notification, setNotification] = useState<{
     type: 'success' | 'error';
     message: string;
@@ -85,46 +94,61 @@ const PedidosAdminPage: React.FC = () => {
 
   const handleStatusChanged = async () => {
     // Recargar los datos después de cambiar el estado
-    await loadOrders(currentPage, filters.search, filters.estado, filters.fechaInicio, filters.fechaFin);
+    await loadOrders(
+      currentPage,
+      filters.search,
+      filters.estado,
+      filters.fechaInicio,
+      filters.fechaFin
+    );
     await loadAllOrders();
     showNotification('success', 'Estado del pedido actualizado correctamente');
   };
 
   // Cargar pedidos con paginación
-  const loadOrders = useCallback(async (page = 1, search = '', estado = '', fechaInicio = '', fechaFin = '') => {
-    try {
-      setIsLoading(true);
-      
-      if (isUsingFrontendPagination) {
-        // Usar datos ya filtrados en frontend
-        const startIndex = (page - 1) * itemsPerPage;
-        const endIndex = startIndex + itemsPerPage;
-        setPedidos(allFilteredPedidos.slice(startIndex, endIndex));
-        setTotalPages(Math.ceil(allFilteredPedidos.length / itemsPerPage));
-        setTotalItems(allFilteredPedidos.length);
-      } else {
-        // Usar paginación del backend
-        const response = await pedidosService.obtenerConPaginacion(
-          page, 
-          itemsPerPage, 
-          search, 
-          estado as EstadoPedido, 
-          fechaInicio, 
-          fechaFin
-        );
-        setPedidos(response.data);
-        setTotalPages(response.totalPages);
-        setTotalItems(response.total);
-        setCurrentPage(response.page);
+  const loadOrders = useCallback(
+    async (
+      page = 1,
+      search = '',
+      estado = '',
+      fechaInicio = '',
+      fechaFin = ''
+    ) => {
+      try {
+        setIsLoading(true);
+
+        if (isUsingFrontendPagination) {
+          // Usar datos ya filtrados en frontend
+          const startIndex = (page - 1) * itemsPerPage;
+          const endIndex = startIndex + itemsPerPage;
+          setPedidos(allFilteredPedidos.slice(startIndex, endIndex));
+          setTotalPages(Math.ceil(allFilteredPedidos.length / itemsPerPage));
+          setTotalItems(allFilteredPedidos.length);
+        } else {
+          // Usar paginación del backend
+          const response = await pedidosService.obtenerConPaginacion(
+            page,
+            itemsPerPage,
+            search,
+            estado as EstadoPedido,
+            fechaInicio,
+            fechaFin
+          );
+          setPedidos(response.data);
+          setTotalPages(response.totalPages);
+          setTotalItems(response.total);
+          setCurrentPage(response.page);
+        }
+      } catch (error) {
+        console.error('Error al cargar pedidos:', error);
+        showNotification('error', 'Error al cargar pedidos');
+        setPedidos([]);
+      } finally {
+        setIsLoading(false);
       }
-    } catch (error) {
-      console.error('Error al cargar pedidos:', error);
-      showNotification('error', 'Error al cargar pedidos');
-      setPedidos([]);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [isUsingFrontendPagination, allFilteredPedidos, itemsPerPage]);  // Cargar todos los pedidos para estadísticas y filtros especiales
+    },
+    [isUsingFrontendPagination, allFilteredPedidos, itemsPerPage]
+  ); // Cargar todos los pedidos para estadísticas y filtros especiales
   const loadAllOrders = useCallback(async () => {
     try {
       console.log('🔍 Cargando todos los pedidos para estadísticas...');
@@ -138,115 +162,168 @@ const PedidosAdminPage: React.FC = () => {
       console.error('❌ Error al cargar todos los pedidos:', error);
       setAllPedidos([]); // Asegurar que siempre sea un array
     }
-  }, []);  // Manejar cambio de filtros
-  const handleFilterChange = useCallback(async (newFilters: FilterState) => {
-    console.log('🔍 Aplicando filtros:', newFilters);
-    setFilters(newFilters);
-    setCurrentPage(1);
-
-    // Si hay filtros especiales (método pago, fechas), usar paginación frontend
-    const hasSpecialFilters = newFilters.metodoPago !== '' || newFilters.metodoEnvio !== '' || newFilters.fechaInicio !== '' || newFilters.fechaFin !== '';
-    
-    if (hasSpecialFilters) {
-      console.log('📋 Usando filtros especiales en frontend');
-      
-      // Si allPedidos está vacío, cargar todos los pedidos primero
-      let allPedidosData = allPedidos;
-      if (!Array.isArray(allPedidos) || allPedidos.length === 0) {
-        console.log('🔄 Cargando todos los pedidos para filtrar...');
-        try {
-          const response = await pedidosService.obtenerTodosAdmin();
-          allPedidosData = Array.isArray(response.data) ? response.data : [];
-          setAllPedidos(allPedidosData);
-          console.log('✅ Pedidos cargados para filtrar:', allPedidosData.length);
-        } catch (error) {
-          console.error('❌ Error al cargar pedidos para filtrar:', error);
-          allPedidosData = [];
-        }
-      }
-      
-      console.log('📋 Datos disponibles para filtrar:', allPedidosData.length);
-      let filtered = [...allPedidosData];
-      
-      // Filtro de estado
-      if (newFilters.estado) {
-        filtered = filtered.filter(pedido => pedido.estado === newFilters.estado);
-        console.log('🎯 Después de filtro estado:', filtered.length);
-      }
-      
-      // Filtro de método de pago
-      if (newFilters.metodoPago) {
-        console.log('💳 Filtrando por método de pago:', newFilters.metodoPago);
-        console.log('💳 Métodos de pago disponibles:', allPedidosData.map(p => p.metodoPago).filter((v, i, a) => a.indexOf(v) === i));
-        filtered = filtered.filter(pedido => {
-          console.log(`💳 Comparando: ${pedido.metodoPago} === ${newFilters.metodoPago}`);
-          return pedido.metodoPago === newFilters.metodoPago;
-        });
-        console.log('💳 Después de filtro método pago:', filtered.length);
-      }
-
-      // Filtro de método de envío
-      if (newFilters.metodoEnvio) {
-        console.log('🚚 Filtrando por método de envío:', newFilters.metodoEnvio);
-        console.log('🚚 Métodos de envío disponibles:', allPedidosData.map(p => p.metodoEnvio).filter((v, i, a) => a.indexOf(v) === i));
-        filtered = filtered.filter(pedido => {
-          console.log(`🚚 Comparando: ${pedido.metodoEnvio} === ${newFilters.metodoEnvio}`);
-          return pedido.metodoEnvio === newFilters.metodoEnvio;
-        });
-        console.log('🚚 Después de filtro método envío:', filtered.length);
-      }
-        // Filtro de fechas
-      if (newFilters.fechaInicio) {
-        const fechaInicio = new Date(newFilters.fechaInicio);
-        fechaInicio.setHours(0, 0, 0, 0); // Inicio del día
-        filtered = filtered.filter(pedido => {
-          const fechaPedido = new Date(pedido.creadoEn);
-          fechaPedido.setHours(0, 0, 0, 0); // Normalizar para comparar solo fecha
-          return fechaPedido >= fechaInicio;
-        });
-        console.log('📅 Después de filtro fecha inicio:', filtered.length);
-      }
-      
-      if (newFilters.fechaFin) {
-        const fechaFin = new Date(newFilters.fechaFin);
-        fechaFin.setHours(23, 59, 59, 999); // Final del día
-        filtered = filtered.filter(pedido => {
-          const fechaPedido = new Date(pedido.creadoEn);
-          return fechaPedido <= fechaFin;
-        });
-        console.log('📅 Después de filtro fecha fin:', filtered.length);
-      }
-      
-      // Filtro de búsqueda local
-      if (newFilters.search) {
-        filtered = filtered.filter(pedido =>
-          pedido.numero.toLowerCase().includes(newFilters.search.toLowerCase()) ||
-          (pedido.usuario?.nombres && pedido.usuario.nombres.toLowerCase().includes(newFilters.search.toLowerCase())) ||
-          (pedido.usuario?.apellidos && pedido.usuario.apellidos.toLowerCase().includes(newFilters.search.toLowerCase())) ||
-          (pedido.usuario?.email && pedido.usuario.email.toLowerCase().includes(newFilters.search.toLowerCase()))
-        );
-        console.log('🔍 Después de filtro búsqueda:', filtered.length);
-      }
-      
-      console.log('✅ Resultados finales filtrados:', filtered.length);
-      setAllFilteredPedidos(filtered);
-      setIsUsingFrontendPagination(true);
-      
-      // Mostrar primera página de resultados filtrados
-      const startIndex = 0;
-      const endIndex = itemsPerPage;
-      setPedidos(filtered.slice(startIndex, endIndex));
-      setTotalPages(Math.ceil(filtered.length / itemsPerPage));
-      setTotalItems(filtered.length);
+  }, []); // Manejar cambio de filtros
+  const handleFilterChange = useCallback(
+    async (newFilters: FilterState) => {
+      console.log('🔍 Aplicando filtros:', newFilters);
+      setFilters(newFilters);
       setCurrentPage(1);
-      setIsLoading(false);
-    } else {
-      // Solo búsqueda simple y estado, usar backend
-      console.log('🔄 Usando filtros simples en backend');
-      setIsUsingFrontendPagination(false);
-      await loadOrders(1, newFilters.search, newFilters.estado, newFilters.fechaInicio, newFilters.fechaFin);
-    }
-  }, [allPedidos, itemsPerPage, loadOrders]);
+
+      // Si hay filtros especiales (método pago, fechas), usar paginación frontend
+      const hasSpecialFilters =
+        newFilters.metodoPago !== '' ||
+        newFilters.metodoEnvio !== '' ||
+        newFilters.fechaInicio !== '' ||
+        newFilters.fechaFin !== '';
+
+      if (hasSpecialFilters) {
+        console.log('📋 Usando filtros especiales en frontend');
+
+        // Si allPedidos está vacío, cargar todos los pedidos primero
+        let allPedidosData = allPedidos;
+        if (!Array.isArray(allPedidos) || allPedidos.length === 0) {
+          console.log('🔄 Cargando todos los pedidos para filtrar...');
+          try {
+            const response = await pedidosService.obtenerTodosAdmin();
+            allPedidosData = Array.isArray(response.data) ? response.data : [];
+            setAllPedidos(allPedidosData);
+            console.log(
+              '✅ Pedidos cargados para filtrar:',
+              allPedidosData.length
+            );
+          } catch (error) {
+            console.error('❌ Error al cargar pedidos para filtrar:', error);
+            allPedidosData = [];
+          }
+        }
+
+        console.log(
+          '📋 Datos disponibles para filtrar:',
+          allPedidosData.length
+        );
+        let filtered = [...allPedidosData];
+
+        // Filtro de estado
+        if (newFilters.estado) {
+          filtered = filtered.filter(
+            (pedido) => pedido.estado === newFilters.estado
+          );
+          console.log('🎯 Después de filtro estado:', filtered.length);
+        }
+
+        // Filtro de método de pago
+        if (newFilters.metodoPago) {
+          console.log(
+            '💳 Filtrando por método de pago:',
+            newFilters.metodoPago
+          );
+          console.log(
+            '💳 Métodos de pago disponibles:',
+            allPedidosData
+              .map((p) => p.metodoPago)
+              .filter((v, i, a) => a.indexOf(v) === i)
+          );
+          filtered = filtered.filter((pedido) => {
+            console.log(
+              `💳 Comparando: ${pedido.metodoPago} === ${newFilters.metodoPago}`
+            );
+            return pedido.metodoPago === newFilters.metodoPago;
+          });
+          console.log('💳 Después de filtro método pago:', filtered.length);
+        }
+
+        // Filtro de método de envío
+        if (newFilters.metodoEnvio) {
+          console.log(
+            '🚚 Filtrando por método de envío:',
+            newFilters.metodoEnvio
+          );
+          console.log(
+            '🚚 Métodos de envío disponibles:',
+            allPedidosData
+              .map((p) => p.metodoEnvio)
+              .filter((v, i, a) => a.indexOf(v) === i)
+          );
+          filtered = filtered.filter((pedido) => {
+            console.log(
+              `🚚 Comparando: ${pedido.metodoEnvio} === ${newFilters.metodoEnvio}`
+            );
+            return pedido.metodoEnvio === newFilters.metodoEnvio;
+          });
+          console.log('🚚 Después de filtro método envío:', filtered.length);
+        }
+        // Filtro de fechas
+        if (newFilters.fechaInicio) {
+          const fechaInicio = new Date(newFilters.fechaInicio);
+          fechaInicio.setHours(0, 0, 0, 0); // Inicio del día
+          filtered = filtered.filter((pedido) => {
+            const fechaPedido = new Date(pedido.creadoEn);
+            fechaPedido.setHours(0, 0, 0, 0); // Normalizar para comparar solo fecha
+            return fechaPedido >= fechaInicio;
+          });
+          console.log('📅 Después de filtro fecha inicio:', filtered.length);
+        }
+
+        if (newFilters.fechaFin) {
+          const fechaFin = new Date(newFilters.fechaFin);
+          fechaFin.setHours(23, 59, 59, 999); // Final del día
+          filtered = filtered.filter((pedido) => {
+            const fechaPedido = new Date(pedido.creadoEn);
+            return fechaPedido <= fechaFin;
+          });
+          console.log('📅 Después de filtro fecha fin:', filtered.length);
+        }
+
+        // Filtro de búsqueda local
+        if (newFilters.search) {
+          filtered = filtered.filter(
+            (pedido) =>
+              pedido.numero
+                .toLowerCase()
+                .includes(newFilters.search.toLowerCase()) ||
+              (pedido.usuario?.nombres &&
+                pedido.usuario.nombres
+                  .toLowerCase()
+                  .includes(newFilters.search.toLowerCase())) ||
+              (pedido.usuario?.apellidos &&
+                pedido.usuario.apellidos
+                  .toLowerCase()
+                  .includes(newFilters.search.toLowerCase())) ||
+              (pedido.usuario?.email &&
+                pedido.usuario.email
+                  .toLowerCase()
+                  .includes(newFilters.search.toLowerCase()))
+          );
+          console.log('🔍 Después de filtro búsqueda:', filtered.length);
+        }
+
+        console.log('✅ Resultados finales filtrados:', filtered.length);
+        setAllFilteredPedidos(filtered);
+        setIsUsingFrontendPagination(true);
+
+        // Mostrar primera página de resultados filtrados
+        const startIndex = 0;
+        const endIndex = itemsPerPage;
+        setPedidos(filtered.slice(startIndex, endIndex));
+        setTotalPages(Math.ceil(filtered.length / itemsPerPage));
+        setTotalItems(filtered.length);
+        setCurrentPage(1);
+        setIsLoading(false);
+      } else {
+        // Solo búsqueda simple y estado, usar backend
+        console.log('🔄 Usando filtros simples en backend');
+        setIsUsingFrontendPagination(false);
+        await loadOrders(
+          1,
+          newFilters.search,
+          newFilters.estado,
+          newFilters.fechaInicio,
+          newFilters.fechaFin
+        );
+      }
+    },
+    [allPedidos, itemsPerPage, loadOrders]
+  );
 
   // Limpiar filtros
   const clearFilters = useCallback(() => {
@@ -265,40 +342,69 @@ const PedidosAdminPage: React.FC = () => {
 
   // Contar filtros activos
   const activeFiltersCount = useMemo(() => {
-    return Object.values(filters).filter(value => value !== '' && value !== undefined).length;
+    return Object.values(filters).filter(
+      (value) => value !== '' && value !== undefined
+    ).length;
   }, [filters]);
 
   // Cambiar página
-  const handlePageChange = useCallback((page: number) => {
-    setCurrentPage(page);
-    if (isUsingFrontendPagination) {
-      const startIndex = (page - 1) * itemsPerPage;
-      const endIndex = startIndex + itemsPerPage;
-      setPedidos(allFilteredPedidos.slice(startIndex, endIndex));
-    } else {
-      loadOrders(page, filters.search, filters.estado, filters.fechaInicio, filters.fechaFin);
-    }
-  }, [isUsingFrontendPagination, allFilteredPedidos, itemsPerPage, loadOrders, filters]);
+  const handlePageChange = useCallback(
+    (page: number) => {
+      setCurrentPage(page);
+      if (isUsingFrontendPagination) {
+        const startIndex = (page - 1) * itemsPerPage;
+        const endIndex = startIndex + itemsPerPage;
+        setPedidos(allFilteredPedidos.slice(startIndex, endIndex));
+      } else {
+        loadOrders(
+          page,
+          filters.search,
+          filters.estado,
+          filters.fechaInicio,
+          filters.fechaFin
+        );
+      }
+    },
+    [
+      isUsingFrontendPagination,
+      allFilteredPedidos,
+      itemsPerPage,
+      loadOrders,
+      filters,
+    ]
+  );
 
   // Función para filtrar por estado desde las tarjetas
-  const handleFilterByEstado = useCallback((estado: string) => {
-    const newFilters = {
-      ...filters,
-      estado: filters.estado === estado ? '' : estado, // Toggle: si ya está seleccionado, quitar filtro
-      search: '', // Limpiar búsqueda al usar filtro rápido
-    };
-    setFilters(newFilters);
-    handleFilterChange(newFilters);
-  }, [filters, handleFilterChange]);
+  const handleFilterByEstado = useCallback(
+    (estado: string) => {
+      const newFilters = {
+        ...filters,
+        estado: filters.estado === estado ? '' : estado, // Toggle: si ya está seleccionado, quitar filtro
+        search: '', // Limpiar búsqueda al usar filtro rápido
+      };
+      setFilters(newFilters);
+      handleFilterChange(newFilters);
+    },
+    [filters, handleFilterChange]
+  );
 
   // Cambiar estado del pedido
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleChangeStatus = async (id: number, newEstado: EstadoPedido) => {
     try {
       await pedidosService.cambiarEstado(id, newEstado);
-      await loadOrders(currentPage, filters.search, filters.estado, filters.fechaInicio, filters.fechaFin);
+      await loadOrders(
+        currentPage,
+        filters.search,
+        filters.estado,
+        filters.fechaInicio,
+        filters.fechaFin
+      );
       await loadAllOrders();
-      showNotification('success', 'Estado del pedido actualizado correctamente');
+      showNotification(
+        'success',
+        'Estado del pedido actualizado correctamente'
+      );
     } catch (error) {
       console.error('Error al cambiar estado:', error);
       showNotification('error', 'Error al cambiar estado del pedido');
@@ -337,11 +443,13 @@ const PedidosAdminPage: React.FC = () => {
     <div className="space-y-6">
       {/* Notification */}
       {notification && (
-        <div className={`fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg ${
-          notification.type === 'success' 
-            ? 'bg-emerald-50 border border-emerald-200 text-emerald-800' 
-            : 'bg-red-50 border border-red-200 text-red-800'
-        }`}>
+        <div
+          className={`fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg ${
+            notification.type === 'success'
+              ? 'bg-emerald-50 border border-emerald-200 text-emerald-800'
+              : 'bg-red-50 border border-red-200 text-red-800'
+          }`}
+        >
           <div className="flex items-center">
             {notification.type === 'success' ? (
               <CheckCircle className="h-5 w-5 mr-2" />
@@ -352,22 +460,24 @@ const PedidosAdminPage: React.FC = () => {
           </div>
         </div>
       )}
-
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-[#3A3A3A]">Gestión de Pedidos</h1>
+          <h1 className="text-3xl font-bold text-[#3A3A3A]">
+            Gestión de Pedidos
+          </h1>
           <p className="text-[#9A8C61] mt-1">
             Administra todos los pedidos del sistema y su estado de entrega
           </p>
         </div>
-      </div>      {/* Stats Cards */}
+      </div>{' '}
+      {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-7 gap-4">
         <button
           onClick={() => handleFilterByEstado('')}
           className={`bg-white rounded-xl p-4 shadow-sm border transition-all duration-200 text-left transform hover:scale-105 ${
-            filters.estado === '' 
-              ? 'border-[#CC9F53] bg-[#F5E6C6]/20 shadow-md' 
+            filters.estado === ''
+              ? 'border-[#CC9F53] bg-[#F5E6C6]/20 shadow-md'
               : 'border-[#ecd8ab]/30 hover:border-[#CC9F53]/50 hover:shadow-md'
           }`}
           title="Ver todos los pedidos"
@@ -375,7 +485,7 @@ const PedidosAdminPage: React.FC = () => {
           <div className="flex items-center">
             <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
               <Package className="w-5 h-5 text-blue-600" />
-            </div>            
+            </div>
             <div className="ml-3">
               <p className="text-xs font-medium text-[#9A8C61]">Total</p>
               <p className="text-xl font-bold text-[#3A3A3A]">
@@ -387,8 +497,8 @@ const PedidosAdminPage: React.FC = () => {
         <button
           onClick={() => handleFilterByEstado('PENDIENTE')}
           className={`bg-white rounded-xl p-4 shadow-sm border transition-all duration-200 text-left transform hover:scale-105 ${
-            filters.estado === 'PENDIENTE' 
-              ? 'border-[#CC9F53] bg-[#F5E6C6]/20 shadow-md' 
+            filters.estado === 'PENDIENTE'
+              ? 'border-[#CC9F53] bg-[#F5E6C6]/20 shadow-md'
               : 'border-[#ecd8ab]/30 hover:border-[#CC9F53]/50 hover:shadow-md'
           }`}
           title="Filtrar pedidos pendientes"
@@ -400,7 +510,9 @@ const PedidosAdminPage: React.FC = () => {
             <div className="ml-3">
               <p className="text-xs font-medium text-[#9A8C61]">Pendientes</p>
               <p className="text-xl font-bold text-[#3A3A3A]">
-                {Array.isArray(allPedidos) ? allPedidos.filter(p => p.estado === 'PENDIENTE').length : 0}
+                {Array.isArray(allPedidos)
+                  ? allPedidos.filter((p) => p.estado === 'PENDIENTE').length
+                  : 0}
               </p>
             </div>
           </div>
@@ -408,8 +520,8 @@ const PedidosAdminPage: React.FC = () => {
         <button
           onClick={() => handleFilterByEstado('CONFIRMADO')}
           className={`bg-white rounded-xl p-4 shadow-sm border transition-all duration-200 text-left transform hover:scale-105 ${
-            filters.estado === 'CONFIRMADO' 
-              ? 'border-[#CC9F53] bg-[#F5E6C6]/20 shadow-md' 
+            filters.estado === 'CONFIRMADO'
+              ? 'border-[#CC9F53] bg-[#F5E6C6]/20 shadow-md'
               : 'border-[#ecd8ab]/30 hover:border-[#CC9F53]/50 hover:shadow-md'
           }`}
           title="Filtrar pedidos confirmados"
@@ -421,7 +533,9 @@ const PedidosAdminPage: React.FC = () => {
             <div className="ml-3">
               <p className="text-xs font-medium text-[#9A8C61]">Confirmados</p>
               <p className="text-xl font-bold text-[#3A3A3A]">
-                {Array.isArray(allPedidos) ? allPedidos.filter(p => p.estado === 'CONFIRMADO').length : 0}
+                {Array.isArray(allPedidos)
+                  ? allPedidos.filter((p) => p.estado === 'CONFIRMADO').length
+                  : 0}
               </p>
             </div>
           </div>
@@ -429,8 +543,8 @@ const PedidosAdminPage: React.FC = () => {
         <button
           onClick={() => handleFilterByEstado('PROCESANDO')}
           className={`bg-white rounded-xl p-4 shadow-sm border transition-all duration-200 text-left transform hover:scale-105 ${
-            filters.estado === 'PROCESANDO' 
-              ? 'border-[#CC9F53] bg-[#F5E6C6]/20 shadow-md' 
+            filters.estado === 'PROCESANDO'
+              ? 'border-[#CC9F53] bg-[#F5E6C6]/20 shadow-md'
               : 'border-[#ecd8ab]/30 hover:border-[#CC9F53]/50 hover:shadow-md'
           }`}
           title="Filtrar pedidos en procesamiento"
@@ -442,7 +556,9 @@ const PedidosAdminPage: React.FC = () => {
             <div className="ml-3">
               <p className="text-xs font-medium text-[#9A8C61]">Procesando</p>
               <p className="text-xl font-bold text-[#3A3A3A]">
-                {Array.isArray(allPedidos) ? allPedidos.filter(p => p.estado === 'PROCESANDO').length : 0}
+                {Array.isArray(allPedidos)
+                  ? allPedidos.filter((p) => p.estado === 'PROCESANDO').length
+                  : 0}
               </p>
             </div>
           </div>
@@ -450,8 +566,8 @@ const PedidosAdminPage: React.FC = () => {
         <button
           onClick={() => handleFilterByEstado('ENVIADO')}
           className={`bg-white rounded-xl p-4 shadow-sm border transition-all duration-200 text-left transform hover:scale-105 ${
-            filters.estado === 'ENVIADO' 
-              ? 'border-[#CC9F53] bg-[#F5E6C6]/20 shadow-md' 
+            filters.estado === 'ENVIADO'
+              ? 'border-[#CC9F53] bg-[#F5E6C6]/20 shadow-md'
               : 'border-[#ecd8ab]/30 hover:border-[#CC9F53]/50 hover:shadow-md'
           }`}
           title="Filtrar pedidos enviados"
@@ -463,7 +579,9 @@ const PedidosAdminPage: React.FC = () => {
             <div className="ml-3">
               <p className="text-xs font-medium text-[#9A8C61]">Enviados</p>
               <p className="text-xl font-bold text-[#3A3A3A]">
-                {Array.isArray(allPedidos) ? allPedidos.filter(p => p.estado === 'ENVIADO').length : 0}
+                {Array.isArray(allPedidos)
+                  ? allPedidos.filter((p) => p.estado === 'ENVIADO').length
+                  : 0}
               </p>
             </div>
           </div>
@@ -471,8 +589,8 @@ const PedidosAdminPage: React.FC = () => {
         <button
           onClick={() => handleFilterByEstado('ENTREGADO')}
           className={`bg-white rounded-xl p-4 shadow-sm border transition-all duration-200 text-left transform hover:scale-105 ${
-            filters.estado === 'ENTREGADO' 
-              ? 'border-[#CC9F53] bg-[#F5E6C6]/20 shadow-md' 
+            filters.estado === 'ENTREGADO'
+              ? 'border-[#CC9F53] bg-[#F5E6C6]/20 shadow-md'
               : 'border-[#ecd8ab]/30 hover:border-[#CC9F53]/50 hover:shadow-md'
           }`}
           title="Filtrar pedidos entregados"
@@ -484,7 +602,9 @@ const PedidosAdminPage: React.FC = () => {
             <div className="ml-3">
               <p className="text-xs font-medium text-[#9A8C61]">Entregados</p>
               <p className="text-xl font-bold text-[#3A3A3A]">
-                {Array.isArray(allPedidos) ? allPedidos.filter(p => p.estado === 'ENTREGADO').length : 0}
+                {Array.isArray(allPedidos)
+                  ? allPedidos.filter((p) => p.estado === 'ENTREGADO').length
+                  : 0}
               </p>
             </div>
           </div>
@@ -492,8 +612,8 @@ const PedidosAdminPage: React.FC = () => {
         <button
           onClick={() => handleFilterByEstado('CANCELADO')}
           className={`bg-white rounded-xl p-4 shadow-sm border transition-all duration-200 text-left transform hover:scale-105 ${
-            filters.estado === 'CANCELADO' 
-              ? 'border-[#CC9F53] bg-[#F5E6C6]/20 shadow-md' 
+            filters.estado === 'CANCELADO'
+              ? 'border-[#CC9F53] bg-[#F5E6C6]/20 shadow-md'
               : 'border-[#ecd8ab]/30 hover:border-[#CC9F53]/50 hover:shadow-md'
           }`}
           title="Filtrar pedidos cancelados"
@@ -505,12 +625,15 @@ const PedidosAdminPage: React.FC = () => {
             <div className="ml-3">
               <p className="text-xs font-medium text-[#9A8C61]">Cancelados</p>
               <p className="text-xl font-bold text-[#3A3A3A]">
-                {Array.isArray(allPedidos) ? allPedidos.filter(p => p.estado === 'CANCELADO').length : 0}
+                {Array.isArray(allPedidos)
+                  ? allPedidos.filter((p) => p.estado === 'CANCELADO').length
+                  : 0}
               </p>
             </div>
           </div>
         </button>
-      </div>        {/* Filtros */}
+      </div>{' '}
+      {/* Filtros */}
       <div className="bg-white rounded-xl p-6 shadow-sm border border-[#ecd8ab]/30">
         <div className="grid grid-cols-1 lg:grid-cols-7 gap-4">
           {/* Búsqueda */}
@@ -533,7 +656,6 @@ const PedidosAdminPage: React.FC = () => {
               />
             </div>
           </div>
-          
           {/* Filtro Estado */}
           <div>
             <label className="block text-xs font-medium text-[#9A8C61] mb-1">
@@ -557,7 +679,6 @@ const PedidosAdminPage: React.FC = () => {
               <option value="CANCELADO">Cancelado</option>
             </select>
           </div>
-
           {/* Filtro Método de Pago */}
           <div>
             <label className="block text-xs font-medium text-[#9A8C61] mb-1">
@@ -580,7 +701,6 @@ const PedidosAdminPage: React.FC = () => {
               ))}
             </select>
           </div>
-
           {/* Filtro Método de Envío */}
           <div>
             <label className="block text-xs font-medium text-[#9A8C61] mb-1">
@@ -603,7 +723,6 @@ const PedidosAdminPage: React.FC = () => {
               ))}
             </select>
           </div>
-
           {/* Fecha Desde */}
           <div>
             <label className="block text-xs font-medium text-[#9A8C61] mb-1">
@@ -621,7 +740,6 @@ const PedidosAdminPage: React.FC = () => {
               className="border-[#ecd8ab]/50 focus:border-[#CC9F53] focus:ring-[#CC9F53]/20 text-sm"
             />
           </div>
-
           {/* Fecha Hasta */}
           <div>
             <label className="block text-xs font-medium text-[#9A8C61] mb-1">
@@ -639,7 +757,6 @@ const PedidosAdminPage: React.FC = () => {
               className="border-[#ecd8ab]/50 focus:border-[#CC9F53] focus:ring-[#CC9F53]/20 text-sm"
             />
           </div>
-
           {/* Botón Limpiar */}
           <div className="flex items-end">
             {activeFiltersCount > 0 && (
@@ -652,18 +769,25 @@ const PedidosAdminPage: React.FC = () => {
                 Limpiar ({activeFiltersCount})
               </Button>
             )}
-          </div>        </div>
-        
+          </div>{' '}
+        </div>
+
         {/* Atajos rápidos de fechas */}
         <div className="mt-4 pt-4 border-t border-[#ecd8ab]/30">
           <div className="flex flex-wrap items-center gap-3">
-            <span className="text-sm text-[#9A8C61] font-medium">Atajos rápidos:</span>
+            <span className="text-sm text-[#9A8C61] font-medium">
+              Atajos rápidos:
+            </span>
             <div className="flex flex-wrap gap-2">
               <button
                 type="button"
                 onClick={() => {
                   const today = new Date().toISOString().split('T')[0];
-                  const newFilters = { ...filters, fechaInicio: today, fechaFin: today };
+                  const newFilters = {
+                    ...filters,
+                    fechaInicio: today,
+                    fechaFin: today,
+                  };
                   setFilters(newFilters);
                   handleFilterChange(newFilters);
                 }}
@@ -675,11 +799,13 @@ const PedidosAdminPage: React.FC = () => {
                 type="button"
                 onClick={() => {
                   const today = new Date();
-                  const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
-                  const newFilters = { 
-                    ...filters, 
-                    fechaInicio: weekAgo.toISOString().split('T')[0], 
-                    fechaFin: today.toISOString().split('T')[0] 
+                  const weekAgo = new Date(
+                    today.getTime() - 7 * 24 * 60 * 60 * 1000
+                  );
+                  const newFilters = {
+                    ...filters,
+                    fechaInicio: weekAgo.toISOString().split('T')[0],
+                    fechaFin: today.toISOString().split('T')[0],
                   };
                   setFilters(newFilters);
                   handleFilterChange(newFilters);
@@ -692,11 +818,15 @@ const PedidosAdminPage: React.FC = () => {
                 type="button"
                 onClick={() => {
                   const today = new Date();
-                  const monthAgo = new Date(today.getFullYear(), today.getMonth() - 1, today.getDate());
-                  const newFilters = { 
-                    ...filters, 
-                    fechaInicio: monthAgo.toISOString().split('T')[0], 
-                    fechaFin: today.toISOString().split('T')[0] 
+                  const monthAgo = new Date(
+                    today.getFullYear(),
+                    today.getMonth() - 1,
+                    today.getDate()
+                  );
+                  const newFilters = {
+                    ...filters,
+                    fechaInicio: monthAgo.toISOString().split('T')[0],
+                    fechaFin: today.toISOString().split('T')[0],
                   };
                   setFilters(newFilters);
                   handleFilterChange(newFilters);
@@ -708,7 +838,8 @@ const PedidosAdminPage: React.FC = () => {
             </div>
           </div>
         </div>
-      </div>{/* Orders Table */}
+      </div>
+      {/* Orders Table */}
       <div className="bg-white rounded-xl shadow-sm border border-[#ecd8ab]/30 overflow-hidden">
         {isLoading ? (
           <div className="p-8 text-center">
@@ -724,23 +855,37 @@ const PedidosAdminPage: React.FC = () => {
               {pedidos.length === 0 ? 'No hay pedidos' : 'Sin resultados'}
             </h3>
             <p className="text-[#9A8C61] mb-6">
-              {pedidos.length === 0 
+              {pedidos.length === 0
                 ? 'Aún no hay pedidos en el sistema.'
-                : 'No se encontraron pedidos que coincidan con tu búsqueda.'
-              }
+                : 'No se encontraron pedidos que coincidan con tu búsqueda.'}
             </p>
           </div>
-        ) : (          <div className="overflow-x-auto">
+        ) : (
+          <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-gradient-to-r from-[#F5E6C6]/50 to-[#FAF3E7]/30 border-b border-[#ecd8ab]">
                 <tr>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#3A3A3A]">Pedido</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#3A3A3A]">Cliente</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#3A3A3A]">Total</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#3A3A3A]">Estado</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#3A3A3A]">Pago y Envío</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#3A3A3A]">Fecha</th>
-                  <th className="px-6 py-4 text-right text-sm font-semibold text-[#3A3A3A]">Acciones</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#3A3A3A]">
+                    Pedido
+                  </th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#3A3A3A]">
+                    Cliente
+                  </th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#3A3A3A]">
+                    Total
+                  </th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#3A3A3A]">
+                    Estado
+                  </th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#3A3A3A]">
+                    Pago y Envío
+                  </th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#3A3A3A]">
+                    Fecha
+                  </th>
+                  <th className="px-6 py-4 text-right text-sm font-semibold text-[#3A3A3A]">
+                    Acciones
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#ecd8ab]/30">
@@ -752,7 +897,9 @@ const PedidosAdminPage: React.FC = () => {
                           <Package className="w-5 h-5 text-white" />
                         </div>
                         <div className="ml-3">
-                          <p className="font-medium text-[#3A3A3A]">#{pedido.numero}</p>
+                          <p className="font-medium text-[#3A3A3A]">
+                            #{pedido.numero}
+                          </p>
                           <p className="text-sm text-[#9A8C61]">
                             {pedido.detallePedidos?.length || 0} productos
                           </p>
@@ -764,22 +911,41 @@ const PedidosAdminPage: React.FC = () => {
                         <User className="w-4 h-4 text-[#CC9F53] mr-2" />
                         <div>
                           <p className="font-medium text-[#3A3A3A]">
-                            {pedido.usuario?.nombres} {pedido.usuario?.apellidos}
+                            {pedido.usuario?.nombres}{' '}
+                            {pedido.usuario?.apellidos}
                           </p>
-                          <p className="text-sm text-[#9A8C61]">{pedido.usuario?.email}</p>
+                          <p className="text-sm text-[#9A8C61]">
+                            {pedido.usuario?.email}
+                          </p>
                         </div>
-                      </div>                    </td>
+                      </div>{' '}
+                    </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center">
                         <span className="font-medium text-[#3A3A3A]">
-                          S/ {parseFloat(pedido.total?.toString() || '0').toFixed(2)}
+                          S/{' '}
+                          {parseFloat(pedido.total?.toString() || '0').toFixed(
+                            2
+                          )}
                         </span>
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${EstadoPedidoColors[pedido.estado as keyof typeof EstadoPedidoColors]}`}>
+                      <span
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          EstadoPedidoColors[
+                            pedido.estado as keyof typeof EstadoPedidoColors
+                          ]
+                        }`}
+                      >
                         {getStatusIcon(pedido.estado)}
-                        <span className="ml-1">{EstadoPedidoLabels[pedido.estado as keyof typeof EstadoPedidoLabels]}</span>
+                        <span className="ml-1">
+                          {
+                            EstadoPedidoLabels[
+                              pedido.estado as keyof typeof EstadoPedidoLabels
+                            ]
+                          }
+                        </span>
                       </span>
                     </td>
                     <td className="px-6 py-4">
@@ -787,13 +953,21 @@ const PedidosAdminPage: React.FC = () => {
                         <div className="flex items-center space-x-1">
                           <span className="text-xs text-[#9A8C61]">💳</span>
                           <span className="text-sm text-[#3A3A3A]">
-                            {MetodoPagoLabels[pedido.metodoPago as keyof typeof MetodoPagoLabels]}
+                            {
+                              MetodoPagoLabels[
+                                pedido.metodoPago as keyof typeof MetodoPagoLabels
+                              ]
+                            }
                           </span>
                         </div>
                         <div className="flex items-center space-x-1">
                           <span className="text-xs text-[#9A8C61]">🚚</span>
                           <span className="text-xs text-[#9A8C61]">
-                            {MetodoEnvioLabels[pedido.metodoEnvio as keyof typeof MetodoEnvioLabels]}
+                            {
+                              MetodoEnvioLabels[
+                                pedido.metodoEnvio as keyof typeof MetodoEnvioLabels
+                              ]
+                            }
                           </span>
                         </div>
                       </div>
@@ -802,11 +976,13 @@ const PedidosAdminPage: React.FC = () => {
                       {new Date(pedido.creadoEn).toLocaleDateString('es-PE', {
                         year: 'numeric',
                         month: 'short',
-                        day: 'numeric'
+                        day: 'numeric',
                       })}
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end space-x-2">                        <Button
+                      <div className="flex items-center justify-end space-x-2">
+                        {' '}
+                        <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => handleViewDetails(pedido)}
@@ -824,7 +1000,8 @@ const PedidosAdminPage: React.FC = () => {
                         >
                           <Edit className="h-4 w-4" />
                         </Button>
-                      </div>                    </td>
+                      </div>{' '}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -832,13 +1009,14 @@ const PedidosAdminPage: React.FC = () => {
           </div>
         )}
       </div>
-
       {/* Pagination */}
       {!isLoading && filteredOrders.length > 0 && totalPages > 1 && (
         <div className="bg-white rounded-xl p-6 shadow-sm border border-[#ecd8ab]/30">
           <div className="flex items-center justify-between">
             <div className="flex items-center text-sm text-[#9A8C61]">
-              Mostrando {((currentPage - 1) * itemsPerPage) + 1} - {Math.min(currentPage * itemsPerPage, totalItems)} de {totalItems} resultados
+              Mostrando {(currentPage - 1) * itemsPerPage + 1} -{' '}
+              {Math.min(currentPage * itemsPerPage, totalItems)} de {totalItems}{' '}
+              resultados
             </div>
             <div className="flex items-center space-x-2">
               <Button
@@ -850,27 +1028,28 @@ const PedidosAdminPage: React.FC = () => {
               >
                 Anterior
               </Button>
-              
+
               {/* Page numbers */}
               {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                const pageNumber = Math.max(1, Math.min(totalPages - 4, currentPage - 2)) + i;
+                const pageNumber =
+                  Math.max(1, Math.min(totalPages - 4, currentPage - 2)) + i;
                 return (
                   <Button
                     key={pageNumber}
-                    variant={currentPage === pageNumber ? "default" : "outline"}
+                    variant={currentPage === pageNumber ? 'default' : 'outline'}
                     size="sm"
                     onClick={() => handlePageChange(pageNumber)}
                     className={
                       currentPage === pageNumber
-                        ? "bg-[#CC9F53] text-white hover:bg-[#b08a3c]"
-                        : "border-[#ecd8ab]/50 text-[#9A8C61] hover:bg-[#F5E6C6]/30"
+                        ? 'bg-[#CC9F53] text-white hover:bg-[#b08a3c]'
+                        : 'border-[#ecd8ab]/50 text-[#9A8C61] hover:bg-[#F5E6C6]/30'
                     }
                   >
                     {pageNumber}
                   </Button>
                 );
               })}
-              
+
               <Button
                 variant="outline"
                 size="sm"
@@ -881,9 +1060,9 @@ const PedidosAdminPage: React.FC = () => {
                 Siguiente
               </Button>
             </div>
-          </div>        </div>
+          </div>{' '}
+        </div>
       )}
-
       {/* Modales */}
       {selectedPedido && (
         <>
@@ -900,11 +1079,11 @@ const PedidosAdminPage: React.FC = () => {
           />
         </>
       )}
-
       {/* Información de filtros rápidos */}
       <div className="flex items-center justify-center">
         <p className="text-sm text-[#9A8C61] bg-[#F5E6C6]/30 px-4 py-2 rounded-lg border border-[#ecd8ab]/50">
-          💡 Haz clic en cualquier tarjeta de estadísticas para filtrar por ese estado
+          💡 Haz clic en cualquier tarjeta de estadísticas para filtrar por ese
+          estado
         </p>
       </div>
     </div>

@@ -28,6 +28,17 @@ import {
   MetodoEnvioLabels,
 } from '@/types/enums';
 
+interface ProductoImagen {
+  url: string;
+  principal: boolean;
+}
+
+interface ProductoDetalle {
+  imagen?: string;
+  imagenes?: ProductoImagen[];
+  nombre?: string;
+}
+
 interface EnhancedPedidoDetailModalProps {
   pedido: Pedido;
   isOpen: boolean;
@@ -44,6 +55,33 @@ const EnhancedPedidoDetailModal: React.FC<EnhancedPedidoDetailModalProps> = ({
   const [activeTab, setActiveTab] = useState<TabType>('general');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Función para obtener la imagen principal del producto
+  const getImagenPrincipal = (producto: ProductoDetalle | null | undefined): string => {
+    // Debug: mostrar la estructura del producto
+    console.log('Producto estructura:', producto);
+
+    // Si tiene una imagen directa (caso de detalle de pedido)
+    if (producto?.imagen && typeof producto.imagen === 'string') {
+      console.log('Usando imagen directa:', producto.imagen);
+      return producto.imagen;
+    }
+
+    // Si tiene un array de imágenes (caso de producto completo)
+    if (Array.isArray(producto?.imagenes) && producto.imagenes.length > 0) {
+      const principal = producto.imagenes.find((img: ProductoImagen) => img.principal);
+      const imagenUrl =
+        principal?.url ||
+        producto.imagenes[0]?.url ||
+        '/images/product-fallback.svg';
+      console.log('Usando imagen de array:', imagenUrl);
+      return imagenUrl;
+    }
+
+    // Imagen por defecto
+    console.log('Usando imagen por defecto');
+    return '/images/product-fallback.svg';
+  };
   const loadPedidoDetails = useCallback(async () => {
     try {
       setIsLoading(true);
@@ -307,7 +345,10 @@ const EnhancedPedidoDetailModal: React.FC<EnhancedPedidoDetailModalProps> = ({
                                   {pedido.promocionCodigo}
                                 </span>
                                 <span className="text-sm text-green-600 font-medium">
-                                  -{formatCurrency(Number(pedido.descuentoMonto))}
+                                  -
+                                  {formatCurrency(
+                                    Number(pedido.descuentoMonto)
+                                  )}
                                 </span>
                               </div>
                             </div>
@@ -346,7 +387,10 @@ const EnhancedPedidoDetailModal: React.FC<EnhancedPedidoDetailModalProps> = ({
                                   Descuento:
                                 </span>
                                 <span className="font-medium text-green-600">
-                                  -{formatCurrency(Number(pedido.descuentoMonto))}
+                                  -
+                                  {formatCurrency(
+                                    Number(pedido.descuentoMonto)
+                                  )}
                                 </span>
                               </div>
                               {pedido.promocionCodigo && (
@@ -400,47 +444,65 @@ const EnhancedPedidoDetailModal: React.FC<EnhancedPedidoDetailModalProps> = ({
                           {pedido.detallePedidos.map((detalle, index) => (
                             <div
                               key={index}
-                              className="border border-[#ecd8ab]/30 rounded-lg p-4 hover:bg-[#F5E6C6]/10 transition-colors"
+                              className="bg-white border-2 border-[#ecd8ab]/40 rounded-xl p-5 hover:border-[#CC9F53]/60 hover:shadow-lg transition-all duration-300"
                             >
                               <div className="flex items-center space-x-4">
                                 <div className="flex-shrink-0">
-                                  {detalle.producto?.imagen ? (
+                                  <div className="relative w-16 h-16 rounded-xl overflow-hidden bg-gradient-to-br from-[#F5E6C6] to-[#FAF3E7] border-2 border-[#CC9F53]/20">
                                     <Image
-                                      src={detalle.producto.imagen}
-                                      alt={detalle.producto.nombre}
+                                      src={getImagenPrincipal(detalle.producto)}
+                                      alt={
+                                        detalle.producto?.nombre || 'Producto'
+                                      }
                                       width={64}
                                       height={64}
-                                      className="w-16 h-16 object-cover rounded-lg"
+                                      className="w-full h-full object-cover"
+                                      onError={(e) => {
+                                        console.log(
+                                          'Error loading image:',
+                                          getImagenPrincipal(detalle.producto)
+                                        );
+                                        e.currentTarget.src =
+                                          '/images/product-fallback.svg';
+                                      }}
                                     />
-                                  ) : (
-                                    <div className="w-16 h-16 bg-gray-200 rounded-lg flex items-center justify-center">
-                                      <Package className="h-8 w-8 text-gray-400" />
-                                    </div>
-                                  )}
+                                  </div>
                                 </div>
                                 <div className="flex-1">
-                                  <h4 className="font-semibold text-[#3A3A3A] mb-1">
-                                    {detalle.producto.nombre}
+                                  <h4 className="font-bold text-[#3A3A3A] mb-2 text-lg">
+                                    {detalle.producto?.nombre ||
+                                      'Producto sin nombre'}
                                   </h4>
-                                  <div className="grid grid-cols-3 gap-4 text-sm">
-                                    <div>
-                                      <p className="text-[#9A8C61]">Cantidad</p>
-                                      <p className="font-medium">
-                                        {detalle.cantidad}
+                                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div className="bg-[#FAF3E7] rounded-lg p-3">
+                                      <p className="text-[#9A8C61] text-sm font-medium mb-1">
+                                        Cantidad
+                                      </p>
+                                      <p className="font-bold text-[#3A3A3A] text-lg">
+                                        {detalle.cantidad}{' '}
+                                        {detalle.cantidad === 1
+                                          ? 'unidad'
+                                          : 'unidades'}
                                       </p>
                                     </div>
-                                    <div>
-                                      <p className="text-[#9A8C61]">
+                                    <div className="bg-[#FAF3E7] rounded-lg p-3">
+                                      <p className="text-[#9A8C61] text-sm font-medium mb-1">
                                         Precio Unitario
                                       </p>
-                                      <p className="font-medium">
-                                        {formatCurrency(Number(detalle.precioUnitario))}
+                                      <p className="font-bold text-[#3A3A3A] text-lg">
+                                        {formatCurrency(
+                                          Number(detalle.precioUnitario)
+                                        )}
                                       </p>
                                     </div>
-                                    <div>
-                                      <p className="text-[#9A8C61]">Subtotal</p>
-                                      <p className="font-medium text-[#CC9F53]">
-                                        {formatCurrency(Number(detalle.subtotal))}
+                                    <div className="bg-gradient-to-r from-[#CC9F53]/10 to-[#b08a3c]/10 rounded-lg p-3 border border-[#CC9F53]/30">
+                                      <p className="text-[#9A8C61] text-sm font-medium mb-1">
+                                        Subtotal
+                                      </p>
+                                      <p className="font-bold text-[#CC9F53] text-xl">
+                                        {formatCurrency(
+                                          Number(detalle.subtotal)
+                                        )}
                                       </p>
                                     </div>
                                   </div>
