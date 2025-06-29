@@ -11,11 +11,7 @@ export interface DetallePedido {
   id: number;
   productoId: number;
   cantidad: number;
-<<<<<<< HEAD
-  precio: number; // Este viene como precioUnitario del backend, mapeado a precio
-=======
   precioUnitario: number;
->>>>>>> develops
   subtotal: number;
   producto: {
     id: number;
@@ -35,13 +31,8 @@ export interface Pedido {
   metodoEnvio: MetodoEnvio;
   subtotal: number;
   impuestos: number;
-<<<<<<< HEAD
-  costoEnvio: number;
-  descuento: number;
-=======
   envioMonto: number; // Cambié de costoEnvio a envioMonto para coincidir con Prisma
   descuentoMonto: number; // Cambié de descuento a descuentoMonto
->>>>>>> develops
   total: number;
   promocionCodigo?: string;
   notasCliente?: string;
@@ -50,12 +41,7 @@ export interface Pedido {
   fechaEntrega?: string;
   creadoEn: string;
   actualizadoEn: string;
-<<<<<<< HEAD
-  detalles: DetallePedido[];
-  detallePedidos?: DetallePedido[]; // Alias for backwards compatibility
-=======
   detallePedidos: DetallePedido[]; // Cambié de detalles a detallePedidos
->>>>>>> develops
   direccion: {
     id: number;
     alias: string;
@@ -184,22 +170,14 @@ class PedidosService {
     search?: string,
     estado?: EstadoPedido,
     fechaInicio?: string,
-<<<<<<< HEAD
-    fechaFin?: string,
-=======
     fechaFin?: string
->>>>>>> develops
   ): Promise<PaginatedResponse<Pedido>> {
     try {
       const params = new URLSearchParams({
         page: page.toString(),
         limit: limit.toString(),
       });
-<<<<<<< HEAD
-      
-=======
 
->>>>>>> develops
       if (search) params.append('search', search);
       if (estado) params.append('estado', estado);
       if (fechaInicio) params.append('fechaInicio', fechaInicio);
@@ -223,13 +201,6 @@ class PedidosService {
       console.error('Error al obtener pedidos con paginación:', error);
       throw error;
     }
-<<<<<<< HEAD
-  }
-
-  // Obtener todos los pedidos para admin (sin paginación)
-  async obtenerTodosAdmin(): Promise<ApiResponse<Pedido[]>> {
-    try {
-=======
   }  // Obtener todos los pedidos para admin (sin paginación)
   async obtenerTodosAdmin(): Promise<ApiResponse<Pedido[]>> {
     try {
@@ -237,41 +208,11 @@ class PedidosService {
       console.log('🔍 Frontend: URL:', `${API_BASE_URL}/pedidos/admin/todos`);
       console.log('🔍 Frontend: Headers:', this.getAuthHeaders());
       
->>>>>>> develops
       const response = await fetch(`${API_BASE_URL}/pedidos/admin/todos`, {
         method: 'GET',
         headers: this.getAuthHeaders(),
       });
 
-<<<<<<< HEAD
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Error al obtener pedidos');
-      }      const result = await response.json();
-      return {
-        mensaje: 'Pedidos obtenidos correctamente',
-        data: result.data || result
-      };
-    } catch (error) {
-      console.error('Error al obtener pedidos:', error);
-      throw error;
-    }
-  }
-
-  // Obtener todos los pedidos (admin)
-  async obtenerTodos(filtros?: FiltrosPedidosDto): Promise<ApiResponse<Pedido[]>> {
-    try {
-      const params = new URLSearchParams();
-      if (filtros) {
-        Object.entries(filtros).forEach(([key, value]) => {
-          if (value !== undefined && value !== null) {
-            params.append(key, value.toString());
-          }
-        });
-      }
-
-      const response = await fetch(`${API_BASE_URL}/pedidos?${params.toString()}`, {
-=======
       console.log('🔍 Frontend: Response status:', response.status);
       console.log('🔍 Frontend: Response ok:', response.ok);
 
@@ -331,7 +272,6 @@ class PedidosService {
       }
 
       const response = await fetch(url, {
->>>>>>> develops
         method: 'GET',
         headers: this.getAuthHeaders(),
       });
@@ -346,13 +286,6 @@ class PedidosService {
       console.error('Error al obtener pedidos:', error);
       throw error;
     }
-<<<<<<< HEAD
-  }  // Cambiar estado del pedido (admin)
-  async cambiarEstado(id: number, estado: EstadoPedido, notasInternas?: string): Promise<ApiResponse<Pedido>> {
-    try {
-      const body: { estado: EstadoPedido; notasInternas?: string } = { estado };
-      
-=======
   }
 
   // Cambiar estado del pedido (admin)
@@ -364,16 +297,11 @@ class PedidosService {
     try {
       const body: { estado: EstadoPedido; notasInternas?: string } = { estado };
 
->>>>>>> develops
       // Si se proporcionan notas internas, incluirlas en el cuerpo
       if (notasInternas !== undefined) {
         body.notasInternas = notasInternas;
       }
-<<<<<<< HEAD
-      
-=======
 
->>>>>>> develops
       const response = await fetch(`${API_BASE_URL}/pedidos/${id}/estado`, {
         method: 'PATCH',
         headers: this.getAuthHeaders(),
@@ -382,13 +310,9 @@ class PedidosService {
 
       if (!response.ok) {
         const errorData = await response.json();
-<<<<<<< HEAD
-        throw new Error(errorData.message || 'Error al cambiar estado del pedido');
-=======
         throw new Error(
           errorData.message || 'Error al cambiar estado del pedido'
         );
->>>>>>> develops
       }
 
       return await response.json();
