@@ -11,7 +11,7 @@ export interface DetallePedido {
   id: number;
   productoId: number;
   cantidad: number;
-  precio: number; // Este viene como precioUnitario del backend, mapeado a precio
+  precioUnitario: number;
   subtotal: number;
   producto: {
     id: number;
@@ -31,8 +31,8 @@ export interface Pedido {
   metodoEnvio: MetodoEnvio;
   subtotal: number;
   impuestos: number;
-  costoEnvio: number;
-  descuento: number;
+  envioMonto: number; // Cambié de costoEnvio a envioMonto para coincidir con Prisma
+  descuentoMonto: number; // Cambié de descuento a descuentoMonto
   total: number;
   promocionCodigo?: string;
   notasCliente?: string;
@@ -41,8 +41,7 @@ export interface Pedido {
   fechaEntrega?: string;
   creadoEn: string;
   actualizadoEn: string;
-  detalles: DetallePedido[];
-  detallePedidos?: DetallePedido[]; // Alias for backwards compatibility
+  detallePedidos: DetallePedido[]; // Cambié de detalles a detallePedidos
   direccion: {
     id: number;
     alias: string;

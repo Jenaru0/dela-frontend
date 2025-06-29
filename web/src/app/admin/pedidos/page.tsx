@@ -17,7 +17,7 @@ import {
   X
 } from 'lucide-react';
 import { pedidosService, Pedido } from '@/services/pedidos.service';
-import { EstadoPedido, EstadoPedidoLabels, EstadoPedidoColors, MetodoPagoLabels, MetodoEnvioLabels } from '@/types/enums';
+import { EstadoPedido, EstadoPedidoLabels, EstadoPedidoColors, MetodoPago, MetodoPagoLabels, MetodoEnvio, MetodoEnvioLabels } from '@/types/enums';
 import EnhancedPedidoDetailModal from '@/components/admin/modals/orders/EnhancedPedidoDetailModal';
 import PedidoChangeStatusModal from '@/components/admin/modals/orders/PedidoChangeStatusModal';
 
@@ -25,6 +25,7 @@ interface FilterState {
   search: string;
   estado: string;
   metodoPago: string;
+  metodoEnvio: string;
   fechaInicio: string;
   fechaFin: string;
 }
@@ -45,6 +46,7 @@ const PedidosAdminPage: React.FC = () => {
     search: '',
     estado: '',
     metodoPago: '',
+    metodoEnvio: '',
     fechaInicio: '',
     fechaFin: '',
   });
@@ -143,7 +145,7 @@ const PedidosAdminPage: React.FC = () => {
     setCurrentPage(1);
 
     // Si hay filtros especiales (método pago, fechas), usar paginación frontend
-    const hasSpecialFilters = newFilters.metodoPago !== '' || newFilters.fechaInicio !== '' || newFilters.fechaFin !== '';
+    const hasSpecialFilters = newFilters.metodoPago !== '' || newFilters.metodoEnvio !== '' || newFilters.fechaInicio !== '' || newFilters.fechaFin !== '';
     
     if (hasSpecialFilters) {
       console.log('📋 Usando filtros especiales en frontend');
@@ -181,6 +183,17 @@ const PedidosAdminPage: React.FC = () => {
           return pedido.metodoPago === newFilters.metodoPago;
         });
         console.log('💳 Después de filtro método pago:', filtered.length);
+      }
+
+      // Filtro de método de envío
+      if (newFilters.metodoEnvio) {
+        console.log('🚚 Filtrando por método de envío:', newFilters.metodoEnvio);
+        console.log('🚚 Métodos de envío disponibles:', allPedidosData.map(p => p.metodoEnvio).filter((v, i, a) => a.indexOf(v) === i));
+        filtered = filtered.filter(pedido => {
+          console.log(`🚚 Comparando: ${pedido.metodoEnvio} === ${newFilters.metodoEnvio}`);
+          return pedido.metodoEnvio === newFilters.metodoEnvio;
+        });
+        console.log('🚚 Después de filtro método envío:', filtered.length);
       }
         // Filtro de fechas
       if (newFilters.fechaInicio) {
@@ -241,6 +254,7 @@ const PedidosAdminPage: React.FC = () => {
       search: '',
       estado: '',
       metodoPago: '',
+      metodoEnvio: '',
       fechaInicio: '',
       fechaFin: '',
     };
@@ -265,6 +279,18 @@ const PedidosAdminPage: React.FC = () => {
       loadOrders(page, filters.search, filters.estado, filters.fechaInicio, filters.fechaFin);
     }
   }, [isUsingFrontendPagination, allFilteredPedidos, itemsPerPage, loadOrders, filters]);
+
+  // Función para filtrar por estado desde las tarjetas
+  const handleFilterByEstado = useCallback((estado: string) => {
+    const newFilters = {
+      ...filters,
+      estado: filters.estado === estado ? '' : estado, // Toggle: si ya está seleccionado, quitar filtro
+      search: '', // Limpiar búsqueda al usar filtro rápido
+    };
+    setFilters(newFilters);
+    handleFilterChange(newFilters);
+  }, [filters, handleFilterChange]);
+
   // Cambiar estado del pedido
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleChangeStatus = async (id: number, newEstado: EstadoPedido) => {
@@ -337,19 +363,36 @@ const PedidosAdminPage: React.FC = () => {
         </div>
       </div>      {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-7 gap-4">
-        <div className="bg-white rounded-xl p-4 shadow-sm border border-[#ecd8ab]/30">
+        <button
+          onClick={() => handleFilterByEstado('')}
+          className={`bg-white rounded-xl p-4 shadow-sm border transition-all duration-200 text-left transform hover:scale-105 ${
+            filters.estado === '' 
+              ? 'border-[#CC9F53] bg-[#F5E6C6]/20 shadow-md' 
+              : 'border-[#ecd8ab]/30 hover:border-[#CC9F53]/50 hover:shadow-md'
+          }`}
+          title="Ver todos los pedidos"
+        >
           <div className="flex items-center">
             <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
               <Package className="w-5 h-5 text-blue-600" />
-            </div>            <div className="ml-3">
+            </div>            
+            <div className="ml-3">
               <p className="text-xs font-medium text-[#9A8C61]">Total</p>
               <p className="text-xl font-bold text-[#3A3A3A]">
                 {Array.isArray(allPedidos) ? allPedidos.length : 0}
               </p>
             </div>
           </div>
-        </div>
-        <div className="bg-white rounded-xl p-4 shadow-sm border border-[#ecd8ab]/30">
+        </button>
+        <button
+          onClick={() => handleFilterByEstado('PENDIENTE')}
+          className={`bg-white rounded-xl p-4 shadow-sm border transition-all duration-200 text-left transform hover:scale-105 ${
+            filters.estado === 'PENDIENTE' 
+              ? 'border-[#CC9F53] bg-[#F5E6C6]/20 shadow-md' 
+              : 'border-[#ecd8ab]/30 hover:border-[#CC9F53]/50 hover:shadow-md'
+          }`}
+          title="Filtrar pedidos pendientes"
+        >
           <div className="flex items-center">
             <div className="w-10 h-10 bg-yellow-50 rounded-lg flex items-center justify-center">
               <Clock className="w-5 h-5 text-yellow-600" />
@@ -361,8 +404,16 @@ const PedidosAdminPage: React.FC = () => {
               </p>
             </div>
           </div>
-        </div>
-        <div className="bg-white rounded-xl p-4 shadow-sm border border-[#ecd8ab]/30">
+        </button>
+        <button
+          onClick={() => handleFilterByEstado('CONFIRMADO')}
+          className={`bg-white rounded-xl p-4 shadow-sm border transition-all duration-200 text-left transform hover:scale-105 ${
+            filters.estado === 'CONFIRMADO' 
+              ? 'border-[#CC9F53] bg-[#F5E6C6]/20 shadow-md' 
+              : 'border-[#ecd8ab]/30 hover:border-[#CC9F53]/50 hover:shadow-md'
+          }`}
+          title="Filtrar pedidos confirmados"
+        >
           <div className="flex items-center">
             <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
               <CheckCircle className="w-5 h-5 text-blue-600" />
@@ -374,8 +425,16 @@ const PedidosAdminPage: React.FC = () => {
               </p>
             </div>
           </div>
-        </div>
-        <div className="bg-white rounded-xl p-4 shadow-sm border border-[#ecd8ab]/30">
+        </button>
+        <button
+          onClick={() => handleFilterByEstado('PROCESANDO')}
+          className={`bg-white rounded-xl p-4 shadow-sm border transition-all duration-200 text-left transform hover:scale-105 ${
+            filters.estado === 'PROCESANDO' 
+              ? 'border-[#CC9F53] bg-[#F5E6C6]/20 shadow-md' 
+              : 'border-[#ecd8ab]/30 hover:border-[#CC9F53]/50 hover:shadow-md'
+          }`}
+          title="Filtrar pedidos en procesamiento"
+        >
           <div className="flex items-center">
             <div className="w-10 h-10 bg-orange-50 rounded-lg flex items-center justify-center">
               <Package className="w-5 h-5 text-orange-600" />
@@ -387,8 +446,16 @@ const PedidosAdminPage: React.FC = () => {
               </p>
             </div>
           </div>
-        </div>
-        <div className="bg-white rounded-xl p-4 shadow-sm border border-[#ecd8ab]/30">
+        </button>
+        <button
+          onClick={() => handleFilterByEstado('ENVIADO')}
+          className={`bg-white rounded-xl p-4 shadow-sm border transition-all duration-200 text-left transform hover:scale-105 ${
+            filters.estado === 'ENVIADO' 
+              ? 'border-[#CC9F53] bg-[#F5E6C6]/20 shadow-md' 
+              : 'border-[#ecd8ab]/30 hover:border-[#CC9F53]/50 hover:shadow-md'
+          }`}
+          title="Filtrar pedidos enviados"
+        >
           <div className="flex items-center">
             <div className="w-10 h-10 bg-purple-50 rounded-lg flex items-center justify-center">
               <Truck className="w-5 h-5 text-purple-600" />
@@ -400,8 +467,16 @@ const PedidosAdminPage: React.FC = () => {
               </p>
             </div>
           </div>
-        </div>
-        <div className="bg-white rounded-xl p-4 shadow-sm border border-[#ecd8ab]/30">
+        </button>
+        <button
+          onClick={() => handleFilterByEstado('ENTREGADO')}
+          className={`bg-white rounded-xl p-4 shadow-sm border transition-all duration-200 text-left transform hover:scale-105 ${
+            filters.estado === 'ENTREGADO' 
+              ? 'border-[#CC9F53] bg-[#F5E6C6]/20 shadow-md' 
+              : 'border-[#ecd8ab]/30 hover:border-[#CC9F53]/50 hover:shadow-md'
+          }`}
+          title="Filtrar pedidos entregados"
+        >
           <div className="flex items-center">
             <div className="w-10 h-10 bg-green-50 rounded-lg flex items-center justify-center">
               <CheckCircle className="w-5 h-5 text-green-600" />
@@ -413,8 +488,16 @@ const PedidosAdminPage: React.FC = () => {
               </p>
             </div>
           </div>
-        </div>
-        <div className="bg-white rounded-xl p-4 shadow-sm border border-[#ecd8ab]/30">
+        </button>
+        <button
+          onClick={() => handleFilterByEstado('CANCELADO')}
+          className={`bg-white rounded-xl p-4 shadow-sm border transition-all duration-200 text-left transform hover:scale-105 ${
+            filters.estado === 'CANCELADO' 
+              ? 'border-[#CC9F53] bg-[#F5E6C6]/20 shadow-md' 
+              : 'border-[#ecd8ab]/30 hover:border-[#CC9F53]/50 hover:shadow-md'
+          }`}
+          title="Filtrar pedidos cancelados"
+        >
           <div className="flex items-center">
             <div className="w-10 h-10 bg-red-50 rounded-lg flex items-center justify-center">
               <XCircle className="w-5 h-5 text-red-600" />
@@ -426,10 +509,10 @@ const PedidosAdminPage: React.FC = () => {
               </p>
             </div>
           </div>
-        </div>
-      </div>      {/* Filtros */}
+        </button>
+      </div>        {/* Filtros */}
       <div className="bg-white rounded-xl p-6 shadow-sm border border-[#ecd8ab]/30">
-        <div className="grid grid-cols-1 lg:grid-cols-6 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-7 gap-4">
           {/* Búsqueda */}
           <div className="relative">
             <label className="block text-xs font-medium text-[#9A8C61] mb-1">
@@ -490,12 +573,34 @@ const PedidosAdminPage: React.FC = () => {
               className="w-full px-3 py-2 border border-[#ecd8ab]/50 rounded-md focus:border-[#CC9F53] focus:ring-[#CC9F53]/20 bg-white text-sm"
             >
               <option value="">Todos los métodos</option>
-              <option value="TARJETA_CREDITO">Tarjeta Crédito</option>
-              <option value="TARJETA_DEBITO">Tarjeta Débito</option>
-              <option value="TRANSFERENCIA">Transferencia</option>
-              <option value="EFECTIVO">Efectivo</option>
-              <option value="YAPE">Yape</option>
-              <option value="PLIN">Plin</option>
+              {Object.entries(MetodoPago).map(([key, value]) => (
+                <option key={key} value={value}>
+                  {MetodoPagoLabels[value]}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Filtro Método de Envío */}
+          <div>
+            <label className="block text-xs font-medium text-[#9A8C61] mb-1">
+              Método de Envío
+            </label>
+            <select
+              value={filters.metodoEnvio}
+              onChange={(e) => {
+                const newFilters = { ...filters, metodoEnvio: e.target.value };
+                setFilters(newFilters);
+                handleFilterChange(newFilters);
+              }}
+              className="w-full px-3 py-2 border border-[#ecd8ab]/50 rounded-md focus:border-[#CC9F53] focus:ring-[#CC9F53]/20 bg-white text-sm"
+            >
+              <option value="">Todos los envíos</option>
+              {Object.entries(MetodoEnvio).map(([key, value]) => (
+                <option key={key} value={value}>
+                  {MetodoEnvioLabels[value]}
+                </option>
+              ))}
             </select>
           </div>
 
@@ -633,7 +738,7 @@ const PedidosAdminPage: React.FC = () => {
                   <th className="px-6 py-4 text-left text-sm font-semibold text-[#3A3A3A]">Cliente</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-[#3A3A3A]">Total</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-[#3A3A3A]">Estado</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#3A3A3A]">Método</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#3A3A3A]">Pago y Envío</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-[#3A3A3A]">Fecha</th>
                   <th className="px-6 py-4 text-right text-sm font-semibold text-[#3A3A3A]">Acciones</th>
                 </tr>
@@ -679,13 +784,18 @@ const PedidosAdminPage: React.FC = () => {
                     </td>
                     <td className="px-6 py-4">
                       <div className="space-y-1">
-                        <span className="text-sm text-[#3A3A3A]">
-                          {MetodoPagoLabels[pedido.metodoPago as keyof typeof MetodoPagoLabels]}
-                        </span>
-                        <br />
-                        <span className="text-xs text-[#9A8C61]">
-                          {MetodoEnvioLabels[pedido.metodoEnvio as keyof typeof MetodoEnvioLabels]}
-                        </span>
+                        <div className="flex items-center space-x-1">
+                          <span className="text-xs text-[#9A8C61]">💳</span>
+                          <span className="text-sm text-[#3A3A3A]">
+                            {MetodoPagoLabels[pedido.metodoPago as keyof typeof MetodoPagoLabels]}
+                          </span>
+                        </div>
+                        <div className="flex items-center space-x-1">
+                          <span className="text-xs text-[#9A8C61]">🚚</span>
+                          <span className="text-xs text-[#9A8C61]">
+                            {MetodoEnvioLabels[pedido.metodoEnvio as keyof typeof MetodoEnvioLabels]}
+                          </span>
+                        </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 text-sm text-[#9A8C61]">
@@ -790,6 +900,13 @@ const PedidosAdminPage: React.FC = () => {
           />
         </>
       )}
+
+      {/* Información de filtros rápidos */}
+      <div className="flex items-center justify-center">
+        <p className="text-sm text-[#9A8C61] bg-[#F5E6C6]/30 px-4 py-2 rounded-lg border border-[#ecd8ab]/50">
+          💡 Haz clic en cualquier tarjeta de estadísticas para filtrar por ese estado
+        </p>
+      </div>
     </div>
   );
 };
