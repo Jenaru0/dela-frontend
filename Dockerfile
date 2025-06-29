@@ -24,7 +24,7 @@ ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV BUILD_STANDALONE=true
 
-# Variables ARG para build-time (pueden ser sobrescritas por Dokploy)
+# Variables ARG para build-time (opcionales - se usan variables compartidas del proyecto)
 ARG NEXT_PUBLIC_API_URL=https://delabackend.episundc.pe
 ARG NEXT_PUBLIC_APP_NAME=DELA
 ARG NEXT_PUBLIC_APP_VERSION=1.0.0
@@ -33,14 +33,10 @@ ARG JWT_SECRET
 ARG NEXTAUTH_SECRET
 ARG NEXTAUTH_URL
 
-# ENV para runtime
+# ENV para runtime (las variables sensibles vienen del proyecto)
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_APP_NAME=$NEXT_PUBLIC_APP_NAME
 ENV NEXT_PUBLIC_APP_VERSION=$NEXT_PUBLIC_APP_VERSION
-ENV DATABASE_URL=$DATABASE_URL
-ENV JWT_SECRET=$JWT_SECRET
-ENV NEXTAUTH_SECRET=$NEXTAUTH_SECRET
-ENV NEXTAUTH_URL=$NEXTAUTH_URL
 
 # Construimos la aplicación
 RUN npm run build
@@ -57,7 +53,12 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
 
-# Variables de entorno para runtime (heredadas del builder)
+# Solo variables públicas en el Dockerfile
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_APP_NAME=$NEXT_PUBLIC_APP_NAME  
+ENV NEXT_PUBLIC_APP_VERSION=$NEXT_PUBLIC_APP_VERSION
+
+# Variables sensibles para runtime (vienen de Dokploy como build-args)
 ARG DATABASE_URL
 ARG JWT_SECRET
 ARG NEXTAUTH_SECRET
