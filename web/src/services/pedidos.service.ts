@@ -171,14 +171,14 @@ class PedidosService {
     search?: string,
     estado?: EstadoPedido,
     fechaInicio?: string,
-    fechaFin?: string,
+    fechaFin?: string
   ): Promise<PaginatedResponse<Pedido>> {
     try {
       const params = new URLSearchParams({
         page: page.toString(),
         limit: limit.toString(),
       });
-      
+
       if (search) params.append('search', search);
       if (estado) params.append('estado', estado);
       if (fechaInicio) params.append('fechaInicio', fechaInicio);
@@ -202,43 +202,77 @@ class PedidosService {
       console.error('Error al obtener pedidos con paginación:', error);
       throw error;
     }
-  }
-
-  // Obtener todos los pedidos para admin (sin paginación)
+  }  // Obtener todos los pedidos para admin (sin paginación)
   async obtenerTodosAdmin(): Promise<ApiResponse<Pedido[]>> {
     try {
+      console.log('🔍 Frontend: Iniciando obtenerTodosAdmin');
+      console.log('🔍 Frontend: URL:', `${API_BASE_URL}/pedidos/admin/todos`);
+      console.log('🔍 Frontend: Headers:', this.getAuthHeaders());
+      
       const response = await fetch(`${API_BASE_URL}/pedidos/admin/todos`, {
         method: 'GET',
         headers: this.getAuthHeaders(),
       });
 
+      console.log('🔍 Frontend: Response status:', response.status);
+      console.log('🔍 Frontend: Response ok:', response.ok);
+
       if (!response.ok) {
-        const errorData = await response.json();
+        let errorData;
+        try {
+          errorData = await response.json();
+        } catch (parseError) {
+          console.error('❌ Frontend: Error al parsear respuesta de error:', parseError);
+          throw new Error(`Error HTTP ${response.status}: ${response.statusText}`);
+        }
+        console.error('❌ Frontend: Error data:', errorData);
         throw new Error(errorData.message || 'Error al obtener pedidos');
-      }      const result = await response.json();
-      return {
-        mensaje: 'Pedidos obtenidos correctamente',
-        data: result.data || result
-      };
+      }
+      
+      let result;
+      try {
+        result = await response.json();
+      } catch (parseError) {
+        console.error('❌ Frontend: Error al parsear respuesta exitosa:', parseError);
+        throw new Error('Error al procesar la respuesta del servidor');
+      }
+      
+      console.log('✅ Frontend: Success data:', result);
+      
+      // El backend ya devuelve el formato correcto {mensaje, data}
+      return result;
     } catch (error) {
-      console.error('Error al obtener pedidos:', error);
+      console.error('❌ Frontend: Error completo:', error);
       throw error;
     }
-  }
-
-  // Obtener todos los pedidos (admin)
-  async obtenerTodos(filtros?: FiltrosPedidosDto): Promise<ApiResponse<Pedido[]>> {
+  }// Obtener todos los pedidos (admin)
+  async obtenerTodos(
+    filtros?: FiltrosPedidosDto
+  ): Promise<ApiResponse<Pedido[]>> {
     try {
-      const params = new URLSearchParams();
+      // Construir URL base
+      let url = `${API_BASE_URL}/pedidos`;
+
+      // Solo agregar parámetros si hay filtros válidos
       if (filtros) {
-        Object.entries(filtros).forEach(([key, value]) => {
-          if (value !== undefined && value !== null) {
-            params.append(key, value.toString());
-          }
-        });
+        const params = new URLSearchParams();
+
+        // Manejar cada filtro de forma segura
+        if (filtros.estado) params.append('estado', filtros.estado);
+        if (filtros.fechaDesde) params.append('fechaDesde', filtros.fechaDesde);
+        if (filtros.fechaHasta) params.append('fechaHasta', filtros.fechaHasta);
+        if (filtros.metodoPago) params.append('metodoPago', filtros.metodoPago);
+        if (filtros.page) params.append('page', filtros.page.toString());
+        if (filtros.limit) params.append('limit', filtros.limit.toString());
+
+        // Solo agregar query string si hay parámetros
+        const queryString = params.toString();
+        if (queryString) {
+          url += `?${queryString}`;
+        }
       }
 
-      const response = await fetch(`${API_BASE_URL}/pedidos?${params.toString()}`, {
+      const response = await fetch(url, {
         method: 'GET',
         headers: this.getAuthHeaders(),
       });
@@ -253,16 +287,22 @@ class PedidosService {
       console.error('Error al obtener pedidos:', error);
       throw error;
     }
-  }  // Cambiar estado del pedido (admin)
-  async cambiarEstado(id: number, estado: EstadoPedido, notasInternas?: string): Promise<ApiResponse<Pedido>> {
+  }
+
+  // Cambiar estado del pedido (admin)
+  async cambiarEstado(
+    id: number,
+    estado: EstadoPedido,
+    notasInternas?: string
+  ): Promise<ApiResponse<Pedido>> {
     try {
       const body: { estado: EstadoPedido; notasInternas?: string } = { estado };
-      
+
       // Si se proporcionan notas internas, incluirlas en el cuerpo
       if (notasInternas !== undefined) {
         body.notasInternas = notasInternas;
       }
-      
+
       const response = await fetch(`${API_BASE_URL}/pedidos/${id}/estado`, {
         method: 'PATCH',
         headers: this.getAuthHeaders(),
@@ -271,7 +311,9 @@ class PedidosService {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Error al cambiar estado del pedido');
+        throw new Error(
+          errorData.message || 'Error al cambiar estado del pedido'
+        );
       }
 
       return await response.json();
