@@ -8,6 +8,12 @@ import EditProfileModal from '@/components/auth/EditProfileModal';
 import ChangePasswordModal from '@/components/auth/ChangePasswordModal';
 import AddressModal from '@/components/direcciones/AddressModal';
 import AddressList from '@/components/direcciones/AddressList';
+<<<<<<< HEAD
+=======
+import PedidoDetailModal from '@/components/perfil/PedidoDetailModal';
+import CreateReviewModal from '@/components/perfil/CreateReviewModal';
+import CreateClaimModal from '@/components/perfil/CreateClaimModal';
+>>>>>>> develops
 import { usuariosService } from '@/services/usuarios.service';
 import { authService } from '@/services/auth.service';
 import { direccionesService } from '@/services/direcciones.service';
@@ -27,7 +33,19 @@ const ProfilePage: React.FC = () => {
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
   const [selectedAddress, setSelectedAddress] = useState<DireccionCliente | null>(null);
   const [direcciones, setDirecciones] = useState<DireccionCliente[]>([]);
+<<<<<<< HEAD
   const [isLoadingAddresses, setIsLoadingAddresses] = useState(false);  const [activeTab, setActiveTab] = useState<'personal' | 'addresses' | 'orders' | 'claims' | 'reviews'>('personal');
+=======
+  const [isLoadingAddresses, setIsLoadingAddresses] = useState(false);
+  
+  // Estados para modales de pedidos y reseñas
+  const [isPedidoDetailModalOpen, setIsPedidoDetailModalOpen] = useState(false);
+  const [selectedPedido, setSelectedPedido] = useState<Pedido | null>(null);
+  const [isCreateReviewModalOpen, setIsCreateReviewModalOpen] = useState(false);
+  const [reviewData, setReviewData] = useState<{ productoId: number; productoNombre: string } | null>(null);
+  const [isCreateClaimModalOpen, setIsCreateClaimModalOpen] = useState(false);
+  const [claimData, setClaimData] = useState<{ pedidoId: number; pedidoNumero: string } | null>(null);  const [activeTab, setActiveTab] = useState<'personal' | 'addresses' | 'orders' | 'claims' | 'reviews'>('personal');
+>>>>>>> develops
   const [isNewsletterSubscribed, setIsNewsletterSubscribed] = useState(false);
   const [isLoadingNewsletter, setIsLoadingNewsletter] = useState(false);
   const [isDeactivating, setIsDeactivating] = useState(false);
@@ -306,6 +324,63 @@ const ProfilePage: React.FC = () => {
   const handleEditAddress = (direccion: DireccionCliente) => {
     setSelectedAddress(direccion);
     setIsAddressModalOpen(true);
+<<<<<<< HEAD
+=======
+  };
+
+  // Manejar visualización de detalles del pedido
+  const handleViewPedidoDetails = (pedido: Pedido) => {
+    setSelectedPedido(pedido);
+    setIsPedidoDetailModalOpen(true);
+  };
+
+  // Manejar creación de reseña
+  const handleCreateReview = (productoId: number, productoNombre: string) => {
+    setReviewData({ productoId, productoNombre });
+    setIsCreateReviewModalOpen(true);
+    setIsPedidoDetailModalOpen(false); // Cerrar modal de pedido si está abierto
+  };
+
+  // Manejar creación de reclamo
+  const handleCreateClaim = (pedidoId: number, pedidoNumero: string) => {
+    setClaimData({ pedidoId, pedidoNumero });
+    setIsCreateClaimModalOpen(true);
+    setIsPedidoDetailModalOpen(false); // Cerrar modal de pedido si está abierto
+  };
+
+  // Manejar envío de reseña
+  const handleSubmitReview = async (reviewData: { productoId: number; calificacion: number; comentario: string }) => {
+    try {
+      // TODO: Implementar servicio de reseñas
+      console.log('Crear reseña:', reviewData);
+      showNotification('success', 'Reseña enviada correctamente. Será revisada antes de publicarse.');
+      
+      // Opcional: Recargar reseñas si estamos en esa pestaña
+      if (activeTab === 'reviews') {
+        setResenasLoaded(false);
+      }
+    } catch (error) {
+      console.error('Error al crear reseña:', error);
+      throw error; // El modal manejará el error
+    }
+  };
+
+  // Manejar envío de reclamo
+  const handleSubmitClaim = async (claimData: { pedidoId: number; asunto: string; descripcion: string; tipoReclamo: string }) => {
+    try {
+      // TODO: Implementar servicio de reclamos
+      console.log('Crear reclamo:', claimData);
+      showNotification('success', 'Reclamo enviado correctamente. Te contactaremos pronto.');
+      
+      // Opcional: Recargar reclamos si estamos en esa pestaña
+      if (activeTab === 'claims') {
+        setReclamosLoaded(false);
+      }
+    } catch (error) {
+      console.error('Error al crear reclamo:', error);
+      throw error; // El modal manejará el error
+    }
+>>>>>>> develops
   };// Mostrar loading durante la verificación inicial
   if (isLoading) {
     return (
@@ -601,7 +676,12 @@ const ProfilePage: React.FC = () => {
                   <div className="text-center py-8">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#CC9F53] mx-auto mb-4"></div>
                     <p className="text-gray-500">Cargando pedidos...</p>
+<<<<<<< HEAD
                   </div>                ) : !pedidos || pedidos.length === 0 ? (
+=======
+                  </div>
+                ) : !pedidos || pedidos.length === 0 ? (
+>>>>>>> develops
                   <div className="text-center py-8">
                     <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                     <h3 className="text-lg font-medium text-gray-900 mb-2">
@@ -619,7 +699,12 @@ const ProfilePage: React.FC = () => {
                           <div className="flex items-center space-x-3">
                             <Package className="h-5 w-5 text-primary-600" />
                             <div>
+<<<<<<< HEAD
                               <h3 className="font-medium text-gray-900">Pedido #{pedido.numero}</h3>                              <p className="text-sm text-gray-500">
+=======
+                              <h3 className="font-medium text-gray-900">Pedido #{pedido.numero}</h3>
+                              <p className="text-sm text-gray-500">
+>>>>>>> develops
                                 {new Date(pedido.creadoEn).toLocaleDateString('es-PE', {
                                   year: 'numeric',
                                   month: 'long',
@@ -629,23 +714,37 @@ const ProfilePage: React.FC = () => {
                             </div>
                           </div>
                           <div className="text-right">
+<<<<<<< HEAD
                             <p className="font-semibold text-gray-900">S/ {pedido.total.toFixed(2)}</p>                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${EstadoPedidoColors[pedido.estado as keyof typeof EstadoPedidoColors]}`}>
+=======
+                            <p className="font-semibold text-gray-900">S/ {pedido.total.toFixed(2)}</p>
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${EstadoPedidoColors[pedido.estado as keyof typeof EstadoPedidoColors]}`}>
+>>>>>>> develops
                               {EstadoPedidoLabels[pedido.estado as keyof typeof EstadoPedidoLabels]}
                             </span>
                           </div>
                         </div>
                         
                         <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+<<<<<<< HEAD
                           <div className="flex items-center space-x-4 text-sm text-gray-600">                            <span>Pago: {MetodoPagoLabels[pedido.metodoPago as keyof typeof MetodoPagoLabels]}</span>
+=======
+                          <div className="flex items-center space-x-4 text-sm text-gray-600">
+                            <span>Pago: {MetodoPagoLabels[pedido.metodoPago as keyof typeof MetodoPagoLabels]}</span>
+>>>>>>> develops
                             <span>Envío: {MetodoEnvioLabels[pedido.metodoEnvio as keyof typeof MetodoEnvioLabels]}</span>
                           </div>
                           <Button
                             variant="outline"
                             size="sm"
+<<<<<<< HEAD
                             onClick={() => {
                               // TODO: Implementar ver detalles del pedido
                               console.log('Ver detalles pedido:', pedido.id);
                             }}
+=======
+                            onClick={() => handleViewPedidoDetails(pedido)}
+>>>>>>> develops
                           >
                             <Eye className="h-4 w-4 mr-1" />
                             Ver detalles
@@ -842,6 +941,49 @@ const ProfilePage: React.FC = () => {
             onSave={handleSaveAddress}
             isEdit={!!selectedAddress}
           />
+<<<<<<< HEAD
+=======
+
+          {/* Modal de detalles del pedido */}
+          <PedidoDetailModal
+            isOpen={isPedidoDetailModalOpen}
+            onClose={() => {
+              setIsPedidoDetailModalOpen(false);
+              setSelectedPedido(null);
+            }}
+            pedido={selectedPedido}
+            onCreateReview={handleCreateReview}
+            onCreateClaim={handleCreateClaim}
+          />
+
+          {/* Modal de crear reseña */}
+          {reviewData && (
+            <CreateReviewModal
+              isOpen={isCreateReviewModalOpen}
+              onClose={() => {
+                setIsCreateReviewModalOpen(false);
+                setReviewData(null);
+              }}
+              onSubmit={handleSubmitReview}
+              productoId={reviewData.productoId}
+              productoNombre={reviewData.productoNombre}
+            />
+          )}
+
+          {/* Modal de crear reclamo */}
+          {claimData && (
+            <CreateClaimModal
+              isOpen={isCreateClaimModalOpen}
+              onClose={() => {
+                setIsCreateClaimModalOpen(false);
+                setClaimData(null);
+              }}
+              onSubmit={handleSubmitClaim}
+              pedidoId={claimData.pedidoId}
+              pedidoNumero={claimData.pedidoNumero}
+            />
+          )}
+>>>>>>> develops
         </div>
       </div>
     </Layout>

@@ -1,8 +1,15 @@
 'use client';
 
+<<<<<<< HEAD
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+=======
+import React, { useState } from 'react';
+import Link from 'next/link';
+import Image from 'next/image';
+import dynamic from 'next/dynamic';
+>>>>>>> develops
 import Layout from '@/components/layout/Layout';
 import { useFavorites } from '@/contexts/FavoritoContext';
 import { useCart } from '@/contexts/CarContext';
@@ -13,6 +20,14 @@ import { Heart, Trash2, Lock, ShoppingCart, Home, User } from 'lucide-react';
 import { Producto, ImagenProducto } from '@/types/productos';
 import { Favorito } from '@/types/favorito';
 
+<<<<<<< HEAD
+=======
+// Cargar el modal de forma dinámica para evitar problemas de SSR
+const ClearFavoritesModal = dynamic(() => import('@/components/favoritos/ClearFavoritesModal'), {
+  ssr: false
+});
+
+>>>>>>> develops
 // Tipo para el producto cuando se añade al carrito
 interface CartProductData {
   id: string;
@@ -54,9 +69,16 @@ const FavoriteItem: React.FC<{
   };
 
   return (
+<<<<<<< HEAD
     <div className="bg-white bg-opacity-95 rounded-2xl shadow-lg border border-[#ecd8ab] p-6 transition-all duration-300 group hover:shadow-xl hover:border-[#CC9F53] hover:bg-opacity-100"
       style={{ backdropFilter: 'blur(8px)' }}>
       
+=======
+    <div
+      className="bg-white bg-opacity-95 rounded-2xl shadow-lg border border-[#ecd8ab] p-6 transition-all duration-300 group hover:shadow-xl hover:border-[#CC9F53] hover:bg-opacity-100"
+      style={{ backdropFilter: 'blur(8px)' }}
+    >
+>>>>>>> develops
       <div className="flex items-start gap-6">
         {/* Imagen del producto */}
         <div className="w-24 h-24 rounded-xl bg-gradient-to-br from-[#F5E6C6] to-[#FAF3E7] flex items-center justify-center border-2 border-[#CC9F53] overflow-hidden flex-shrink-0">
@@ -81,7 +103,11 @@ const FavoriteItem: React.FC<{
               <div className="inline-flex items-center bg-[#FAF3E7] text-[#C59D5F] px-3 py-1 rounded-full text-sm font-medium mb-4">
                 {product.category}
               </div>
+<<<<<<< HEAD
               
+=======
+
+>>>>>>> develops
               {/* Precio */}
               <div className="text-2xl font-bold text-[#CC9F53] mb-4">
                 {product.priceFormatted}
@@ -99,7 +125,11 @@ const FavoriteItem: React.FC<{
                 <ShoppingCart className="h-4 w-4" />
                 Añadir al carrito
               </Button>
+<<<<<<< HEAD
               
+=======
+
+>>>>>>> develops
               <Link
                 href={`/productos/${product.id}`}
                 className="text-[#CC9F53] hover:text-[#b08a3c] font-medium transition-colors"
@@ -131,10 +161,23 @@ const FavoritosEmpty: React.FC = () => (
     <div className="w-32 h-32 bg-gradient-to-br from-[#F5E6C6] to-[#FAF3E7] rounded-full flex items-center justify-center mb-8 shadow-lg border-2 border-[#ecd8ab]">
       <Heart className="w-16 h-16 text-[#CC9F53]" />
     </div>
+<<<<<<< HEAD
     <h3 className="text-2xl font-bold text-[#3A3A3A] mb-3">Tu lista de favoritos está vacía</h3>
     <p className="text-gray-600 mb-8 text-center max-w-md">
       Guarda tus productos favoritos para acceder a ellos rápidamente y no perder de vista lo que más te gusta
     </p>    <div className="flex flex-col sm:flex-row gap-3">      <Link
+=======
+    <h3 className="text-2xl font-bold text-[#3A3A3A] mb-3">
+      Tu lista de favoritos está vacía
+    </h3>
+    <p className="text-gray-600 mb-8 text-center max-w-md">
+      Guarda tus productos favoritos para acceder a ellos rápidamente y no
+      perder de vista lo que más te gusta
+    </p>{' '}
+    <div className="flex flex-col sm:flex-row gap-3">
+      {' '}
+      <Link
+>>>>>>> develops
         href="/"
         className="bg-gradient-to-r from-[#CC9F53] to-[#b08a3c] hover:from-[#b08a3c] hover:to-[#9a7635] text-white font-semibold px-6 py-3 rounded-lg transition-all duration-300 shadow-lg flex items-center gap-2"
       >
@@ -158,6 +201,12 @@ export default function FavoritosPage() {
   const { isAuthenticated, usuario, isLoading } = useAuth();
   const { open: openAuthModal } = useAuthModalGlobal();
 
+<<<<<<< HEAD
+=======
+  // Estado para el modal de limpiar favoritos
+  const [isClearModalOpen, setIsClearModalOpen] = useState(false);
+
+>>>>>>> develops
   const handleRemoveFavorite = async (productId: string) => {
     await removeFavorite(productId);
   };
@@ -182,6 +231,7 @@ export default function FavoritosPage() {
       openAuthModal('login');
       return;
     }
+<<<<<<< HEAD
     favorites.forEach(fav => handleAddToCart({
       id: fav.producto.id.toString(),
       name: fav.producto.nombre,
@@ -192,6 +242,33 @@ export default function FavoritosPage() {
     // Aquí podrías añadir una notificación de éxito masivo
   };
 
+=======
+    favorites.forEach((fav) =>
+      handleAddToCart({
+        id: fav.producto.id.toString(),
+        name: fav.producto.nombre,
+        image: getImagenPrincipal(fav.producto),
+        category: fav.producto.categoria?.nombre || '',
+        price: Number(fav.producto.precioUnitario),
+      })
+    );
+    // Aquí podrías añadir una notificación de éxito masivo
+  };
+
+  const handleClearAllFavorites = async () => {
+    try {
+      // Eliminar todos los favoritos uno por uno
+      for (const fav of favorites) {
+        await removeFavorite(fav.producto.id.toString());
+      }
+      // Aquí podrías añadir una notificación de éxito
+    } catch (error) {
+      console.error('Error al limpiar favoritos:', error);
+      // Aquí podrías añadir una notificación de error
+    }
+  };
+
+>>>>>>> develops
   // Mostrar loading durante la verificación inicial
   if (isLoading) {
     return (
@@ -225,6 +302,7 @@ export default function FavoritosPage() {
               Debes iniciar sesión para acceder a tu lista de favoritos
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
+<<<<<<< HEAD
               <Button onClick={() => window.history.back()}>
                 Volver
               </Button>
@@ -232,6 +310,11 @@ export default function FavoritosPage() {
                 <Button variant="outline">
                   Ver productos
                 </Button>
+=======
+              <Button onClick={() => window.history.back()}>Volver</Button>
+              <Link href="/productos">
+                <Button variant="outline">Ver productos</Button>
+>>>>>>> develops
               </Link>
             </div>
           </div>
@@ -241,6 +324,7 @@ export default function FavoritosPage() {
   }
 
   return (
+<<<<<<< HEAD
     <Layout>
       <div className="min-h-screen py-10 bg-gradient-to-br from-[#fffbe6] via-[#fffaf1] to-[#fff]">
         <div className="container mx-auto px-2 max-w-5xl">
@@ -326,14 +410,135 @@ export default function FavoritosPage() {
                         <Trash2 className="w-4 h-4 mr-2" />
                         Limpiar lista
                       </Button>
+=======
+    <>
+      <Layout>
+        <div className="min-h-screen py-10 bg-gradient-to-br from-[#fffbe6] via-[#fffaf1] to-[#fff]">
+          <div className="container mx-auto px-2 max-w-5xl">
+            <h1 className="text-3xl md:text-4xl font-extrabold mb-6 text-[#C59D5F] tracking-tight flex items-center gap-3">
+              <Heart className="w-8 h-8 text-[#CC9F53]" /> Mis Favoritos
+            </h1>
+
+            {/* ...existing code... */}
+
+            {/* CTA y estadísticas */}
+            <div className="mb-8 bg-white/80 rounded-2xl p-6 shadow-lg border border-[#ecd8ab]">
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-gradient-to-br from-[#F5E6C6] to-[#FAF3E7] rounded-xl flex items-center justify-center">
+                    <Lock className="w-6 h-6 text-[#CC9F53]" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-semibold text-[#3A3A3A]">
+                      Tus favoritos guardados
+                    </h2>
+                    <p className="text-[#9A8C61] text-sm">
+                      Acceso rápido a tus productos preferidos
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-4">
+                  {favorites.length > 0 && (
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-[#CC9F53]">
+                        {favorites.length}
+                      </div>
+                      <div className="text-xs text-gray-600">
+                        Productos guardados
+                      </div>
+                    </div>
+                  )}
+                  <Link
+                    href="/productos"
+                    className="bg-gradient-to-r from-[#CC9F53] to-[#b08a3c] hover:from-[#b08a3c] hover:to-[#9a7635] text-white font-semibold px-5 py-2.5 rounded-lg transition-all duration-300 flex items-center gap-2 shadow-lg"
+                  >
+                    <ShoppingCart className="w-4 h-4" />
+                    Descubrir más productos
+                  </Link>
+                </div>
+              </div>
+            </div>
+
+            {favorites.length === 0 ? (
+              <FavoritosEmpty />
+            ) : (
+              <div className="grid md:grid-cols-1 gap-8">
+                {/* Lista de favoritos */}
+                <div className="flex flex-col gap-6">
+                  {favorites.map((fav) => (
+                    <FavoriteItem
+                      key={fav.producto.id}
+                      fav={fav}
+                      onRemove={handleRemoveFavorite}
+                      onAddToCart={handleAddToCart}
+                    />
+                  ))}
+
+                  {/* Resumen y acciones masivas */}
+                  <div className="bg-gradient-to-r from-white/95 to-[#FAF3E7]/50 rounded-2xl p-6 shadow-lg border border-[#ecd8ab] mt-8">
+                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-gradient-to-br from-[#CC9F53] to-[#b08a3c] rounded-xl flex items-center justify-center">
+                          <Heart className="w-6 h-6 text-white" />
+                        </div>
+                        <div>
+                          <h3 className="text-lg font-bold text-[#3A3A3A]">
+                            {favorites.length}{' '}
+                            {favorites.length === 1
+                              ? 'producto favorito'
+                              : 'productos favoritos'}
+                          </h3>
+                          <p className="text-gray-600 text-sm">
+                            Realiza acciones con todos tus favoritos de una vez
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col sm:flex-row items-center gap-3">
+                        <Button
+                          onClick={handleAddAllToCart}
+                          className="bg-gradient-to-r from-[#CC9F53] to-[#b08a3c] hover:from-[#b08a3c] hover:to-[#9a7635] text-white font-semibold px-5 py-2.5 rounded-lg transition-all duration-300 flex items-center gap-2 shadow-lg w-full sm:w-auto"
+                        >
+                          <ShoppingCart className="w-4 h-4" />
+                          Añadir todos al carrito ({favorites.length})
+                        </Button>
+
+                        <Button
+                          variant="outline"
+                          className="text-red-600 border-red-300 hover:bg-red-50 hover:border-red-400 transition-all duration-200 w-full sm:w-auto"
+                          onClick={() => setIsClearModalOpen(true)}
+                        >
+                          <Trash2 className="w-4 h-4 mr-2" />
+                          Limpiar lista
+                        </Button>
+                      </div>
+>>>>>>> develops
                     </div>
                   </div>
                 </div>
               </div>
+<<<<<<< HEAD
             </div>
           )}
         </div>
       </div>
     </Layout>
+=======
+            )}
+          </div>
+        </div>
+      </Layout>
+
+      {/* Modal con renderizado condicional */}
+      {isClearModalOpen && (
+        <ClearFavoritesModal
+          isOpen={isClearModalOpen}
+          onClose={() => setIsClearModalOpen(false)}
+          onConfirm={handleClearAllFavorites}
+          favoritesCount={favorites.length}
+        />
+      )}
+    </>
+>>>>>>> develops
   );
 }
