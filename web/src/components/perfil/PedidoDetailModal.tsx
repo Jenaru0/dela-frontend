@@ -66,11 +66,19 @@ const PedidoDetailModal: React.FC<PedidoDetailModalProps> = ({
       console.log('✅ Detalles del pedido cargados (RESPONSE COMPLETA):', response);
       console.log('✅ Detalles del pedido DATA:', response.data);
       
-      if (response.data) {
-        setPedidoDetallado(response.data);
-        console.log('🎯 Pedido detallado establecido:', response.data);
+      // Manejar tanto el formato ApiResponse<Pedido> como el objeto Pedido directo
+      const pedidoData = response.data || response;
+      
+      if (pedidoData && pedidoData.id) {
+        console.log('🔍 Pedido data recibido:', pedidoData);
+        console.log('🔍 detallePedidos en pedidoData:', pedidoData.detallePedidos);
+        console.log('🔍 Longitud de detallePedidos:', pedidoData.detallePedidos?.length);
+        setPedidoDetallado(pedidoData);
+        console.log('🎯 Pedido detallado establecido:', pedidoData);
       } else {
-        console.log('⚠️ No hay data en response, usando pedido original');
+        console.log('⚠️ No hay data válida en response, usando pedido original');
+        console.log('🔍 Pedido original:', pedido);
+        console.log('🔍 detallePedidos en pedido original:', pedido.detallePedidos);
         setPedidoDetallado(pedido);
       }
     } catch (error) {

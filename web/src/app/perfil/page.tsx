@@ -217,7 +217,8 @@ const ProfilePage: React.FC = () => {
     };
 
     loadData();
-  }, [activeTab, isAuthenticated, usuario, isLoadingPedidos, isLoadingReclamos, isLoadingResenas, pedidosLoaded, reclamosLoaded, resenasLoaded]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, isAuthenticated, usuario]);
   const loadAddresses = async () => {
     try {
       setIsLoadingAddresses(true);
@@ -696,7 +697,7 @@ const ProfilePage: React.FC = () => {
                             </div>
                           </div>
                           <div className="text-right">
-                            <p className="font-semibold text-gray-900">S/ {pedido.total.toFixed(2)}</p>
+                            <p className="font-semibold text-gray-900">S/ {(Number(pedido.total) || 0).toFixed(2)}</p>
                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${EstadoPedidoColors[pedido.estado as keyof typeof EstadoPedidoColors]}`}>
                               {EstadoPedidoLabels[pedido.estado as keyof typeof EstadoPedidoLabels]}
                             </span>
