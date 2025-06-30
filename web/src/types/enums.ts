@@ -17,7 +17,6 @@ export enum MetodoPago {
   visa = 'visa',
   master = 'master',
   amex = 'amex',
-  diners = 'diners',
 }
 
 export enum MetodoEnvio {
@@ -174,7 +173,6 @@ export const MetodoPagoLabels = {
   [MetodoPago.visa]: 'Visa',
   [MetodoPago.master]: 'MasterCard',
   [MetodoPago.amex]: 'American Express',
-  [MetodoPago.diners]: 'Diners Club',
 };
 
 export const MetodoEnvioLabels = {

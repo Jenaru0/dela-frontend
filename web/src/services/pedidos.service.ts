@@ -66,6 +66,7 @@ export interface Pedido {
 }
 
 export interface CreatePedidoDto {
+  usuarioId: number;
   direccionId: number;
   detalles: {
     productoId: number;
