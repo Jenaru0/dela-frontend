@@ -286,22 +286,45 @@ const ReclamosAdminPage: React.FC = () => {
     }
   };
 
+  // Recargar un reclamo específico
+  const handleReloadReclamo = async (reclamoId: number) => {
+    try {
+      console.log('🔄 Recargando reclamo específico:', reclamoId);
+      const updatedReclamo = await reclamosService.obtenerPorId(reclamoId);
+      console.log('📄 Reclamo recargado:', updatedReclamo.data);
+      console.log('💬 Comentarios en reclamo recargado:', updatedReclamo.data.comentarios);
+      setSelectedReclamo(updatedReclamo.data);
+    } catch (error) {
+      console.error('❌ Error al recargar reclamo:', error);
+    }
+  };
+
   // Agregar comentario
   const handleAddComment = async (reclamoId: number, comentario: string, esInterno: boolean) => {
     try {
-      await reclamosService.agregarComentario(reclamoId, comentario, esInterno);
+      console.log('🔄 Agregando comentario...', { reclamoId, comentario, esInterno });
+      
+      // Agregar el comentario
+      const comentarioResponse = await reclamosService.agregarComentario(reclamoId, comentario, esInterno);
+      console.log('✅ Comentario agregado:', comentarioResponse);
       
       // Recargar los datos del reclamo específico
+      console.log('🔄 Recargando datos del reclamo...');
       const updatedReclamo = await reclamosService.obtenerPorId(reclamoId);
+      console.log('📄 Reclamo actualizado:', updatedReclamo.data);
+      console.log('💬 Comentarios en reclamo actualizado:', updatedReclamo.data.comentarios);
+      
+      // Actualizar el reclamo seleccionado
       setSelectedReclamo(updatedReclamo.data);
       
-      // Recargar la lista
+      // Recargar la lista completa (para actualizar contadores)
       await handleReclamoUpdated();
       
       showNotification('success', 'Comentario agregado correctamente');
     } catch (error) {
-      console.error('Error al agregar comentario:', error);
-      showNotification('error', 'Error al agregar comentario');    }
+      console.error('❌ Error al agregar comentario:', error);
+      showNotification('error', 'Error al agregar comentario');
+    }
   };
 
   const getStatusIcon = (estado: EstadoReclamo) => {
@@ -804,6 +827,7 @@ const ReclamosAdminPage: React.FC = () => {
         onClose={handleCloseModals}
         reclamo={selectedReclamo}
         onAddComment={handleAddComment}
+        onReloadReclamo={handleReloadReclamo}
       />
 
       <ReclamoManageModal

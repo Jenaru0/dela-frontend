@@ -121,9 +121,11 @@ const PedidosAdminPage: React.FC = () => {
           // Usar datos ya filtrados en frontend
           const startIndex = (page - 1) * itemsPerPage;
           const endIndex = startIndex + itemsPerPage;
-          setPedidos(allFilteredPedidos.slice(startIndex, endIndex));
-          setTotalPages(Math.ceil(allFilteredPedidos.length / itemsPerPage));
-          setTotalItems(allFilteredPedidos.length);
+          // Asegurar que allFilteredPedidos sea un array
+          const safePedidos = Array.isArray(allFilteredPedidos) ? allFilteredPedidos : [];
+          setPedidos(safePedidos.slice(startIndex, endIndex));
+          setTotalPages(Math.ceil(safePedidos.length / itemsPerPage));
+          setTotalItems(safePedidos.length);
         } else {
           // Usar paginación del backend
           const response = await pedidosService.obtenerConPaginacion(
@@ -134,15 +136,23 @@ const PedidosAdminPage: React.FC = () => {
             fechaInicio,
             fechaFin
           );
-          setPedidos(response.data);
-          setTotalPages(response.totalPages);
-          setTotalItems(response.total);
-          setCurrentPage(response.page);
+          
+          // Asegurar que response.data sea un array
+          const pedidosData = Array.isArray(response.data) ? response.data : [];
+          console.log('📦 Datos de paginación recibidos:', pedidosData.length);
+          
+          setPedidos(pedidosData);
+          setTotalPages(response.totalPages || 1);
+          setTotalItems(response.total || 0);
+          setCurrentPage(response.page || page);
         }
       } catch (error) {
         console.error('Error al cargar pedidos:', error);
         showNotification('error', 'Error al cargar pedidos');
+        // Asegurar que pedidos sea un array vacío en caso de error
         setPedidos([]);
+        setTotalPages(1);
+        setTotalItems(0);
       } finally {
         setIsLoading(false);
       }
@@ -304,7 +314,9 @@ const PedidosAdminPage: React.FC = () => {
         // Mostrar primera página de resultados filtrados
         const startIndex = 0;
         const endIndex = itemsPerPage;
-        setPedidos(filtered.slice(startIndex, endIndex));
+        const paginatedResults = Array.isArray(filtered) ? filtered.slice(startIndex, endIndex) : [];
+        
+        setPedidos(paginatedResults);
         setTotalPages(Math.ceil(filtered.length / itemsPerPage));
         setTotalItems(filtered.length);
         setCurrentPage(1);
@@ -354,7 +366,9 @@ const PedidosAdminPage: React.FC = () => {
       if (isUsingFrontendPagination) {
         const startIndex = (page - 1) * itemsPerPage;
         const endIndex = startIndex + itemsPerPage;
-        setPedidos(allFilteredPedidos.slice(startIndex, endIndex));
+        // Asegurar que allFilteredPedidos sea un array
+        const safePedidos = Array.isArray(allFilteredPedidos) ? allFilteredPedidos : [];
+        setPedidos(safePedidos.slice(startIndex, endIndex));
       } else {
         loadOrders(
           page,
@@ -417,6 +431,11 @@ const PedidosAdminPage: React.FC = () => {
 
   // Filtrar pedidos por búsqueda (solo para mostrar en tiempo real)
   const filteredOrders = useMemo(() => {
+    // Asegurar que pedidos siempre sea un array
+    if (!Array.isArray(pedidos)) {
+      console.warn('⚠️ pedidos no es un array:', pedidos);
+      return [];
+    }
     return pedidos; // Ya están filtrados por el backend o frontend
   }, [pedidos]);
 
