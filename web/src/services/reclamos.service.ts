@@ -43,6 +43,7 @@ export interface CreateReclamoDto {
   pedidoId?: number;
   asunto: string;
   descripcion: string;
+  tipoReclamo?: string;
 }
 
 export interface UpdateReclamoDto {

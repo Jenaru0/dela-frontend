@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/Button';
-import { User, Shield, Mail, Phone, AlertCircle, CheckCircle, MapPin, Plus, Package, MessageSquare, Star, UserX, Eye } from 'lucide-react';
+import { User, Shield, Mail, Phone, AlertCircle, CheckCircle, MapPin, Plus, Package, MessageSquare, Star, UserX, Eye, Info } from 'lucide-react';
 import EditProfileModal from '@/components/auth/EditProfileModal';
 import ChangePasswordModal from '@/components/auth/ChangePasswordModal';
 import AddressModal from '@/components/direcciones/AddressModal';
@@ -11,6 +11,7 @@ import AddressList from '@/components/direcciones/AddressList';
 import PedidoDetailModal from '@/components/perfil/PedidoDetailModal';
 import CreateReviewModal from '@/components/perfil/CreateReviewModal';
 import CreateClaimModal from '@/components/perfil/CreateClaimModal';
+import ClaimDetailModal from '@/components/perfil/ClaimDetailModal';
 import { usuariosService } from '@/services/usuarios.service';
 import { authService } from '@/services/auth.service';
 import { direccionesService } from '@/services/direcciones.service';
@@ -20,11 +21,13 @@ import { reclamosService, Reclamo } from '@/services/reclamos.service';
 import { resenasService, Resena } from '@/services/resenas.service';
 import { UpdateUsuarioDto } from '@/types/usuarios';
 import { DireccionCliente, CreateDireccionDto, UpdateDireccionDto } from '@/types/direcciones';
-import { EstadoPedidoLabels, EstadoPedidoColors, EstadoReclamoLabels, EstadoReclamoColors, PrioridadReclamoLabels, PrioridadReclamoColors, EstadoResenaLabels, MetodoPagoLabels, MetodoEnvioLabels } from '@/types/enums';
+import { useReclamos } from '@/hooks/useReclamos';
+import { EstadoPedidoLabels, EstadoPedidoColors, EstadoReclamoLabels, PrioridadReclamoLabels, EstadoResenaLabels, MetodoPagoLabels, MetodoEnvioLabels } from '@/types/enums';
 import Layout from '@/components/layout/Layout';
 
 const ProfilePage: React.FC = () => {
   const { usuario, isAuthenticated, actualizarUsuario, isLoading, cerrarSesion } = useAuth();
+  const { crearReclamo} = useReclamos();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
@@ -38,6 +41,8 @@ const ProfilePage: React.FC = () => {
   const [isCreateReviewModalOpen, setIsCreateReviewModalOpen] = useState(false);
   const [reviewData, setReviewData] = useState<{ productoId: number; productoNombre: string } | null>(null);
   const [isCreateClaimModalOpen, setIsCreateClaimModalOpen] = useState(false);
+  const [isClaimDetailModalOpen, setIsClaimDetailModalOpen] = useState(false);
+  const [selectedReclamo, setSelectedReclamo] = useState<Reclamo | null>(null);
   const [claimData, setClaimData] = useState<{ pedidoId: number; pedidoNumero: string } | null>(null);  const [activeTab, setActiveTab] = useState<'personal' | 'addresses' | 'orders' | 'claims' | 'reviews'>('personal');
   const [isNewsletterSubscribed, setIsNewsletterSubscribed] = useState(false);
   const [isLoadingNewsletter, setIsLoadingNewsletter] = useState(false);
@@ -51,7 +56,7 @@ const ProfilePage: React.FC = () => {
   const [isLoadingReclamos, setIsLoadingReclamos] = useState(false);
   const [isLoadingResenas, setIsLoadingResenas] = useState(false);
     const [notification, setNotification] = useState<{
-    type: 'success' | 'error';
+    type: 'success' | 'error' | 'info';
     message: string;
   } | null>(null);
   
@@ -61,7 +66,7 @@ const ProfilePage: React.FC = () => {
   const [resenasLoaded, setResenasLoaded] = useState(false);
   
   // Función para mostrar notificaciones
-  const showNotification = (type: 'success' | 'error', message: string) => {
+  const showNotification = (type: 'success' | 'error' | 'info', message: string) => {
     setNotification({ type, message });    setTimeout(() => setNotification(null), 5000);
   };
 
@@ -357,21 +362,53 @@ const ProfilePage: React.FC = () => {
     }
   };
 
+  // Función para recargar reclamos
+  const reloadReclamos = useCallback(async () => {
+    if (activeTab === 'claims') {
+      try {
+        setIsLoadingReclamos(true);
+        const response = await reclamosService.obtenerMisReclamos();
+        setReclamos(response?.data || []);
+      } catch (error) {
+        console.error('Error al recargar reclamos:', error);
+      } finally {
+        setIsLoadingReclamos(false);
+      }
+    }
+  }, [activeTab]);
+
   // Manejar envío de reclamo
-  const handleSubmitClaim = async (claimData: { pedidoId: number; asunto: string; descripcion: string; tipoReclamo: string }) => {
+  const handleSubmitClaim = async (claimData: { pedidoId?: number; asunto: string; descripcion: string; tipoReclamo: string }) => {
     try {
-      // TODO: Implementar servicio de reclamos
-      console.log('Crear reclamo:', claimData);
+      const reclamoCreado = await crearReclamo({
+        ...(claimData.pedidoId && { pedidoId: claimData.pedidoId }),
+        asunto: claimData.asunto,
+        descripcion: claimData.descripcion,
+        tipoReclamo: claimData.tipoReclamo,
+      });
+      
+      console.log('Reclamo creado:', reclamoCreado);
       showNotification('success', 'Reclamo enviado correctamente. Te contactaremos pronto.');
       
-      // Opcional: Recargar reclamos si estamos en esa pestaña
-      if (activeTab === 'claims') {
-        setReclamosLoaded(false);
-      }
+      // Recargar reclamos
+      await reloadReclamos();
+      
+      // Abrir automáticamente el detalle del reclamo recién creado
+      setTimeout(() => {
+        setSelectedReclamo(reclamoCreado);
+        setIsClaimDetailModalOpen(true);
+      }, 1000);
     } catch (error) {
       console.error('Error al crear reclamo:', error);
       throw error; // El modal manejará el error
     }
+  };
+
+  // Manejar apertura del detalle de reclamo
+  const handleOpenClaimDetails = (reclamo: Reclamo) => {
+    console.log('🚀 Abriendo modal de reclamo:', reclamo);
+    setSelectedReclamo(reclamo);
+    setIsClaimDetailModalOpen(true);
   };// Mostrar loading durante la verificación inicial
   if (isLoading) {
     return (
@@ -420,11 +457,15 @@ const ProfilePage: React.FC = () => {
             <div className={`fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg ${
               notification.type === 'success' 
                 ? 'bg-emerald-50 border border-emerald-200 text-emerald-800' 
+                : notification.type === 'info'
+                ? 'bg-blue-50 border border-blue-200 text-blue-800'
                 : 'bg-red-50 border border-red-200 text-red-800'
             }`}>
               <div className="flex items-center">
                 {notification.type === 'success' ? (
                   <CheckCircle className="h-5 w-5 mr-2" />
+                ) : notification.type === 'info' ? (
+                  <Info className="h-5 w-5 mr-2" />
                 ) : (
                   <AlertCircle className="h-5 w-5 mr-2" />
                 )}
@@ -727,76 +768,157 @@ const ProfilePage: React.FC = () => {
 
             {/* Claims Tab */}
             {activeTab === 'claims' && (
-              <div className="bg-white rounded-xl shadow-lg p-6">
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-xl font-bold text-neutral-900 flex items-center">
-                    <MessageSquare className="h-5 w-5 mr-2 text-primary-600" />
-                    Mis Reclamos
-                  </h2>
-                  <Button
-                    onClick={() => {
-                      // TODO: Implementar crear nuevo reclamo
-                      console.log('Crear nuevo reclamo');
-                    }}
-                    className="flex items-center gap-2"
-                  >
-                    <Plus className="h-4 w-4" />
-                    Nuevo Reclamo
-                  </Button>
-                </div>
-                
-                {isLoadingReclamos ? (
-                  <div className="text-center py-8">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#CC9F53] mx-auto mb-4"></div>
-                    <p className="text-gray-500">Cargando reclamos...</p>
-                  </div>                ) : !reclamos || reclamos.length === 0 ? (
-                  <div className="text-center py-8">
-                    <MessageSquare className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">
-                      No tienes reclamos
-                    </h3>
-                    <p className="text-gray-500">
-                      Si tienes algún problema con tu pedido, puedes crear un reclamo aquí
-                    </p>
+              <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+                <div className="p-6 border-b border-gray-100">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 bg-[#CC9F53]/10 rounded-full flex items-center justify-center">
+                        <MessageSquare className="h-5 w-5 text-[#CC9F53]" />
+                      </div>
+                      <div>
+                        <h2 className="text-xl font-bold text-gray-900">Mis Reclamos</h2>
+                        <p className="text-gray-600 text-sm">
+                          Gestiona tus consultas y reclamos
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      onClick={() => {
+                        setClaimData(null);
+                        setIsCreateClaimModalOpen(true);
+                      }}
+                      className="bg-[#CC9F53] hover:bg-[#B8903D] text-white"
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Nuevo Reclamo
+                    </Button>
                   </div>
-                ) : (
-                  <div className="space-y-4">
-                    {reclamos.map((reclamo) => (
-                      <div key={reclamo.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-                        <div className="flex items-start justify-between mb-3">
-                          <div className="flex items-start space-x-3">
-                            <MessageSquare className="h-5 w-5 text-primary-600 mt-0.5" />
-                            <div>
-                              <h3 className="font-medium text-gray-900">{reclamo.asunto}</h3>
-                              <p className="text-sm text-gray-600 mt-1">{reclamo.descripcion}</p>                              <p className="text-sm text-gray-500 mt-1">
-                                {new Date(reclamo.creadoEn).toLocaleDateString('es-PE', {
-                                  year: 'numeric',
-                                  month: 'long',
-                                  day: 'numeric'
-                                })}
-                              </p>
+                </div>
+
+                <div className="p-6">
+                  {isLoadingReclamos ? (
+                    <div className="text-center py-12">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#CC9F53] mx-auto mb-4"></div>
+                      <p className="text-gray-500">Cargando reclamos...</p>
+                    </div>
+                  ) : !reclamos || reclamos.length === 0 ? (
+                    <div className="text-center py-12">
+                      <div className="w-20 h-20 bg-[#CC9F53]/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <MessageSquare className="h-10 w-10 text-[#CC9F53]" />
+                      </div>
+                      <h3 className="text-lg font-medium text-gray-900 mb-2">
+                        No tienes reclamos aún
+                      </h3>
+                      <p className="text-gray-500 mb-6 max-w-md mx-auto">
+                        ¿Tienes alguna pregunta o problema? Puedes crear un nuevo reclamo y te ayudaremos a resolverlo.
+                      </p>
+                      <Button
+                        onClick={() => {
+                          setClaimData(null);
+                          setIsCreateClaimModalOpen(true);
+                        }}
+                        className="bg-[#CC9F53] hover:bg-[#B8903D] text-white"
+                      >
+                        <MessageSquare className="h-4 w-4 mr-2" />
+                        Crear Reclamo
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {reclamos.map((reclamo) => (
+                        <div 
+                          key={reclamo.id} 
+                          className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-all duration-200 hover:border-[#CC9F53]/30"
+                        >
+                          {/* Header con título y badges */}
+                          <div className="flex items-start justify-between mb-4">
+                            <div className="flex-1">
+                              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                                {reclamo.asunto}
+                              </h3>
+                              <div className="flex items-center gap-2 mb-3">
+                                <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
+                                  reclamo.estado === 'ABIERTO' ? 'bg-blue-50 text-blue-700 border border-blue-200' :
+                                  reclamo.estado === 'EN_PROCESO' ? 'bg-yellow-50 text-yellow-700 border border-yellow-200' :
+                                  reclamo.estado === 'RESUELTO' ? 'bg-green-50 text-green-700 border border-green-200' :
+                                  'bg-red-50 text-red-700 border border-red-200'
+                                }`}>
+                                  {EstadoReclamoLabels[reclamo.estado as keyof typeof EstadoReclamoLabels]}
+                                </span>
+                                <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
+                                  reclamo.prioridad === 'ALTA' ? 'bg-red-50 text-red-700 border border-red-200' :
+                                  reclamo.prioridad === 'MEDIA' ? 'bg-yellow-50 text-yellow-700 border border-yellow-200' :
+                                  'bg-gray-50 text-gray-700 border border-gray-200'
+                                }`}>
+                                  {PrioridadReclamoLabels[reclamo.prioridad as keyof typeof PrioridadReclamoLabels]}
+                                </span>
+                              </div>
                             </div>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleOpenClaimDetails(reclamo)}
+                              className="border-[#CC9F53] text-[#CC9F53] hover:bg-[#CC9F53] hover:text-white ml-4"
+                            >
+                              <Eye className="h-4 w-4 mr-1" />
+                              Ver Detalles
+                            </Button>
                           </div>
-                          <div className="flex flex-col items-end space-y-2">                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${EstadoReclamoColors[reclamo.estado as keyof typeof EstadoReclamoColors]}`}>
-                              {EstadoReclamoLabels[reclamo.estado as keyof typeof EstadoReclamoLabels]}
-                            </span>
-                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${PrioridadReclamoColors[reclamo.prioridad as keyof typeof PrioridadReclamoColors]}`}>
-                              {PrioridadReclamoLabels[reclamo.prioridad as keyof typeof PrioridadReclamoLabels]}
-                            </span>
-                          </div>
-                        </div>
-                        
-                        {reclamo.pedidoId && (
-                          <div className="pt-3 border-t border-gray-100">
-                            <p className="text-sm text-gray-600">
-                              Relacionado con pedido #{reclamo.pedido?.numero || reclamo.pedidoId}
+
+                          {/* Descripción */}
+                          <div className="mb-4">
+                            <p className="text-gray-600 text-sm leading-relaxed line-clamp-2">
+                              {reclamo.descripcion}
                             </p>
                           </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
+
+                          {/* Metadatos */}
+                          <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+                            <div className="flex items-center gap-6 text-sm text-gray-500">
+                              <div className="flex items-center gap-1">
+                                <AlertCircle className="h-4 w-4" />
+                                <span>Reclamo #{reclamo.id}</span>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <span>📅</span>
+                                <span>
+                                  {new Date(reclamo.creadoEn).toLocaleDateString('es-PE', {
+                                    day: '2-digit',
+                                    month: '2-digit',
+                                    year: 'numeric'
+                                  })} a las {new Date(reclamo.creadoEn).toLocaleTimeString('es-PE', {
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                  })}
+                                </span>
+                              </div>
+                              {reclamo.pedidoId && (
+                                <div className="flex items-center gap-1">
+                                  <Package className="h-4 w-4" />
+                                  <span>Pedido #{reclamo.pedidoId}</span>
+                                </div>
+                              )}
+                              {reclamo.comentarios && reclamo.comentarios.length > 0 && (
+                                <div className="flex items-center gap-1">
+                                  <MessageSquare className="h-4 w-4" />
+                                  <span>{reclamo.comentarios.length} comentario{reclamo.comentarios.length > 1 ? 's' : ''}</span>
+                                </div>
+                              )}
+                            </div>
+                            
+                            <div className="text-xs text-gray-400">
+                              {reclamo.actualizadoEn && reclamo.actualizadoEn !== reclamo.creadoEn && (
+                                <span>
+                                  Actualizado: {new Date(reclamo.actualizadoEn).toLocaleDateString('es-PE')}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 
@@ -945,10 +1067,26 @@ const ProfilePage: React.FC = () => {
                 setClaimData(null);
               }}
               onSubmit={handleSubmitClaim}
-              pedidoId={claimData.pedidoId}
-              pedidoNumero={claimData.pedidoNumero}
+              pedidoId={claimData?.pedidoId}
+              pedidoNumero={claimData?.pedidoNumero}
             />
           )}
+
+          {/* Modal de detalle de reclamo */}
+          <ClaimDetailModal
+            isOpen={isClaimDetailModalOpen}
+            onClose={() => {
+              setIsClaimDetailModalOpen(false);
+              setSelectedReclamo(null);
+            }}
+            reclamo={selectedReclamo}
+            onReclamoUpdate={() => {
+              // Recargar la lista de reclamos cuando se agregue un comentario
+              if (activeTab === 'claims') {
+                reloadReclamos();
+              }
+            }}
+          />
         </div>
       </div>
     </Layout>

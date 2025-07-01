@@ -9,21 +9,22 @@ interface CreateClaimModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (claimData: { 
-    pedidoId: number; 
+    pedidoId?: number; 
     asunto: string; 
     descripcion: string; 
     tipoReclamo: string;
   }) => Promise<void>;
-  pedidoId: number;
-  pedidoNumero: string;
+  pedidoId?: number;
+  pedidoNumero?: string;
 }
 
 const tiposReclamo = [
   { value: 'PRODUCTO_DEFECTUOSO', label: 'Producto defectuoso' },
-  { value: 'ENTREGA_TARDÍA', label: 'Entrega tardía' },
-  { value: 'PRODUCTO_INCORRECTO', label: 'Producto incorrecto' },
+  { value: 'DEMORA_ENTREGA', label: 'Demora en entrega' },
+  { value: 'PEDIDO_INCOMPLETO', label: 'Pedido incompleto' },
+  { value: 'COBRO_INCORRECTO', label: 'Cobro incorrecto' },
+  { value: 'SOLICITUD_CANCELACION', label: 'Solicitud de cancelación' },
   { value: 'SERVICIO_CLIENTE', label: 'Servicio al cliente' },
-  { value: 'REEMBOLSO', label: 'Solicitud de reembolso' },
   { value: 'OTRO', label: 'Otro' },
 ];
 
@@ -116,7 +117,7 @@ const CreateClaimModal: React.FC<CreateClaimModalProps> = ({
     try {
       setIsSubmitting(true);
       await onSubmit({
-        pedidoId,
+        ...(pedidoId && { pedidoId }),
         asunto: asunto.trim(),
         descripcion: descripcion.trim(),
         tipoReclamo,
@@ -152,7 +153,7 @@ const CreateClaimModal: React.FC<CreateClaimModalProps> = ({
                 Crear Reclamo
               </h2>
               <p className="text-sm text-gray-500">
-                Pedido #{pedidoNumero}
+                {pedidoNumero ? `Pedido #${pedidoNumero}` : 'Reclamo General'}
               </p>
             </div>
           </div>
@@ -168,15 +169,17 @@ const CreateClaimModal: React.FC<CreateClaimModalProps> = ({
         {/* Content */}
         <form onSubmit={handleSubmit} className="p-6 overflow-y-auto max-h-[calc(90vh-180px)]">
           {/* Información del pedido */}
-          <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <div className="flex items-center space-x-2 mb-2">
-              <Package className="w-5 h-5 text-blue-600" />
-              <h3 className="font-medium text-blue-800">Información del Pedido</h3>
+          {pedidoId && pedidoNumero && (
+            <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="flex items-center space-x-2 mb-2">
+                <Package className="w-5 h-5 text-blue-600" />
+                <h3 className="font-medium text-blue-800">Información del Pedido</h3>
+              </div>
+              <p className="text-sm text-blue-700">
+                Este reclamo se asociará con el pedido <strong>#{pedidoNumero}</strong>
+              </p>
             </div>
-            <p className="text-sm text-blue-700">
-              Este reclamo se asociará con el pedido <strong>#{pedidoNumero}</strong>
-            </p>
-          </div>
+          )}
 
           {/* Tipo de reclamo */}
           <div className="mb-6">
