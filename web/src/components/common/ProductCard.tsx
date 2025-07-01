@@ -15,6 +15,8 @@ import type { Product } from '@/lib/products';
 import { useFavorites } from '@/contexts/FavoritoContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAuthModalGlobal } from '@/contexts/AuthModalContext';
+import { useStockAlert } from '@/hooks/useStockAlert';
+import { StockAlertModal } from '@/components/modals/StockAlertModal';
 
 interface ProductCardProps {
   product: Product;
@@ -30,6 +32,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
   const { addFavorite, removeFavorite, isFavorite } = useFavorites();
   const { isAuthenticated } = useAuth();
   const { open: openAuthModal } = useAuthModalGlobal();
+  const { isOpen, config, showError, closeAlert } = useStockAlert();
 
   const fav = isFavorite(product.id);
 
@@ -53,7 +56,9 @@ const ProductCard: React.FC<ProductCardProps> = ({
     : 0;
   const { addToCart, isLoading } = useCart();
   const { openDrawer } = useCartDrawer();
-  const [isAddingToCart, setIsAddingToCart] = useState(false);  const handleAddToCart = async () => {
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
+
+  const handleAddToCart = async () => {
     console.log('🔄 HandleAddToCart called', { 
       isAuthenticated, 
       product: { id: product.id, name: product.name },
@@ -74,7 +79,11 @@ const ProductCard: React.FC<ProductCardProps> = ({
       openDrawer();
     } catch (error) {
       console.error('❌ Error adding to cart:', error);
-      alert(`Error añadiendo al carrito: ${error instanceof Error ? error.message : 'Error desconocido'}`);
+      const availableStock = product.stock || 0;
+      const stockMinimo = product.stockMinimo || 0;
+      const stockDisponible = Math.max(0, availableStock - stockMinimo);
+      
+      showError(product.name, error instanceof Error ? error.message : 'Error desconocido al añadir al carrito');
     } finally {
       setIsAddingToCart(false);
     }
@@ -204,6 +213,19 @@ const ProductCard: React.FC<ProductCardProps> = ({
           }
         </Button>
       </CardFooter>
+      
+      {/* Modal de stock */}
+      {config && (
+        <StockAlertModal
+          isOpen={isOpen}
+          onClose={closeAlert}
+          type={config.type}
+          productName={config.productName}
+          availableStock={config.availableStock}
+          requestedQuantity={config.requestedQuantity}
+          message={config.message}
+        />
+      )}
     </Card>
   );
 };
