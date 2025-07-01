@@ -200,7 +200,7 @@ class AuthService {  private getAuthHeaders() {
       if (!token) return false;
 
       const response = await fetch(`${API_BASE_URL}/autenticacion/verify`, {
-        method: 'GET',
+        method: 'POST',
         headers: this.getAuthHeaders(),
       });
 
@@ -271,6 +271,7 @@ class AuthService {  private getAuthHeaders() {
     // Si obtenemos un 401, intentar renovar el token y reintentar
     if (response.status === 401) {
       try {
+        console.log('Token expirado, intentando renovar...');
         await this.renovarToken();
         
         // Reintentar la petición con el nuevo token
@@ -281,9 +282,25 @@ class AuthService {  private getAuthHeaders() {
             ...options.headers,
           },
         });
-      } catch {
+        
+        // Si sigue dando 401 después de renovar, la sesión debe cerrarse
+        if (response.status === 401) {
+          console.log('Sesión inválida después de renovar token');
+          this.limpiarDatos();
+          // Disparar evento para que el contexto se entere
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('auth:session-expired'));
+          }
+          throw new Error('Sesión expirada. Inicie sesión nuevamente.');
+        }
+      } catch (renewError) {
         // Si la renovación falla, limpiar datos y lanzar error
+        console.log('Error al renovar token:', renewError);
         this.limpiarDatos();
+        // Disparar evento para que el contexto se entere
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('auth:session-expired'));
+        }
         throw new Error('Sesión expirada. Inicie sesión nuevamente.');
       }
     }
