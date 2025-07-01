@@ -16,6 +16,7 @@ export default function CarritoPage() {
     cart,
     increaseQty,
     decreaseQty,
+    setQty,
     removeFromCart,
     clearCart,
   } = useCart();
@@ -136,6 +137,7 @@ export default function CarritoPage() {
                     prod={prod}
                     increaseQty={increaseQty}
                     decreaseQty={decreaseQty}
+                    setQty={setQty}
                     removeFromCart={removeFromCart}
                   />
                 ))}                {/* Acciones del carrito */}

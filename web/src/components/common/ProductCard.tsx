@@ -167,34 +167,41 @@ const ProductCard: React.FC<ProductCardProps> = ({
           )}
         </div>
       </CardContent>      <CardFooter className="p-6 pt-0 space-y-3">
-        {/* Debug info */}
-        <div className="text-xs text-gray-500">
-          {isAuthenticated ? '✅ Autenticado' : '❌ No autenticado'}
+        {/* Stock information */}
+        <div className="flex items-center justify-between text-sm">
+          {product.stock !== undefined && (
+            <div className={`flex items-center gap-1 ${
+              product.stock > 0 ? 'text-green-600' : 'text-red-600'
+            }`}>
+              <div className={`w-2 h-2 rounded-full ${
+                product.stock > 0 ? 'bg-green-500' : 'bg-red-500'
+              }`} />
+              {product.stock > 0 ? (
+                product.stock <= 5 ? (
+                  <span>¡Solo quedan {product.stock}!</span>
+                ) : (
+                  <span>En stock ({product.stock} disponibles)</span>
+                )
+              ) : (
+                <span>Sin stock</span>
+              )}
+            </div>
+          )}
         </div>
-        
-        {/* Simple test button */}
-        <button 
-          className="w-full bg-red-500 text-white p-2 rounded"
-          onClick={() => {
-            console.log('🔥 SIMPLE BUTTON CLICKED!');
-            alert('Simple button works!');
-          }}
-        >
-          TEST SIMPLE BUTTON
-        </button>
         
         <Button
           className="w-full bg-[#CC9F53] hover:bg-[#CC9F53]/90 text-white font-semibold py-3 px-6 rounded-lg shadow-lg hover:shadow-xl hover:shadow-[#CC9F53]/20 transition-all duration-300 transform hover:scale-[1.02] group/btn disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
           size="default"
-          onClick={() => {
-            console.log('🔥 BUTTON CLICKED! Simple test');
-            alert('Button clicked!');
-            handleAddToCart();
-          }}
-          disabled={isAddingToCart || isLoading}
+          onClick={handleAddToCart}
+          disabled={isAddingToCart || isLoading || (product.stock !== undefined && product.stock <= 0)}
         >
           <ShoppingBag className={`mr-2 h-5 w-5 transition-transform group-hover/btn:scale-110 ${isAddingToCart ? 'animate-pulse' : ''}`} />
-          {isAddingToCart ? 'Añadiendo...' : 'Añadir al carrito'}
+          {(product.stock !== undefined && product.stock <= 0) 
+            ? 'Sin stock' 
+            : isAddingToCart 
+              ? 'Añadiendo...' 
+              : 'Añadir al carrito'
+          }
         </Button>
       </CardFooter>
     </Card>

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCart } from '@/contexts/CarContext';
 import { useAuth } from '@/contexts/AuthContext';
+import Layout from '@/components/layout/Layout';
 import { CheckoutSummary } from '@/components/checkout/CheckoutSummary';
 import { AddressSelection } from '@/components/checkout/AddressSelection';
 import { PaymentForm } from '@/components/checkout/PaymentForm';
@@ -32,18 +33,23 @@ export default function CheckoutPage() {
   // Verificar autenticación
   useEffect(() => {
     if (!isAuthenticated) {
-      router.push('/auth/login?redirect=/checkout');
+      router.push('/?showAuthModal=true&mode=login&redirect=/checkout');
       return;
     }
   }, [isAuthenticated, router]);
 
-  // Verificar que haya productos en el carrito
+  // Verificar que haya productos en el carrito - solo si no está cargando
   useEffect(() => {
-    if (!carritoLoading && (!carrito || carrito.length === 0)) {
+    // No hacer nada si estamos cargando o si es la primera carga
+    if (carritoLoading || loadingDirecciones) return;
+    
+    // Solo redirigir si definitivamente no hay productos
+    if (!carrito || carrito.length === 0) {
+      console.log('Carrito vacío, redirigiendo...');
       router.push('/carrito');
       return;
     }
-  }, [carrito, carritoLoading, router]);
+  }, [carrito, carritoLoading, loadingDirecciones, router]);
 
   // Cargar direcciones del usuario
   useEffect(() => {
@@ -85,6 +91,13 @@ export default function CheckoutPage() {
   };
 
   const manejarContinuarAPago = () => {
+    // Si es recojo en tienda, no necesitamos dirección específica
+    if (metodoEnvio === MetodoEnvio.RECOJO_TIENDA) {
+      setStep('payment');
+      return;
+    }
+    
+    // Para delivery sí necesitamos dirección
     if (!direccionSeleccionada) {
       toast.error('Por favor selecciona una dirección de entrega');
       return;
@@ -93,8 +106,14 @@ export default function CheckoutPage() {
   };
 
   const manejarProcesarPago = async (metodoPago: MetodoPago, datosTarjeta?: DatosTarjeta) => {
-    if (!direccionSeleccionada || !carrito || carrito.length === 0) {
-      toast.error('Faltan datos para procesar el pedido');
+    // Para delivery necesitamos dirección, para recojo en tienda no
+    if (metodoEnvio === MetodoEnvio.DELIVERY && !direccionSeleccionada) {
+      toast.error('Falta dirección de entrega');
+      return;
+    }
+    
+    if (!carrito || carrito.length === 0) {
+      toast.error('Faltan productos en el carrito');
       return;
     }
 
@@ -112,7 +131,8 @@ export default function CheckoutPage() {
       // 1. Crear el pedido
       const datosPedido: CreatePedidoDto = {
         usuarioId: usuario.id,
-        direccionId: direccionSeleccionada.id,
+        // Para recojo en tienda, usar null como direccionId
+        direccionId: metodoEnvio === MetodoEnvio.RECOJO_TIENDA ? null : direccionSeleccionada?.id || null,
         detalles: carrito.map(item => ({
           productoId: parseInt(item.id),
           cantidad: item.quantity,
@@ -190,9 +210,11 @@ export default function CheckoutPage() {
 
   if (!isAuthenticated || carritoLoading || loadingDirecciones) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <LoadingSpinner size="lg" />
-      </div>
+      <Layout>
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-[#F5EFD7]/20 to-white">
+          <LoadingSpinner size="lg" />
+        </div>
+      </Layout>
     );
   }
 
@@ -203,93 +225,95 @@ export default function CheckoutPage() {
   const totales = calcularTotales();
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <Button
-            variant="ghost"
-            onClick={manejarVolver}
-            className="mb-4 text-gray-600 hover:text-gray-900"
-            disabled={step === 'processing'}
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Volver
-          </Button>
-          
-          <h1 className="text-3xl font-bold text-gray-900">
-            {step === 'address' && 'Dirección de Entrega'}
-            {step === 'payment' && 'Método de Pago'}
-            {step === 'processing' && 'Procesando Pago...'}
-          </h1>
+    <Layout>
+      <div className="min-h-screen bg-gradient-to-b from-[#F5EFD7]/20 to-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {/* Header */}
+          <div className="mb-8">
+            <Button
+              variant="ghost"
+              onClick={manejarVolver}
+              className="mb-4 text-gray-600 hover:text-gray-900"
+              disabled={step === 'processing'}
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Volver
+            </Button>
+            
+            <h1 className="text-3xl font-bold text-gray-900">
+              {step === 'address' && 'Dirección de Entrega'}
+              {step === 'payment' && 'Método de Pago'}
+              {step === 'processing' && 'Procesando Pago...'}
+            </h1>
 
-          {/* Indicador de pasos */}
-          <div className="flex items-center mt-4 space-x-4">
-            <div className={`flex items-center ${step === 'address' ? 'text-blue-600' : step === 'payment' || step === 'processing' ? 'text-green-600' : 'text-gray-400'}`}>
-              <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center text-sm font-medium ${step === 'address' ? 'border-blue-600 bg-blue-600 text-white' : step === 'payment' || step === 'processing' ? 'border-green-600 bg-green-600 text-white' : 'border-gray-300 text-gray-400'}`}>
-                1
+            {/* Indicador de pasos */}
+            <div className="flex items-center mt-4 space-x-4">
+              <div className={`flex items-center ${step === 'address' ? 'text-blue-600' : step === 'payment' || step === 'processing' ? 'text-green-600' : 'text-gray-400'}`}>
+                <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center text-sm font-medium ${step === 'address' ? 'border-blue-600 bg-blue-600 text-white' : step === 'payment' || step === 'processing' ? 'border-green-600 bg-green-600 text-white' : 'border-gray-300 text-gray-400'}`}>
+                  1
+                </div>
+                <span className="ml-2 text-sm font-medium">Dirección</span>
               </div>
-              <span className="ml-2 text-sm font-medium">Dirección</span>
-            </div>
-            
-            <div className={`h-0.5 w-16 ${step === 'payment' || step === 'processing' ? 'bg-green-600' : 'bg-gray-300'}`} />
-            
-            <div className={`flex items-center ${step === 'payment' ? 'text-blue-600' : step === 'processing' ? 'text-green-600' : 'text-gray-400'}`}>
-              <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center text-sm font-medium ${step === 'payment' ? 'border-blue-600 bg-blue-600 text-white' : step === 'processing' ? 'border-green-600 bg-green-600 text-white' : 'border-gray-300 text-gray-400'}`}>
-                2
+              
+              <div className={`h-0.5 w-16 ${step === 'payment' || step === 'processing' ? 'bg-green-600' : 'bg-gray-300'}`} />
+              
+              <div className={`flex items-center ${step === 'payment' ? 'text-blue-600' : step === 'processing' ? 'text-green-600' : 'text-gray-400'}`}>
+                <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center text-sm font-medium ${step === 'payment' ? 'border-blue-600 bg-blue-600 text-white' : step === 'processing' ? 'border-green-600 bg-green-600 text-white' : 'border-gray-300 text-gray-400'}`}>
+                  2
+                </div>
+                <span className="ml-2 text-sm font-medium">Pago</span>
               </div>
-              <span className="ml-2 text-sm font-medium">Pago</span>
             </div>
           </div>
-        </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Contenido principal */}
-          <div className="lg:col-span-2">
-            {step === 'address' && (
-              <AddressSelection
-                direcciones={direcciones}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Contenido principal */}
+            <div className="lg:col-span-2">
+              {step === 'address' && (
+                <AddressSelection
+                  direcciones={direcciones}
+                  direccionSeleccionada={direccionSeleccionada}
+                  onSeleccionarDireccion={setDireccionSeleccionada}
+                  metodoEnvio={metodoEnvio}
+                  onCambiarMetodoEnvio={setMetodoEnvio}
+                  onContinuar={manejarContinuarAPago}
+                />
+              )}
+
+              {step === 'payment' && (
+                <PaymentForm
+                  total={totales.total}
+                  userEmail={usuario?.email || ''}
+                  onProcesarPago={manejarProcesarPago}
+                  loading={loading}
+                />
+              )}
+
+              {step === 'processing' && (
+                <div className="bg-white rounded-lg shadow-sm p-8 text-center">
+                  <LoadingSpinner size="lg" className="mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    Procesando tu pago...
+                  </h3>
+                  <p className="text-gray-600">
+                    Por favor espera mientras confirmamos tu transacción.
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Resumen del pedido */}
+            <div className="lg:col-span-1">
+              <CheckoutSummary
+                items={carrito}
+                totales={totales}
                 direccionSeleccionada={direccionSeleccionada}
-                onSeleccionarDireccion={setDireccionSeleccionada}
                 metodoEnvio={metodoEnvio}
-                onCambiarMetodoEnvio={setMetodoEnvio}
-                onContinuar={manejarContinuarAPago}
               />
-            )}
-
-            {step === 'payment' && (
-              <PaymentForm
-                total={totales.total}
-                userEmail={usuario?.email || ''}
-                onProcesarPago={manejarProcesarPago}
-                loading={loading}
-              />
-            )}
-
-            {step === 'processing' && (
-              <div className="bg-white rounded-lg shadow-sm p-8 text-center">
-                <LoadingSpinner size="lg" className="mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  Procesando tu pago...
-                </h3>
-                <p className="text-gray-600">
-                  Por favor espera mientras confirmamos tu transacción.
-                </p>
-              </div>
-            )}
-          </div>
-
-          {/* Resumen del pedido */}
-          <div className="lg:col-span-1">
-            <CheckoutSummary
-              items={carrito}
-              totales={totales}
-              direccionSeleccionada={direccionSeleccionada}
-              metodoEnvio={metodoEnvio}
-            />
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </Layout>
   );
 }

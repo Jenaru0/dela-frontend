@@ -5,7 +5,8 @@ import { MetodoPago } from '@/types/enums';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/input';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
-import { pagosService, MetodoPagoMercadoPago, TipoIdentificacion, DatosTarjeta } from '@/services/pagos.service';
+import { CardTypeIndicator } from '@/components/ui/CardIcon';
+import { pagosService, TipoIdentificacion, DatosTarjeta } from '@/services/pagos.service';
 import { CreditCard, Lock, AlertCircle } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
@@ -17,7 +18,6 @@ interface PaymentFormProps {
 }
 
 export function PaymentForm({ total, userEmail, onProcesarPago, loading }: PaymentFormProps) {
-  const [metodosPago, setMetodosPago] = useState<MetodoPagoMercadoPago[]>([]);
   const [tiposIdentificacion, setTiposIdentificacion] = useState<TipoIdentificacion[]>([]);
   const [metodoPagoDetectado, setMetodoPagoDetectado] = useState<MetodoPago | null>(null);
   const [loadingMetodos, setLoadingMetodos] = useState(true);
@@ -44,8 +44,10 @@ export function PaymentForm({ total, userEmail, onProcesarPago, loading }: Payme
       return MetodoPago.visa;
     }
     
-    // MasterCard: empieza con 5 o números 2221-2720
-    if (/^5[1-5]/.test(numero) || /^2(2[2-9][1-9]|[3-6][0-9]{2}|7[0-1][0-9]|720)/.test(numero)) {
+    // MasterCard: 
+    // - Rangos clásicos: 5000-5999 (50-59) - ampliado para incluir 50
+    // - Nuevos rangos: 2221-2720
+    if (/^5[0-9]/.test(numero) || /^2(22[1-9]|2[3-9][0-9]|[3-6][0-9]{2}|7[0-1][0-9]|720)/.test(numero)) {
       return MetodoPago.master;
     }
     
@@ -72,17 +74,13 @@ export function PaymentForm({ total, userEmail, onProcesarPago, loading }: Payme
     return targetsaspruebaOficiales.includes(firstSixDigits);
   };
 
-  // Cargar métodos de pago y tipos de identificación al montar el componente
+  // Cargar tipos de identificación al montar el componente
   useEffect(() => {
     const cargarDatos = async () => {
       try {
         setLoadingMetodos(true);
-        const [metodosPagoRes, tiposIdRes] = await Promise.all([
-          pagosService.obtenerMetodosPago(),
-          pagosService.obtenerTiposIdentificacion(),
-        ]);
+        const tiposIdRes = await pagosService.obtenerTiposIdentificacion();
         
-        setMetodosPago(metodosPagoRes.data);
         setTiposIdentificacion(tiposIdRes.data);
       } catch (error) {
         console.error('Error al cargar datos de pago:', error);
@@ -112,8 +110,11 @@ export function PaymentForm({ total, userEmail, onProcesarPago, loading }: Payme
 
     if (!datosTarjeta.fechaExpiracion.trim()) {
       nuevosErrores.fechaExpiracion = 'La fecha de expiración es requerida';
-    } else if (!/^(0[1-9]|1[0-2])\/\d{2}$/.test(datosTarjeta.fechaExpiracion)) {
-      nuevosErrores.fechaExpiracion = 'Formato inválido (MM/YY)';
+    } else {
+      const validacionFecha = validarFechaExpiracion(datosTarjeta.fechaExpiracion);
+      if (!validacionFecha.esValida) {
+        nuevosErrores.fechaExpiracion = validacionFecha.mensaje || 'Fecha de expiración inválida';
+      }
     }
 
     if (!datosTarjeta.codigoSeguridad.trim()) {
@@ -167,6 +168,42 @@ export function PaymentForm({ total, userEmail, onProcesarPago, loading }: Payme
     return numeroLimpio;
   };
 
+  // Función para validar y convertir fecha de expiración
+  const validarFechaExpiracion = (fechaStr: string): { esValida: boolean; mensaje?: string } => {
+    if (!/^(0[1-9]|1[0-2])\/\d{2}$/.test(fechaStr)) {
+      return { esValida: false, mensaje: 'Formato inválido (MM/YY)' };
+    }
+
+    const [mes, año] = fechaStr.split('/');
+    const mesNum = parseInt(mes, 10);
+    let añoNum = parseInt(año, 10);
+
+    // Convertir YY a YYYY
+    // Si el año es menor que 50, asumimos que es 20XX, sino 19XX
+    // Pero para tarjetas de crédito, nunca debería ser 19XX
+    if (añoNum < 50) {
+      añoNum = 2000 + añoNum;
+    } else if (añoNum < 100) {
+      añoNum = 2000 + añoNum; // Para tarjetas, siempre 20XX
+    }
+
+    const fechaActual = new Date();
+    const añoActual = fechaActual.getFullYear();
+    const mesActual = fechaActual.getMonth() + 1;
+
+    // Validar que la fecha no sea en el pasado
+    if (añoNum < añoActual || (añoNum === añoActual && mesNum < mesActual)) {
+      return { esValida: false, mensaje: 'La tarjeta ha expirado' };
+    }
+
+    // Validar que no sea demasiado en el futuro (más de 20 años)
+    if (añoNum > añoActual + 20) {
+      return { esValida: false, mensaje: 'Fecha de expiración muy lejana' };
+    }
+
+    return { esValida: true };
+  };
+
   const manejarSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -197,135 +234,16 @@ export function PaymentForm({ total, userEmail, onProcesarPago, loading }: Payme
         Información de Pago
       </h3>
 
-      {/* Guía de tarjetas de prueba - Solo en desarrollo */}
-      {process.env.NODE_ENV === 'development' && (
-        <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          <h4 className="text-sm font-semibold text-blue-800 mb-2">
-            🧪 Tarjetas de Prueba Oficiales MercadoPago Perú
-          </h4>
-          <div className="text-xs text-blue-700 space-y-1 mb-3">
-            <p><strong>Mastercard:</strong> 5031 7557 3453 0604 | CVV: 123 | Venc: 11/30</p>
-            <p><strong>Visa:</strong> 4009 1753 3280 6176 | CVV: 123 | Venc: 11/30</p>
-            <p><strong>Amex:</strong> 3711 803032 57522 | CVV: 1234 | Venc: 11/30</p>
-            <p><strong>Mastercard Débito:</strong> 5178 7816 2220 2455 | CVV: 123 | Venc: 11/30</p>
-            <div className="border-t border-blue-200 pt-2 mt-2">
-              <p className="text-blue-600 font-medium">
-                <strong>Titular:</strong> APRO (✅ aprobado) | OTHE (❌ rechazado) | CONT (⏳ pendiente)
-              </p>
-              <p className="text-blue-500 text-xs mt-1">
-                ⚠️ Solo estas tarjetas funcionan en modo test. Otras serán rechazadas.
-              </p>
-            </div>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={() => {
-                setDatosTarjeta(prev => ({
-                  ...prev,
-                  numeroTarjeta: '5031 7557 3453 0604',
-                  fechaExpiracion: '11/30',
-                  codigoSeguridad: '123',
-                  nombreTitular: 'APRO'
-                }));
-                setMetodoPagoDetectado(MetodoPago.master);
-              }}
-              className="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors"
-            >
-              📋 Usar MC
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setDatosTarjeta(prev => ({
-                  ...prev,
-                  numeroTarjeta: '4009 1753 3280 6176',
-                  fechaExpiracion: '11/30',
-                  codigoSeguridad: '123',
-                  nombreTitular: 'APRO'
-                }));
-                setMetodoPagoDetectado(MetodoPago.visa);
-              }}
-              className="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors"
-            >
-              📋 Usar Visa
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setDatosTarjeta(prev => ({
-                  ...prev,
-                  numeroTarjeta: '3711 803032 57522',
-                  fechaExpiracion: '11/30',
-                  codigoSeguridad: '1234',
-                  nombreTitular: 'APRO'
-                }));
-                setMetodoPagoDetectado(MetodoPago.amex);
-              }}
-              className="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors"
-            >
-              📋 Usar Amex
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setDatosTarjeta(prev => ({
-                  ...prev,
-                  numeroTarjeta: '5178 7816 2220 2455',
-                  fechaExpiracion: '11/30',
-                  codigoSeguridad: '123',
-                  nombreTitular: 'OTHE'
-                }));
-                setMetodoPagoDetectado(MetodoPago.master);
-              }}
-              className="px-2 py-1 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors"
-            >
-              ❌ Test Rechazo
-            </button>
-          </div>
-        </div>
-      )}
-
       <form onSubmit={manejarSubmit} className="space-y-6">
-        {/* Indicador del tipo de tarjeta detectado */}
+        {/* Indicador profesional del tipo de tarjeta */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-3">
-            Tipo de Tarjeta Detectado
+            Información de Pago
           </label>
-          <div className="flex items-center space-x-4">
-            {metodoPagoDetectado ? (
-              <div className="flex items-center space-x-2 px-4 py-2 bg-green-50 border border-green-200 rounded-lg">
-                {(() => {
-                  const metodo = metodosPago.find(m => m.id === metodoPagoDetectado);
-                  return metodo ? (
-                    <>
-                      <div className="w-8 h-8 bg-green-100 rounded flex items-center justify-center">
-                        <span className="text-xs font-bold text-green-700">
-                          {metodo.name.substring(0, 2).toUpperCase()}
-                        </span>
-                      </div>
-                      <span className="text-sm font-medium text-green-800">
-                        {metodo.name}
-                      </span>
-                    </>
-                  ) : (
-                    <span className="text-sm font-medium text-green-800">
-                      {metodoPagoDetectado.toUpperCase()}
-                    </span>
-                  );
-                })()}
-              </div>
-            ) : (
-              <div className="px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg">
-                <span className="text-sm text-gray-600">
-                  Ingresa el número de tu tarjeta para detectar el tipo automáticamente
-                </span>
-              </div>
-            )}
-          </div>
-          <p className="mt-2 text-xs text-gray-500">
-            Aceptamos tarjetas Visa, MasterCard y American Express
-          </p>
+          <CardTypeIndicator 
+            detectedType={metodoPagoDetectado}
+            className="mb-4"
+          />
         </div>
 
         {/* Información de la tarjeta */}

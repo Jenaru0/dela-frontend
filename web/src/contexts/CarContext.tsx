@@ -11,13 +11,14 @@ export interface CartItem extends Product {
 interface CartContextProps {
   cart: CartItem[];
   isLoading: boolean;
-  addToCart: (product: Product) => Promise<void>;
+  addToCart: (product: Product, quantity?: number) => Promise<void>;
   removeFromCart: (productId: string) => Promise<void>;
   increaseQty: (productId: string) => Promise<void>;
   decreaseQty: (productId: string) => Promise<void>;
   setQty: (productId: string, qty: number) => Promise<void>;
   clearCart: () => Promise<void>;
   refreshCart: () => Promise<void>;
+  syncCartInBackground: () => Promise<void>;
 }
 
 const CartContext = createContext<CartContextProps | undefined>(undefined);
@@ -56,12 +57,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
 
     try {
+      console.time('⏱️ refreshCart time');
       setIsLoading(true);
       const apiCart = await carritoService.getCart();
       const localCart = apiCart.items.map(convertApiCartItemToLocal);
       setCart(localCart);
+      console.timeEnd('⏱️ refreshCart time');
+      console.log('✅ Cart refreshed with', localCart.length, 'items');
     } catch (error) {
-      console.error('Error loading cart:', error);
+      console.error('❌ Error loading cart:', error);
       // Keep local cart on error
     } finally {
       setIsLoading(false);
@@ -100,30 +104,78 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
     loadCart();
   }, [isAuthenticated, usuario]);
-  const addToCart = async (product: Product) => {
-    console.log('addToCart called', { isAuthenticated, usuario, product });
+  const addToCart = async (product: Product, quantity: number = 1) => {
+    console.log('🛒 addToCart called', { isAuthenticated, usuario, product, quantity });
     
     if (!isAuthenticated) {
       throw new Error('Debes iniciar sesión para añadir productos al carrito');
     }
 
+    // Validar stock disponible
+    const availableStock = product.stock || 0;
+    if (availableStock <= 0) {
+      throw new Error('Este producto no tiene stock disponible');
+    }
+
+    // Verificar si ya existe en el carrito y calcular cantidad total
+    const existingItem = cart.find(item => item.id === product.id);
+    const currentQuantity = existingItem ? existingItem.quantity : 0;
+    const totalQuantity = currentQuantity + quantity;
+
+    if (totalQuantity > availableStock) {
+      throw new Error(`Solo quedan ${availableStock} unidades disponibles. Ya tienes ${currentQuantity} en tu carrito.`);
+    }
+
+    if (quantity <= 0) {
+      throw new Error('La cantidad debe ser mayor a 0');
+    }
+
     try {
       setIsLoading(true);
-      console.log('Calling carritoService.addItemToCart with:', {
+      console.time('⏱️ addToCart total time');
+      
+      console.log('📡 Calling carritoService.addItemToCart with:', {
         productoId: parseInt(product.id),
-        cantidad: 1,
+        cantidad: quantity,
       });
       
+      console.time('⏱️ API addItemToCart time');
       await carritoService.addItemToCart({
         productoId: parseInt(product.id),
-        cantidad: 1,
+        cantidad: quantity,
       });
+      console.timeEnd('⏱️ API addItemToCart time');
       
-      console.log('Item added to cart, refreshing cart...');
-      await refreshCart(); // Refresh to get updated cart
-      console.log('Cart refreshed successfully');
+      // Instead of refreshing the entire cart, let's update locally and then sync
+      console.log('🔄 Updating cart locally...');
+      const existingItemIndex = cart.findIndex(item => item.id === product.id);
+      
+      if (existingItemIndex !== -1) {
+        // Update existing item quantity
+        const updatedCart = [...cart];
+        updatedCart[existingItemIndex].quantity += quantity;
+        setCart(updatedCart);
+        console.log('✅ Updated existing item quantity locally');
+      } else {
+        // Add new item to cart
+        const newCartItem: CartItem = {
+          ...product,
+          quantity: quantity,
+        };
+        setCart(prevCart => [...prevCart, newCartItem]);
+        console.log('✅ Added new item to cart locally');
+      }
+      
+      // Optionally, we can refresh in background without blocking the user
+      // but for now, let's skip the refresh to see if this improves performance
+      console.log('✅ Cart updated successfully');
+      console.timeEnd('⏱️ addToCart total time');
+      
     } catch (error) {
-      console.error('Error adding to cart:', error);
+      console.error('❌ Error adding to cart:', error);
+      // If the API call failed, we should refresh the cart to ensure consistency
+      console.log('🔄 API failed, refreshing cart to ensure consistency...');
+      await refreshCart();
       throw error;
     } finally {
       setIsLoading(false);
@@ -137,10 +189,21 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
     try {
       setIsLoading(true);
+      console.log('🗑️ Removing item from cart:', productId);
+      
       await carritoService.removeItemFromCart(parseInt(productId));
-      await refreshCart();
+      
+      // Update local cart immediately
+      setCart(prevCart => prevCart.filter(item => item.id !== productId));
+      console.log('✅ Item removed from cart locally');
+      
+      // Optionally sync in background
+      setTimeout(() => syncCartInBackground(), 500);
+      
     } catch (error) {
-      console.error('Error removing from cart:', error);
+      console.error('❌ Error removing from cart:', error);
+      // If API call failed, refresh to ensure consistency
+      await refreshCart();
       throw error;
     } finally {
       setIsLoading(false);
@@ -155,14 +218,37 @@ export function CartProvider({ children }: { children: ReactNode }) {
       throw new Error('Debes iniciar sesión para modificar el carrito');
     }
 
+    // Validar stock disponible
+    const availableStock = item.stock || 0;
+    if (item.quantity >= availableStock) {
+      throw new Error(`No hay más stock disponible. Solo quedan ${availableStock} unidades.`);
+    }
+
     try {
       setIsLoading(true);
+      console.log('➕ Increasing quantity for:', productId);
+      
       await carritoService.updateCartItem(parseInt(productId), {
         cantidad: item.quantity + 1,
       });
-      await refreshCart();
+      
+      // Update local cart immediately
+      setCart(prevCart => 
+        prevCart.map(cartItem => 
+          cartItem.id === productId 
+            ? { ...cartItem, quantity: cartItem.quantity + 1 }
+            : cartItem
+        )
+      );
+      console.log('✅ Quantity increased locally');
+      
+      // Optionally sync in background
+      setTimeout(() => syncCartInBackground(), 500);
+      
     } catch (error) {
-      console.error('Error increasing quantity:', error);
+      console.error('❌ Error increasing quantity:', error);
+      // If API call failed, refresh to ensure consistency
+      await refreshCart();
       throw error;
     } finally {
       setIsLoading(false);
@@ -179,16 +265,35 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
     try {
       setIsLoading(true);
+      console.log('➖ Decreasing quantity for:', productId);
+      
       if (item.quantity <= 1) {
         await carritoService.removeItemFromCart(parseInt(productId));
+        // Remove from local cart
+        setCart(prevCart => prevCart.filter(cartItem => cartItem.id !== productId));
+        console.log('✅ Item removed from cart locally (quantity was 1)');
       } else {
         await carritoService.updateCartItem(parseInt(productId), {
           cantidad: item.quantity - 1,
         });
+        // Update local cart
+        setCart(prevCart => 
+          prevCart.map(cartItem => 
+            cartItem.id === productId 
+              ? { ...cartItem, quantity: cartItem.quantity - 1 }
+              : cartItem
+          )
+        );
+        console.log('✅ Quantity decreased locally');
       }
-      await refreshCart();
+      
+      // Optionally sync in background
+      setTimeout(() => syncCartInBackground(), 500);
+      
     } catch (error) {
-      console.error('Error decreasing quantity:', error);
+      console.error('❌ Error decreasing quantity:', error);
+      // If API call failed, refresh to ensure consistency
+      await refreshCart();
       throw error;
     } finally {
       setIsLoading(false);
@@ -200,18 +305,52 @@ export function CartProvider({ children }: { children: ReactNode }) {
       throw new Error('Debes iniciar sesión para modificar el carrito');
     }
 
+    const item = cart.find((p) => p.id === productId);
+    if (!item) return;
+
+    // Validar cantidad y stock
+    if (qty < 0) {
+      throw new Error('La cantidad no puede ser negativa');
+    }
+
+    if (qty > 0) {
+      const availableStock = item.stock || 0;
+      if (qty > availableStock) {
+        throw new Error(`Solo quedan ${availableStock} unidades disponibles.`);
+      }
+    }
+
     try {
       setIsLoading(true);
+      console.log('🔢 Setting quantity for:', productId, 'to:', qty);
+      
       if (qty <= 0) {
         await carritoService.removeItemFromCart(parseInt(productId));
+        // Remove from local cart
+        setCart(prevCart => prevCart.filter(cartItem => cartItem.id !== productId));
+        console.log('✅ Item removed from cart locally (quantity set to 0)');
       } else {
         await carritoService.updateCartItem(parseInt(productId), {
           cantidad: qty,
         });
+        // Update local cart
+        setCart(prevCart => 
+          prevCart.map(cartItem => 
+            cartItem.id === productId 
+              ? { ...cartItem, quantity: qty }
+              : cartItem
+          )
+        );
+        console.log('✅ Quantity set locally');
       }
-      await refreshCart();
+      
+      // Optionally sync in background
+      setTimeout(() => syncCartInBackground(), 500);
+      
     } catch (error) {
-      console.error('Error setting quantity:', error);
+      console.error('❌ Error setting quantity:', error);
+      // If API call failed, refresh to ensure consistency
+      await refreshCart();
       throw error;
     } finally {
       setIsLoading(false);
@@ -235,6 +374,24 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // Sync cart in background without blocking UI
+  const syncCartInBackground = async () => {
+    if (!isAuthenticated || !usuario) {
+      return;
+    }
+
+    try {
+      console.log('🔄 Syncing cart in background...');
+      const apiCart = await carritoService.getCart();
+      const localCart = apiCart.items.map(convertApiCartItemToLocal);
+      setCart(localCart);
+      console.log('✅ Background cart sync completed');
+    } catch (error) {
+      console.warn('⚠️ Background cart sync failed:', error);
+      // Don't throw error as this is a background operation
+    }
+  };
+
   return (
     <CartContext.Provider
       value={{ 
@@ -246,7 +403,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
         decreaseQty, 
         setQty, 
         clearCart,
-        refreshCart 
+        refreshCart,
+        syncCartInBackground
       }}
     >
       {children}

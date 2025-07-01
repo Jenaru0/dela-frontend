@@ -67,7 +67,7 @@ export interface Pedido {
 
 export interface CreatePedidoDto {
   usuarioId: number;
-  direccionId: number;
+  direccionId: number | null; // null para recojo en tienda
   detalles: {
     productoId: number;
     cantidad: number;
