@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import {
@@ -15,6 +15,11 @@ import {
 } from 'lucide-react';
 
 const Footer: React.FC = () => {
+  const [mounted, setMounted] = useState(false);
+  
+  useEffect(() => {
+    setMounted(true);
+  }, []);
   const socialLinks = [
     {
       icon: Facebook,
@@ -53,6 +58,168 @@ const Footer: React.FC = () => {
     { name: 'Política de Cookies', href: '/cookies' },
     { name: 'Devoluciones', href: '/devoluciones' },
   ];
+
+  // Evitar hidratación si no está montado
+  if (!mounted) {
+    return (
+      <footer className="bg-[#3A3A3A] text-white">
+        {/* Main Footer */}
+        <div className="py-16">
+          <div className="container mx-auto px-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
+              {/* Company Info */}
+              <div className="lg:col-span-1">
+                <Link href="/" className="flex items-center space-x-3 mb-6">
+                  <div className="relative h-12 w-12">
+                    <Image
+                      src="/images/logo-white.svg"
+                      alt="DELA Logo"
+                      fill
+                      sizes="120px"
+                      className="object-contain"
+                      onError={(e) => {
+                        e.currentTarget.src = '/images/logo-fallback-white.png';
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold">
+                      <span className="text-[#CC9F53]">DELA</span>
+                    </h2>
+                    <p className="text-sm text-gray-400">Deleites del Valle</p>
+                  </div>
+                </Link>
+
+                <p className="text-gray-300 mb-6 leading-relaxed">
+                  Desde el año 2000, DELA Corp SAC se dedica a la producción de
+                  lácteos frescos y de calidad en Cerro Azul, Cañete.
+                  Comprometidos con el bienestar animal y la sostenibilidad.
+                </p>
+
+                {/* Contact Info */}
+                <div className="space-y-3">
+                  <div className="flex items-center space-x-3">
+                    <MapPin className="h-4 w-4 text-[#CC9F53] flex-shrink-0" />
+                    <span className="text-sm text-gray-300">
+                      Cerro Azul, Cañete - Lima, Perú
+                    </span>
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <Phone className="h-4 w-4 text-[#CC9F53] flex-shrink-0" />
+                    <span className="text-sm text-gray-300">
+                      +51 912 949 652
+                    </span>
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <Mail className="h-4 w-4 text-[#CC9F53] flex-shrink-0" />
+                    <span className="text-sm text-gray-300">
+                      comercial@dela.com.pe
+                    </span>
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <Clock className="h-4 w-4 text-[#CC9F53] flex-shrink-0" />
+                    <span className="text-sm text-gray-300">
+                      Lun - Sáb: 8:00 AM - 6:00 PM
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Products */}
+              <div>
+                <h3 className="text-lg font-semibold text-white mb-6">
+                  Nuestros Productos
+                </h3>
+                <ul className="space-y-3">
+                  {productCategories.map((category, index) => (
+                    <li key={index}>
+                      <Link
+                        href={`/productos?search=${category.search}`}
+                        className="text-gray-300 hover:text-[#CC9F53] transition-colors duration-200 text-sm"
+                      >
+                        {category.name}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Quick Links */}
+              <div>
+                <h3 className="text-lg font-semibold text-white mb-6">
+                  Enlaces Rápidos
+                </h3>
+                <ul className="space-y-3">
+                  {quickLinks.map((link, index) => (
+                    <li key={index}>
+                      <Link
+                        href={link.href}
+                        className="text-gray-300 hover:text-[#CC9F53] transition-colors duration-200 text-sm"
+                      >
+                        {link.name}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Social & Legal */}
+              <div>
+                <h3 className="text-lg font-semibold text-white mb-6">
+                  Síguenos
+                </h3>
+                <div className="flex space-x-4 mb-8">
+                  {socialLinks.map((social, index) => (
+                    <Link
+                      key={index}
+                      href={social.href}
+                      aria-label={social.label}
+                      className="bg-gray-700 hover:bg-[#CC9F53] p-2 rounded-full transition-colors duration-200"
+                    >
+                      <social.icon className="h-4 w-4" />
+                    </Link>
+                  ))}
+                </div>
+
+                <h4 className="text-sm font-semibold text-white mb-4">
+                  Información Legal
+                </h4>
+                <ul className="space-y-2">
+                  {legalLinks.map((link, index) => (
+                    <li key={index}>
+                      <Link
+                        href={link.href}
+                        className="text-gray-400 hover:text-[#CC9F53] transition-colors duration-200 text-xs"
+                      >
+                        {link.name}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom Bar */}
+        <div className="border-t border-gray-700 py-6">
+          <div className="container mx-auto px-4">
+            <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
+              <p className="text-sm text-gray-400">
+                © 2024 DELA Corp SAC. Todos los derechos reservados.
+              </p>
+              <div className="flex items-center space-x-6">
+                <span className="text-xs text-gray-500">
+                  Desarrollado con ❤️ en Perú
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </footer>
+    );
+  }
+
   return (
     <footer className="bg-[#3A3A3A] text-white">
       {/* Main Footer */}

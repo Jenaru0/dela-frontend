@@ -3,7 +3,8 @@ import {
   RegistroDto, 
   RespuestaInicioSesion, 
   RespuestaRegistro, 
-  RespuestaLogout 
+  RespuestaLogout,
+  RespuestaRefreshToken
 } from '@/types/auth';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
@@ -54,9 +55,10 @@ class AuthService {  private getAuthHeaders() {
       }
 
       const data = await response.json();
-        // Guardar token en localStorage
+        // Guardar tokens en localStorage
       if (data.token_acceso && typeof window !== 'undefined') {
         localStorage.setItem('token', data.token_acceso);
+        localStorage.setItem('refresh_token', data.refresh_token);
         localStorage.setItem('usuario', JSON.stringify(data.usuario));
       }
 
@@ -69,28 +71,23 @@ class AuthService {  private getAuthHeaders() {
 
   async cerrarSesion(): Promise<RespuestaLogout> {
     try {
-      const response = await fetch(`${API_BASE_URL}/autenticacion/logout`, {
+      const response = await this.authenticatedFetch(`${API_BASE_URL}/autenticacion/logout`, {
         method: 'POST',
-        headers: this.getAuthHeaders(),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || 'Error al cerrar sesión');
-      }      // Limpiar localStorage
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('token');
-        localStorage.removeItem('usuario');
       }
+
+      // Limpiar localStorage
+      this.limpiarDatos();
 
       return await response.json();
     } catch (error) {
       console.error('Error al cerrar sesión:', error);
       // Limpiar localStorage incluso si hay error
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('token');
-        localStorage.removeItem('usuario');
-      }
+      this.limpiarDatos();
       throw error;
     }
   }  // Verificar si el usuario está autenticado
@@ -152,6 +149,7 @@ class AuthService {  private getAuthHeaders() {
   clearAuth() {
     if (typeof window !== 'undefined') {
       localStorage.removeItem('token');
+      localStorage.removeItem('refresh_token');
       localStorage.removeItem('usuario');
     }
   }  // Cambiar contraseña
@@ -210,6 +208,87 @@ class AuthService {  private getAuthHeaders() {
     } catch {
       return false;
     }
+  }
+
+  async renovarToken(): Promise<RespuestaRefreshToken> {
+    try {
+      const refreshToken = typeof window !== 'undefined' ? localStorage.getItem('refresh_token') : null;
+      
+      if (!refreshToken) {
+        throw new Error('No hay refresh token disponible');
+      }
+
+      const response = await fetch(`${API_BASE_URL}/autenticacion/refresh-token`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ refresh_token: refreshToken }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        // Si el refresh token es inválido, limpiar todo
+        if (response.status === 401) {
+          this.limpiarDatos();
+        }
+        throw new Error(errorData.message || 'Error al renovar token');
+      }
+
+      const data = await response.json();
+      
+      // Guardar nuevos tokens
+      if (data.token_acceso && typeof window !== 'undefined') {
+        localStorage.setItem('token', data.token_acceso);
+        localStorage.setItem('refresh_token', data.refresh_token);
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Error al renovar token:', error);
+      throw error;
+    }
+  }
+
+  private limpiarDatos(): void {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('token');
+      localStorage.removeItem('refresh_token');
+      localStorage.removeItem('usuario');
+    }
+  }
+
+  // Método para hacer peticiones autenticadas con renovación automática de token
+  async authenticatedFetch(url: string, options: RequestInit = {}): Promise<Response> {
+    let response = await fetch(url, {
+      ...options,
+      headers: {
+        ...this.getAuthHeaders(),
+        ...options.headers,
+      },
+    });
+
+    // Si obtenemos un 401, intentar renovar el token y reintentar
+    if (response.status === 401) {
+      try {
+        await this.renovarToken();
+        
+        // Reintentar la petición con el nuevo token
+        response = await fetch(url, {
+          ...options,
+          headers: {
+            ...this.getAuthHeaders(),
+            ...options.headers,
+          },
+        });
+      } catch {
+        // Si la renovación falla, limpiar datos y lanzar error
+        this.limpiarDatos();
+        throw new Error('Sesión expirada. Inicie sesión nuevamente.');
+      }
+    }
+
+    return response;
   }
 }
 

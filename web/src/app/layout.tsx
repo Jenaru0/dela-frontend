@@ -10,6 +10,7 @@ import ShoppingCartDrawer from '@/components/carrito/ShoppingCartDrawer';
 import { FavoritoProvider } from '@/contexts/FavoritoContext';
 import { AuthModalProvider } from '@/contexts/AuthModalContext';
 import AuthModalMount from '@/components/auth/AuthModalMount';
+import TokenInterceptor from '@/components/auth/TokenInterceptor';
 import ScrollToTopWrapper from '@/components/common/ScrollToTopWrapper';
 
 const geistSans = Geist({ variable: '--font-geist-sans', subsets: ['latin'] });
@@ -35,6 +36,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         suppressHydrationWarning={true}
       >        <AuthProvider>
+          <TokenInterceptor />
           <AuthModalProvider>
             <CartProvider>
               <FavoritoProvider>

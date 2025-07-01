@@ -87,6 +87,7 @@ interface AuthContextType extends AuthState {
   registrar: (datos: RegistroDto) => Promise<void>;
   cerrarSesion: () => Promise<void>;
   actualizarUsuario: (usuario: UsuarioResponse) => void;
+  renovarToken: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -109,16 +110,25 @@ export function AuthProvider({ children }: AuthProviderProps) {
   useEffect(() => {
     if (!isHydrated) return;
 
-    const initializeAuth = () => {
+    const initializeAuth = async () => {
       try {
         const token = authService.getToken();
         const usuario = authService.getCurrentUser();
         
         if (token && usuario) {
-          dispatch({
-            type: 'SET_USER',
-            payload: { usuario, token }
-          });
+          // Intentar renovar el token para verificar validez
+          try {
+            await authService.renovarToken();
+            const updatedToken = authService.getToken();
+            dispatch({
+              type: 'SET_USER',
+              payload: { usuario, token: updatedToken || token }
+            });
+          } catch {
+            // Si no se puede renovar, limpiar sesión
+            authService.clearAuth();
+            dispatch({ type: 'LOGIN_FAILURE' });
+          }
         } else {
           // No hay sesión guardada, terminar carga
           dispatch({ type: 'LOGIN_FAILURE' });
@@ -212,12 +222,31 @@ export function AuthProvider({ children }: AuthProviderProps) {
     dispatch({ type: 'UPDATE_USER', payload: { usuario } });
   };
 
+  const renovarToken = async () => {
+    try {
+      const respuesta = await authService.renovarToken();
+      
+      dispatch({
+        type: 'SET_USER',
+        payload: {
+          usuario: state.usuario!,
+          token: respuesta.token_acceso
+        }
+      });
+    } catch (error) {
+      // Si no se puede renovar, cerrar sesión
+      dispatch({ type: 'LOGOUT' });
+      throw error;
+    }
+  };
+
   const value: AuthContextType = {
     ...state,
     iniciarSesion,
     registrar,
     cerrarSesion,
     actualizarUsuario,
+    renovarToken,
   };
 
   return (

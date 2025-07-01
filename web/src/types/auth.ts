@@ -18,7 +18,18 @@ export interface RespuestaRegistro {
 export interface RespuestaInicioSesion {
   mensaje: string;
   token_acceso: string;
+  refresh_token: string;
   usuario: UsuarioResponse;
+}
+
+export interface RespuestaRefreshToken {
+  mensaje: string;
+  token_acceso: string;
+  refresh_token: string;
+}
+
+export interface RefreshTokenDto {
+  refresh_token: string;
 }
 
 // DTOs para las requests
