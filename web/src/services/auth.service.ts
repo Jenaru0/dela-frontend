@@ -204,9 +204,21 @@ class AuthService {  private getAuthHeaders() {
         headers: this.getAuthHeaders(),
       });
 
-      return response.ok;
-    } catch {
-      return false;
+      // Si es 401, el token es inválido (no es error de red)
+      if (response.status === 401) {
+        return false;
+      }
+
+      // Para otros errores (500, error de red, etc.), lanzar excepción
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error al verificar token:', error);
+      // Re-lanzar el error para que el llamador pueda distinguir
+      throw error;
     }
   }
 
@@ -228,10 +240,13 @@ class AuthService {  private getAuthHeaders() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        // Si el refresh token es inválido, limpiar todo
+        
+        // Si el refresh token es inválido o expirado, limpiar todo
         if (response.status === 401) {
+          console.log('Refresh token inválido o expirado, limpiando datos');
           this.limpiarDatos();
         }
+        
         throw new Error(errorData.message || 'Error al renovar token');
       }
 

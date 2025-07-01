@@ -125,9 +125,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
                 payload: { usuario, token }
               });
             } else {
-              // Token inválido, intentar renovar una sola vez
+              // Token definitivamente inválido (401 del backend)
+              console.log('Token inválido en inicialización, intentando renovar...');
               try {
-                console.log('Token inválido en inicialización, intentando renovar...');
                 await authService.renovarToken();
                 const updatedToken = authService.getToken();
                 dispatch({
@@ -135,20 +135,31 @@ export function AuthProvider({ children }: AuthProviderProps) {
                   payload: { usuario, token: updatedToken || token }
                 });
               } catch (renewError) {
-                // Si no se puede renovar, limpiar sesión
+                // Si no se puede renovar, limpiar sesión completamente
                 console.log('No se pudo renovar token en inicialización:', renewError);
                 authService.clearAuth();
                 dispatch({ type: 'LOGIN_FAILURE' });
               }
             }
           } catch (verifyError) {
-            // Si no se puede verificar (error de red, backend caído, etc.)
-            console.log('Error al verificar token, manteniendo sesión offline:', verifyError);
-            // Mantener la sesión pero intentar verificar en la próxima request
-            dispatch({
-              type: 'SET_USER',
-              payload: { usuario, token }
-            });
+            // Error de red u otro error del servidor
+            console.log('Error al verificar token (posible error de red):', verifyError);
+            
+            // Si es un error específico que indica token inválido, limpiar sesión
+            const errorMessage = verifyError instanceof Error ? verifyError.message : String(verifyError);
+            if (errorMessage.includes('401') || errorMessage.includes('Unauthorized')) {
+              console.log('Token definitivamente inválido, limpiando sesión');
+              authService.clearAuth();
+              dispatch({ type: 'LOGIN_FAILURE' });
+            } else {
+              // Para otros errores (red, servidor caído), mantener sesión temporal
+              // pero intentar verificar en la próxima request
+              console.log('Manteniendo sesión offline temporalmente');
+              dispatch({
+                type: 'SET_USER',
+                payload: { usuario, token }
+              });
+            }
           }
         } else {
           // No hay sesión guardada, terminar carga
