@@ -7,6 +7,7 @@ import { Star, Heart, ShoppingBag } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useFavorites } from '@/contexts/FavoritoContext';
 import { useAuthModalGlobal } from '@/contexts/AuthModalContext';
+import { useStockAlertGlobal } from '@/contexts/StockAlertContext';
 
 interface CatalogoCardProps {
   product: {
@@ -36,7 +37,8 @@ const CatalogoCard: React.FC<CatalogoCardProps> = ({
 }) => {
   const { isAuthenticated } = useAuth();
   const { addFavorite, removeFavorite, isFavorite } = useFavorites();
-  const { open: openAuthModal } = useAuthModalGlobal(); // <-- Obtiene el método para abrir el modal
+  const { open: openAuthModal } = useAuthModalGlobal();
+  const { showError } = useStockAlertGlobal();
   const fav = isFavorite(product.id.toString());
 
   // Handler para añadir a favoritos con auth
@@ -58,7 +60,7 @@ const CatalogoCard: React.FC<CatalogoCardProps> = ({
     e.stopPropagation(); // Prevenir que se active el click de la tarjeta
     
     if (!isAuthenticated) {
-      openAuthModal('login'); // <-- Abre el modal de login/registro
+      openAuthModal('login');
       return;
     }
 
@@ -68,6 +70,12 @@ const CatalogoCard: React.FC<CatalogoCardProps> = ({
         await onAddToCart(product);
       } catch (error) {
         console.error('Error adding to cart:', error);
+        // El error ya se maneja en el componente padre que define onAddToCart
+        // Solo mostramos el modal si hay un error inesperado aquí
+        showError(
+          'Error al agregar al carrito',
+          'Error inesperado. Por favor, intenta nuevamente.'
+        );
       } finally {
         setIsAddingToCart(false);
       }

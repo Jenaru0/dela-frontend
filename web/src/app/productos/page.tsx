@@ -11,6 +11,7 @@ import CatalogoListCard from '@/components/catalogo/CatalogoListCard';
 import { useCatalogo } from '@/hooks/useCatalogo';
 import { useCart } from '@/contexts/CarContext';
 import { useCartDrawer } from '@/contexts/CartDrawerContext';
+import { useStockAlertGlobal } from '@/contexts/StockAlertContext';
 import { useRouter } from 'next/navigation';
 import { Product } from '@/lib/products';
 
@@ -47,6 +48,7 @@ export default function CatalogoProductosPage() {
   const { productos, loading, error } = useCatalogo();
   const { addToCart } = useCart();
   const { openDrawer } = useCartDrawer();
+  const { showError } = useStockAlertGlobal();
   const router = useRouter();
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [showFilters, setShowFilters] = useState(false);
@@ -218,13 +220,25 @@ export default function CatalogoProductosPage() {
         image: product.image || '/images/products/producto_sinimage.svg',
         category: product.category || 'Sin categoría',
         description: product.shortDescription || '',
-        stock: 99, // Default stock
+        stock: undefined, // Dejar que el backend maneje el stock real
       };
 
-      await addToCart(cartProduct);
-      openDrawer();
+      const result = await addToCart(cartProduct);
+      
+      if (result.success) {
+        openDrawer();
+      } else {
+        showError(
+          'Error al agregar al carrito',
+          result.error || 'No se pudo agregar el producto al carrito. Por favor, intenta nuevamente.'
+        );
+      }
     } catch (error) {
       console.error('Error adding to cart:', error);
+      showError(
+        'Error al agregar al carrito',
+        'Error inesperado al agregar el producto al carrito.'
+      );
     }
   };
 

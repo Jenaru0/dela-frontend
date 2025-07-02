@@ -11,7 +11,7 @@ export interface CartItem extends Product {
 interface CartContextProps {
   cart: CartItem[];
   isLoading: boolean;
-  addToCart: (product: Product, quantity?: number) => Promise<void>;
+  addToCart: (product: Product, quantity?: number) => Promise<{ success: boolean; error?: string }>;
   removeFromCart: (productId: string) => Promise<void>;
   increaseQty: (productId: string) => Promise<void>;
   decreaseQty: (productId: string) => Promise<void>;
@@ -104,17 +104,26 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
     loadCart();
   }, [isAuthenticated, usuario]);
-  const addToCart = async (product: Product, quantity: number = 1) => {
+  const addToCart = async (product: Product, quantity: number = 1): Promise<{ success: boolean; error?: string }> => {
     console.log('🛒 addToCart called', { isAuthenticated, usuario, product, quantity });
     
     if (!isAuthenticated) {
-      throw new Error('Debes iniciar sesión para añadir productos al carrito');
+      return { success: false, error: 'Debes iniciar sesión para añadir productos al carrito' };
     }
 
-    // Validar stock disponible
+    // Validar stock disponible - si no tenemos info de stock, dejamos que el backend lo maneje
     const availableStock = product.stock || 0;
-    if (availableStock <= 0) {
-      throw new Error('Este producto no tiene stock disponible');
+    const stockMinimo = product.stockMinimo || 0;
+    const stockDisponible = product.stock !== undefined ? Math.max(0, availableStock - stockMinimo) : null;
+    
+    // Solo validamos stock si tenemos la información
+    if (stockDisponible !== null && stockDisponible <= 0) {
+      return { 
+        success: false, 
+        error: availableStock <= 0 
+          ? 'Este producto no tiene stock disponible'
+          : `Este producto no tiene stock suficiente para la venta en este momento`
+      };
     }
 
     // Verificar si ya existe en el carrito y calcular cantidad total
@@ -122,12 +131,18 @@ export function CartProvider({ children }: { children: ReactNode }) {
     const currentQuantity = existingItem ? existingItem.quantity : 0;
     const totalQuantity = currentQuantity + quantity;
 
-    if (totalQuantity > availableStock) {
-      throw new Error(`Solo quedan ${availableStock} unidades disponibles. Ya tienes ${currentQuantity} en tu carrito.`);
+    // Solo validamos cantidad total si tenemos info de stock
+    if (stockDisponible !== null && totalQuantity > stockDisponible) {
+      return { 
+        success: false, 
+        error: currentQuantity > 0 
+          ? `Ya tienes este producto en tu carrito y no puedes agregar más unidades en este momento.`
+          : `Este producto ha alcanzado su límite de stock disponible para la venta.`
+      };
     }
 
     if (quantity <= 0) {
-      throw new Error('La cantidad debe ser mayor a 0');
+      return { success: false, error: 'La cantidad debe ser mayor a 0' };
     }
 
     try {
@@ -140,11 +155,17 @@ export function CartProvider({ children }: { children: ReactNode }) {
       });
       
       console.time('⏱️ API addItemToCart time');
-      await carritoService.addItemToCart({
+      const result = await carritoService.addItemToCart({
         productoId: parseInt(product.id),
         cantidad: quantity,
       });
       console.timeEnd('⏱️ API addItemToCart time');
+      
+      // Verificar si la operación fue exitosa
+      if (!result.success) {
+        console.log('⚠️ API returned error:', result.error);
+        return { success: false, error: result.error || 'Error al añadir producto al carrito' };
+      }
       
       // Instead of refreshing the entire cart, let's update locally and then sync
       console.log('🔄 Updating cart locally...');
@@ -166,17 +187,20 @@ export function CartProvider({ children }: { children: ReactNode }) {
         console.log('✅ Added new item to cart locally');
       }
       
-      // Optionally, we can refresh in background without blocking the user
-      // but for now, let's skip the refresh to see if this improves performance
       console.log('✅ Cart updated successfully');
       console.timeEnd('⏱️ addToCart total time');
+      return { success: true };
       
     } catch (error) {
-      console.error('❌ Error adding to cart:', error);
-      // If the API call failed, we should refresh the cart to ensure consistency
-      console.log('🔄 API failed, refreshing cart to ensure consistency...');
+      console.log('⚠️ Unexpected error in addToCart:', error);
+      // If there was an unexpected error, refresh the cart to ensure consistency
+      console.log('🔄 Unexpected error occurred, refreshing cart to ensure consistency...');
       await refreshCart();
-      throw error;
+      
+      return { 
+        success: false, 
+        error: 'Error inesperado al añadir producto al carrito. Por favor intenta nuevamente.'
+      };
     } finally {
       setIsLoading(false);
     }

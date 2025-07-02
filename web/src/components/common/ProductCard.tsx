@@ -15,8 +15,7 @@ import type { Product } from '@/lib/products';
 import { useFavorites } from '@/contexts/FavoritoContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAuthModalGlobal } from '@/contexts/AuthModalContext';
-import { useStockAlert } from '@/hooks/useStockAlert';
-import { StockAlertModal } from '@/components/modals/StockAlertModal';
+import { useStockAlertGlobal } from '@/contexts/StockAlertContext';
 
 interface ProductCardProps {
   product: Product;
@@ -32,7 +31,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
   const { addFavorite, removeFavorite, isFavorite } = useFavorites();
   const { isAuthenticated } = useAuth();
   const { open: openAuthModal } = useAuthModalGlobal();
-  const { isOpen, config, showError, closeAlert } = useStockAlert();
+  const { showError } = useStockAlertGlobal();
 
   const fav = isFavorite(product.id);
 
@@ -74,16 +73,19 @@ const ProductCard: React.FC<ProductCardProps> = ({
     try {
       setIsAddingToCart(true);
       console.log('⏳ Adding product to cart...', { productId: product.id, productName: product.name });
-      await addToCart(product);
-      console.log('✅ Product added successfully, opening drawer');
-      openDrawer();
-    } catch (error) {
-      console.error('❌ Error adding to cart:', error);
-      const availableStock = product.stock || 0;
-      const stockMinimo = product.stockMinimo || 0;
-      const stockDisponible = Math.max(0, availableStock - stockMinimo);
       
-      showError(product.name, error instanceof Error ? error.message : 'Error desconocido al añadir al carrito');
+      const result = await addToCart(product);
+      
+      if (result.success) {
+        console.log('✅ Product added successfully, opening drawer');
+        openDrawer();
+      } else {
+        console.log('❌ Failed to add product:', result.error);
+        showError(product.name, result.error || 'Error desconocido al añadir al carrito');
+      }
+    } catch (error) {
+      console.error('❌ Unexpected error adding to cart:', error);
+      showError(product.name, 'Error inesperado al añadir al carrito');
     } finally {
       setIsAddingToCart(false);
     }
@@ -202,30 +204,17 @@ const ProductCard: React.FC<ProductCardProps> = ({
           className="w-full bg-[#CC9F53] hover:bg-[#CC9F53]/90 text-white font-semibold py-3 px-6 rounded-lg shadow-lg hover:shadow-xl hover:shadow-[#CC9F53]/20 transition-all duration-300 transform hover:scale-[1.02] group/btn disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
           size="default"
           onClick={handleAddToCart}
-          disabled={isAddingToCart || isLoading || (product.stock !== undefined && product.stock <= 0)}
+          disabled={isAddingToCart || isLoading}
         >
           <ShoppingBag className={`mr-2 h-5 w-5 transition-transform group-hover/btn:scale-110 ${isAddingToCart ? 'animate-pulse' : ''}`} />
-          {(product.stock !== undefined && product.stock <= 0) 
-            ? 'Sin stock' 
-            : isAddingToCart 
-              ? 'Añadiendo...' 
+          {isAddingToCart 
+            ? 'Añadiendo...' 
+            : (product.stock !== undefined && product.stock <= 0)
+              ? 'Sin stock - Ver detalles'
               : 'Añadir al carrito'
           }
         </Button>
       </CardFooter>
-      
-      {/* Modal de stock */}
-      {config && (
-        <StockAlertModal
-          isOpen={isOpen}
-          onClose={closeAlert}
-          type={config.type}
-          productName={config.productName}
-          availableStock={config.availableStock}
-          requestedQuantity={config.requestedQuantity}
-          message={config.message}
-        />
-      )}
     </Card>
   );
 };

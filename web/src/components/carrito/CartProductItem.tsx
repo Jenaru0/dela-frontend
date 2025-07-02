@@ -3,8 +3,7 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/input';
 import { Trash, Plus, Minus } from 'lucide-react';
-import { StockAlertModal } from '@/components/modals/StockAlertModal';
-import { useStockAlert } from '@/hooks/useStockAlert';
+import { useStockAlertGlobal } from '@/contexts/StockAlertContext';
 import type { CartProduct } from '@/types/productos';
 
 interface CartProductItemProps {
@@ -26,14 +25,11 @@ export const CartProductItem: React.FC<CartProductItemProps> = ({
   const [quantityInput, setQuantityInput] = useState(prod.quantity.toString());
   const [showQuantityInput, setShowQuantityInput] = useState(false);
   
-  // Usar el hook del modal de stock limpio y separado
+  // Usar el contexto global del modal de stock
   const { 
-    isOpen, 
-    config, 
     showWarning, 
-    showError, 
-    closeAlert 
-  } = useStockAlert();
+    showError 
+  } = useStockAlertGlobal();
 
   const availableStock = prod.stock || 0;
   const stockMinimo = prod.stockMinimo || 0;
@@ -231,19 +227,6 @@ export const CartProductItem: React.FC<CartProductItemProps> = ({
         </Button>
       </div>
     </div>
-
-    {/* Modal de stock limpio y separado */}
-    {config && (
-      <StockAlertModal
-        isOpen={isOpen}
-        onClose={closeAlert}
-        type={config.type}
-        productName={config.productName}
-        availableStock={config.availableStock}
-        requestedQuantity={config.requestedQuantity}
-        message={config.message}
-      />
-    )}
   </div>
   );
 };

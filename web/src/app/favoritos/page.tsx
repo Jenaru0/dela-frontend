@@ -9,6 +9,7 @@ import { useFavorites } from '@/contexts/FavoritoContext';
 import { useCart } from '@/contexts/CarContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAuthModalGlobal } from '@/contexts/AuthModalContext';
+import { useStockAlertGlobal } from '@/contexts/StockAlertContext';
 import { Button } from '@/components/ui/Button';
 import { Heart, Trash2, Lock, ShoppingCart, Home, User } from 'lucide-react';
 import { Producto, ImagenProducto } from '@/types/productos';
@@ -171,6 +172,7 @@ export default function FavoritosPage() {
   const { addToCart } = useCart();
   const { isAuthenticated, usuario, isLoading } = useAuth();
   const { open: openAuthModal } = useAuthModalGlobal();
+  const { showError, showMultipleProductsError } = useStockAlertGlobal();
 
   // Estado para el modal de limpiar favoritos
   const [isClearModalOpen, setIsClearModalOpen] = useState(false);
@@ -179,36 +181,90 @@ export default function FavoritosPage() {
     await removeFavorite(productId);
   };
 
-  const handleAddToCart = (product: CartProductData) => {
+  const handleAddToCart = async (product: CartProductData) => {
     if (!isAuthenticated) {
       openAuthModal('login');
       return;
     }
-    addToCart({
-      id: product.id,
-      name: product.name,
-      image: product.image,
-      price: product.price,
-      category: product.category,
-    });
-    // Aquí podrías añadir una notificación de éxito
+    
+    try {
+      const result = await addToCart({
+        id: product.id,
+        name: product.name,
+        image: product.image,
+        price: product.price,
+        category: product.category,
+        stock: undefined, // Dejar que el backend maneje el stock real
+      });
+      
+      if (!result.success) {
+        showError(
+          product.name, // Pasamos el nombre del producto aquí
+          result.error || 'No se pudo agregar el producto al carrito. Por favor, intenta nuevamente.'
+        );
+      }
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+      showError(
+        product.name, // También aquí pasamos el nombre del producto
+        'Error inesperado al agregar el producto al carrito.'
+      );
+    }
   };
 
-  const handleAddAllToCart = () => {
+  const handleAddAllToCart = async () => {
     if (!isAuthenticated) {
       openAuthModal('login');
       return;
     }
-    favorites.forEach((fav) =>
-      handleAddToCart({
-        id: fav.producto.id.toString(),
-        name: fav.producto.nombre,
-        image: getImagenPrincipal(fav.producto),
-        category: fav.producto.categoria?.nombre || '',
-        price: Number(fav.producto.precioUnitario),
-      })
-    );
-    // Aquí podrías añadir una notificación de éxito masivo
+    
+    const failedProducts: Array<{ name: string; message?: string }> = [];
+    
+    for (const fav of favorites) {
+      try {
+        const result = await addToCart({
+          id: fav.producto.id.toString(),
+          name: fav.producto.nombre,
+          image: getImagenPrincipal(fav.producto),
+          category: fav.producto.categoria?.nombre || '',
+          price: Number(fav.producto.precioUnitario),
+          stock: undefined, // Dejar que el backend maneje el stock real
+        });
+        
+        if (!result.success) {
+          failedProducts.push({
+            name: fav.producto.nombre,
+            message: result.error
+          });
+        }
+      } catch (error) {
+        console.error('Error adding to cart:', error);
+        failedProducts.push({
+          name: fav.producto.nombre,
+          message: 'Error inesperado al agregar el producto al carrito.'
+        });
+      }
+    }
+    
+    // Si hay productos que fallaron, mostrar el modal con múltiples productos
+    if (failedProducts.length > 0) {
+      if (failedProducts.length === 1) {
+        // Si solo un producto falló, usar el modal de producto único
+        showError(
+          failedProducts[0].name,
+          failedProducts[0].message || 'No se pudo agregar el producto al carrito.'
+        );
+      } else {
+        // Si múltiples productos fallaron, usar el modal de múltiples productos
+        showMultipleProductsError(
+          failedProducts,
+          `${failedProducts.length} de ${favorites.length} productos no se pudieron agregar al carrito por problemas de stock.`
+        );
+      }
+    }
+    
+    // Opcional: Mostrar mensaje de éxito si algunos productos se agregaron correctamente
+    // (esto podría ser otra notificación separada)
   };
 
   const handleClearAllFavorites = async () => {

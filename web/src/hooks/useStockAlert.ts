@@ -1,8 +1,16 @@
 import { useState } from 'react';
 
+interface ProductStockInfo {
+  name: string;
+  availableStock?: number;
+  requestedQuantity?: number;
+  message?: string;
+}
+
 interface StockAlertConfig {
   type: 'warning' | 'error' | 'info';
-  productName: string;
+  productName?: string;
+  products?: ProductStockInfo[];
   availableStock?: number;
   requestedQuantity?: number;
   message?: string;
@@ -42,6 +50,22 @@ export const useStockAlert = () => {
     });
   };
 
+  const showMultipleProductsError = (products: ProductStockInfo[], message?: string) => {
+    showAlert({
+      type: 'error',
+      products,
+      message,
+    });
+  };
+
+  const showMultipleProductsWarning = (products: ProductStockInfo[], message?: string) => {
+    showAlert({
+      type: 'warning',
+      products,
+      message,
+    });
+  };
+
   const closeAlert = () => {
     setIsOpen(false);
     setConfig(null);
@@ -54,6 +78,8 @@ export const useStockAlert = () => {
     showWarning,
     showError,
     showInfo,
+    showMultipleProductsError,
+    showMultipleProductsWarning,
     closeAlert,
   };
 };

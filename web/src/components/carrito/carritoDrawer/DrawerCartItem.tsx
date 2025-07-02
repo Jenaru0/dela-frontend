@@ -2,6 +2,7 @@ import React from "react";
 import { Trash2, Plus, Minus } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import Image from "next/image";
+import { useStockAlertGlobal } from "@/contexts/StockAlertContext";
 
 interface DrawerCartItemProps {
   item: {
@@ -11,6 +12,8 @@ interface DrawerCartItemProps {
     price: number;
     quantity: number;
     category: string;
+    stock?: number;
+    stockMinimo?: number;
   };
   onIncrease: () => void;
   onDecrease: () => void;
@@ -24,7 +27,36 @@ export const DrawerCartItem: React.FC<DrawerCartItemProps> = ({
   onDecrease, 
   onRemove, 
   isUpdating 
-}) => (
+}) => {
+  // Usar el contexto global del modal de stock
+  const { showWarning, showError } = useStockAlertGlobal();
+
+  const availableStock = item.stock || 0;
+  const stockMinimo = item.stockMinimo || 0;
+  const stockDisponibleParaVenta = Math.max(0, availableStock - stockMinimo);
+
+  const handleIncrease = () => {
+    // Validar stock antes de aumentar
+    if (item.quantity >= stockDisponibleParaVenta) {
+      if (stockDisponibleParaVenta === 0) {
+        showError(item.name, `${item.name} está temporalmente agotado. Repondremos stock pronto.`);
+      } else {
+        showWarning(item.name, stockDisponibleParaVenta, item.quantity + 1);
+      }
+      return;
+    }
+    onIncrease();
+  };
+
+  const handleDecrease = () => {
+    onDecrease();
+  };
+
+  const handleRemove = () => {
+    onRemove();
+  };
+
+  return (
   <div className="group relative bg-white/80 backdrop-blur-sm rounded-3xl shadow-lg border border-[#ecd8ab]/50 p-5 transition-all duration-300 hover:shadow-xl hover:border-[#CC9F53] hover:bg-white/90 hover:scale-[1.02]">
     {/* Glow effect on hover */}
     <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-[#CC9F53]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
@@ -60,6 +92,19 @@ export const DrawerCartItem: React.FC<DrawerCartItemProps> = ({
               S/ {(item.price * item.quantity).toFixed(2)}
             </span>
           </div>
+          
+          {/* Información de stock */}
+          {stockDisponibleParaVenta <= 5 && stockDisponibleParaVenta > 0 && (
+            <div className="text-xs text-orange-600 bg-orange-50 px-2 py-1 rounded-full mt-2 inline-block">
+              ¡Solo quedan {stockDisponibleParaVenta} disponibles!
+            </div>
+          )}
+          
+          {stockDisponibleParaVenta === 0 && (
+            <div className="text-xs text-red-600 bg-red-50 px-2 py-1 rounded-full mt-2 inline-block">
+              Temporalmente agotado
+            </div>
+          )}
         </div>
 
         {/* Controls */}
@@ -71,7 +116,7 @@ export const DrawerCartItem: React.FC<DrawerCartItemProps> = ({
               size="icon"
               className="h-9 w-9 text-[#B88D42] hover:bg-[#FFF8E1] hover:scale-110 rounded-full disabled:opacity-50 transition-all"
               title="Disminuir cantidad"
-              onClick={onDecrease}
+              onClick={handleDecrease}
               disabled={isUpdating}
             >
               <Minus className="w-4 h-4" />
@@ -84,8 +129,8 @@ export const DrawerCartItem: React.FC<DrawerCartItemProps> = ({
               size="icon"
               className="h-9 w-9 text-[#B88D42] hover:bg-[#FFF8E1] hover:scale-110 rounded-full disabled:opacity-50 transition-all"
               title="Aumentar cantidad"
-              onClick={onIncrease}
-              disabled={isUpdating}
+              onClick={handleIncrease}
+              disabled={isUpdating || item.quantity >= stockDisponibleParaVenta}
             >
               <Plus className="w-4 h-4" />
             </Button>
@@ -97,7 +142,7 @@ export const DrawerCartItem: React.FC<DrawerCartItemProps> = ({
             size="icon"
             className="h-9 w-9 hover:bg-red-50 hover:scale-110 transition-all disabled:opacity-50 rounded-full border border-transparent hover:border-red-200"
             title="Eliminar producto"
-            onClick={onRemove}
+            onClick={handleRemove}
             disabled={isUpdating}
           >
             <Trash2 className={`h-5 w-5 text-red-400 group-hover:text-red-600 transition-all ${isUpdating ? 'animate-pulse' : ''}`} />
@@ -106,4 +151,5 @@ export const DrawerCartItem: React.FC<DrawerCartItemProps> = ({
       </div>
     </div>
   </div>
-);
+  );
+};

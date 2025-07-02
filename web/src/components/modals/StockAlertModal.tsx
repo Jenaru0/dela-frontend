@@ -2,11 +2,19 @@ import React, { useEffect } from 'react';
 import { AlertTriangle, Package, X, ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 
+interface ProductStockInfo {
+  name: string;
+  availableStock?: number;
+  requestedQuantity?: number;
+  message?: string;
+}
+
 interface StockAlertModalProps {
   isOpen: boolean;
   onClose: () => void;
   type: 'warning' | 'error' | 'info';
-  productName: string;
+  productName?: string; // Para compatibilidad con un solo producto
+  products?: ProductStockInfo[]; // Para múltiples productos
   availableStock?: number;
   requestedQuantity?: number;
   message?: string;
@@ -17,10 +25,14 @@ export const StockAlertModal: React.FC<StockAlertModalProps> = ({
   onClose,
   type,
   productName,
+  products,
   availableStock = 0,
   requestedQuantity,
   message,
 }) => {
+  // Determinar si tenemos múltiples productos
+  const hasMultipleProducts = products && products.length > 0;
+  const isMultipleProducts = hasMultipleProducts && products!.length > 1;
   // Cerrar modal con Escape
   useEffect(() => {
     const handleEscape = (event: KeyboardEvent) => {
@@ -69,12 +81,12 @@ export const StockAlertModal: React.FC<StockAlertModalProps> = ({
       case 'error':
         return {
           icon: Package,
-          iconColor: 'text-red-600',
-          bgColor: 'bg-red-50',
-          borderColor: 'border-red-200',
-          buttonColor: 'bg-red-500 hover:bg-red-600',
-          title: 'Producto Agotado',
-          iconBg: 'bg-red-100',
+          iconColor: 'text-orange-600',
+          bgColor: 'bg-orange-50',
+          borderColor: 'border-orange-200',
+          buttonColor: 'bg-amber-500 hover:bg-amber-600',
+          title: 'Stock Completo en Carrito',
+          iconBg: 'bg-orange-100',
         };
       case 'info':
       default:
@@ -97,16 +109,33 @@ export const StockAlertModal: React.FC<StockAlertModalProps> = ({
   const getDefaultMessage = () => {
     if (message) return message;
 
+    // Si tenemos múltiples productos
+    if (hasMultipleProducts) {
+      const productCount = products!.length;
+      switch (type) {
+        case 'warning':
+          return `${productCount} ${productCount === 1 ? 'producto tiene' : 'productos tienen'} stock limitado. Revisa las cantidades disponibles.`;
+        case 'error':
+          return `${productCount} ${productCount === 1 ? 'producto ya está' : 'productos ya están'} completamente agregados a tu carrito. No es posible añadir más unidades.`;
+        case 'info':
+        default:
+          return `Información sobre ${productCount} productos.`;
+      }
+    }
+
+    // Si tenemos un solo producto (comportamiento original)
+    const currentProductName = productName || (hasMultipleProducts ? products![0].name : 'este producto');
+    
     switch (type) {
       case 'warning':
-        return `Solo quedan ${availableStock} unidades disponibles de ${productName}. ${
+        return `Solo quedan ${availableStock} unidades disponibles de ${currentProductName}. ${
           requestedQuantity ? `No puedes agregar ${requestedQuantity} unidades.` : ''
         }`;
       case 'error':
-        return `Lo sentimos, ${productName} está agotado en este momento.`;
+        return `No es posible agregar más unidades de este producto. Usted ya cuenta con todo el inventario disponible en su carrito de compras.`;
       case 'info':
       default:
-        return `Información sobre ${productName}.`;
+        return `Información sobre ${currentProductName}.`;
     }
   };
 
@@ -165,18 +194,90 @@ export const StockAlertModal: React.FC<StockAlertModalProps> = ({
             {displayMessage}
           </p>
 
-          {/* Información adicional de stock para advertencias */}
-          {type === 'warning' && availableStock > 0 && (
-            <div className="bg-gray-50 rounded-lg p-4 mb-4">
+          {/* Lista de múltiples productos */}
+          {hasMultipleProducts && (
+            <div className="mb-4 space-y-3 max-h-64 overflow-y-auto">
+              {products!.map((product, index) => (
+                <div key={index} className={`
+                  ${type === 'warning' ? 'bg-gradient-to-r from-[#FAF3E7] to-[#F5E6C6] border-[#ECD8AB]' : ''}
+                  ${type === 'error' ? 'bg-gradient-to-r from-orange-50 to-amber-50 border-orange-200' : ''}
+                  ${type === 'info' ? 'bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200' : ''}
+                  rounded-lg p-4 border
+                `}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <h4 className={`font-semibold text-sm ${
+                        type === 'warning' ? 'text-[#9A8C61]' : 
+                        type === 'error' ? 'text-orange-800' : 'text-blue-800'
+                      }`}>
+                        {product.name}
+                      </h4>
+                      {product.message && (
+                        <p className={`text-xs mt-1 ${
+                          type === 'warning' ? 'text-[#9A8C61]' : 
+                          type === 'error' ? 'text-orange-700' : 'text-blue-700'
+                        }`}>
+                          {product.message}
+                        </p>
+                      )}
+                    </div>
+                    
+                    {/* Información de stock para múltiples productos */}
+                    {type === 'warning' && product.availableStock !== undefined && (
+                      <div className="ml-3 text-right">
+                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                          product.availableStock <= 5 ? 'bg-orange-100 text-orange-800' : 'bg-[#F5E6C6] text-[#9A8C61]'
+                        }`}>
+                          {product.availableStock} disponibles
+                        </span>
+                      </div>
+                    )}
+                    
+                    {type === 'error' && (
+                      <div className="ml-3">
+                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                          🛒 Stock completo
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Información adicional de stock para advertencias (producto único) */}
+          {!hasMultipleProducts && type === 'warning' && availableStock > 0 && (
+            <div className="rounded-lg p-4 mb-4 ">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-gray-600">
+                <span className="text-sm font-medium text-[#9A8C61]">
                   Stock disponible:
                 </span>
                 <span className={`text-sm font-bold ${
-                  availableStock <= 5 ? 'text-amber-600' : 'text-green-600'
+                  availableStock <= 5 ? 'text-orange-600' : 'text-[#219436]'
                 }`}>
                   {availableStock} unidades
                 </span>
+              </div>
+            </div>
+          )}
+
+          {/* Información especial para productos agotados (producto único) */}
+          {!hasMultipleProducts && type === 'error' && (
+            <div className="bg-gradient-to-r from-orange-50 to-amber-50 rounded-lg p-4 mb-4 border border-orange-200">
+              <div className="text-center mb-3">
+                <h3 className="text-lg font-semibold text-orange-800 mb-1">
+                  {productName || (hasMultipleProducts ? products![0].name : 'Producto')}
+                </h3>
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-orange-100 text-orange-800">
+                  🛒 Stock completo en carrito
+                </span>
+              </div>
+              <div className="bg-white rounded-lg p-3 border border-orange-200">
+                <div className="flex items-center justify-center text-sm text-orange-700">
+                  <span className="mr-2">📦</span>
+                  Ya posee toda la disponibilidad de este producto
+                </div>
               </div>
             </div>
           )}
@@ -189,7 +290,17 @@ export const StockAlertModal: React.FC<StockAlertModalProps> = ({
                 variant="outline"
                 className="flex-1 py-3 px-4 rounded-lg border-amber-300 text-amber-700 hover:bg-amber-50"
               >
-                Ajustar cantidad
+                {isMultipleProducts ? 'Ajustar cantidades' : 'Ajustar cantidad'}
+              </Button>
+            )}
+            
+            {type === 'error' && (
+              <Button
+                onClick={onClose}
+                variant="outline"
+                className="flex-1 py-3 px-4 rounded-lg border-amber-300 text-amber-700 hover:bg-amber-50"
+              >
+                Revisar carrito
               </Button>
             )}
             
@@ -197,17 +308,23 @@ export const StockAlertModal: React.FC<StockAlertModalProps> = ({
               onClick={onClose}
               className={`flex-1 text-white font-medium py-3 px-4 rounded-lg transition-colors ${config.buttonColor}`}
             >
-              {type === 'warning' ? 'Entendido' : type === 'error' ? 'Buscar otros productos' : 'Cerrar'}
+              {type === 'warning' ? 'Entendido' : type === 'error' ? 'Entendido' : 'Cerrar'}
             </Button>
           </div>
         </div>
 
-        {/* Footer con sugerencia para productos agotados */}
+        {/* Footer con mensaje motivacional para productos agotados */}
         {type === 'error' && (
-          <div className="bg-gray-50 px-6 py-4 rounded-b-2xl border-t">
-            <p className="text-sm text-gray-600 text-center">
-              💡 Te notificaremos cuando este producto esté disponible nuevamente
-            </p>
+          <div className="bg-gradient-to-r from-orange-50 to-amber-50 px-6 py-4 rounded-b-2xl border-t border-orange-200">
+            <div className="flex items-center justify-center space-x-2">
+              <span className="text-xl">🎉</span>
+              <p className="text-sm font-medium text-orange-800 text-center">
+                {isMultipleProducts 
+                  ? `¡Excelente selección! Ha reservado todo el inventario disponible de ${products!.length} productos`
+                  : '¡Excelente elección! Ha reservado todo el inventario disponible'
+                }
+              </p>
+            </div>
           </div>
         )}
       </div>
