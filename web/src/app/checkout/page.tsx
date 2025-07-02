@@ -198,13 +198,18 @@ export default function CheckoutPage() {
 
       const responsePago = await pagosService.crearPagoConTarjeta(datosPago);
       
-      if (responsePago.data.estado === 'COMPLETADO') {
+      if (['COMPLETADO', 'AUTORIZADO'].includes(responsePago.data.estado)) {
         // Limpiar carrito y redirigir a confirmación
         limpiarCarrito();
         toast.success('¡Pago procesado exitosamente!');
-        router.push(`/pedidos/${pedidoId}?success=true`);
+        router.push(`/pago-exitoso?pedidoId=${pedidoId}`);
+      } else if (responsePago.data.estado === 'PROCESANDO') {
+        // Para pagos en proceso, también redirigir pero con mensaje diferente
+        limpiarCarrito();
+        toast.success('Pago en proceso. Te notificaremos cuando se confirme.');
+        router.push(`/pago-exitoso?pedidoId=${pedidoId}`);
       } else {
-        toast.error('El pago no pudo ser procesado. Intenta nuevamente.');
+        toast.error(`El pago no pudo ser procesado. Estado: ${responsePago.data.estado}`);
         setStep('payment');
       }
     } catch (error: unknown) {

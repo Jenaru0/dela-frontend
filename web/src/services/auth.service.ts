@@ -119,7 +119,6 @@ class AuthService {  private getAuthHeaders() {
       // Aquí podrías agregar validación adicional del token si es necesario
       return token;
     } catch {
-      console.error('Error al obtener token');
       return null;
     }
   }  // Obtener usuario actual del localStorage
@@ -140,7 +139,6 @@ class AuthService {  private getAuthHeaders() {
       
       return usuario;
     } catch {
-      console.error('Error al obtener usuario del localStorage');
       this.clearAuth();
       return null;
     }
@@ -243,7 +241,6 @@ class AuthService {  private getAuthHeaders() {
         
         // Si el refresh token es inválido o expirado, limpiar todo
         if (response.status === 401) {
-          console.log('Refresh token inválido o expirado, limpiando datos');
           this.limpiarDatos();
         }
         
@@ -287,7 +284,6 @@ class AuthService {  private getAuthHeaders() {
       // Si obtenemos un 401, intentar renovar el token y reintentar
       if (response.status === 401) {
         try {
-          console.log('Token expirado, intentando renovar...');
           await this.renovarToken();
           
           // Reintentar la petición con el nuevo token
@@ -301,7 +297,6 @@ class AuthService {  private getAuthHeaders() {
           
           // Si sigue dando 401 después de renovar, la sesión debe cerrarse
           if (response.status === 401) {
-            console.log('Sesión inválida después de renovar token');
             this.limpiarDatos();
             // Disparar evento para que el contexto se entere
             if (typeof window !== 'undefined') {
@@ -309,9 +304,8 @@ class AuthService {  private getAuthHeaders() {
             }
             throw new Error('Sesión expirada. Inicie sesión nuevamente.');
           }
-        } catch (renewError) {
+        } catch {
           // Si la renovación falla, limpiar datos y lanzar error
-          console.log('Error al renovar token:', renewError);
           this.limpiarDatos();
           // Disparar evento para que el contexto se entere
           if (typeof window !== 'undefined') {
@@ -325,7 +319,6 @@ class AuthService {  private getAuthHeaders() {
     } catch (error) {
       // Si es un error de red (fetch falló), podría ser que el backend se reinició
       if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
-        console.log('Error de red detectado, backend posiblemente reiniciado');
         throw new Error('Error de conexión. El servidor podría estar reiniciando. Intenta nuevamente en unos momentos.');
       }
       
@@ -337,18 +330,21 @@ class AuthService {  private getAuthHeaders() {
   // Verificar si el backend está disponible (para casos de reinicios)
   async checkBackendConnectivity(): Promise<boolean> {
     try {
-      const response = await fetch(`${API_BASE_URL}/autenticacion/health`, {
-        method: 'GET',
+      // Usar un endpoint que existe - verify token
+      const response = await fetch(`${API_BASE_URL}/autenticacion/verify`, {
+        method: 'POST',
         headers: {
+          ...this.getAuthHeaders(),
           'Content-Type': 'application/json',
         },
         // Timeout más corto para verificación de conectividad
         signal: AbortSignal.timeout(3000),
       });
 
-      return response.ok;
-    } catch (error) {
-      console.log('Backend no disponible:', error);
+      // Si es 401, el backend está funcionando (token inválido es ok para conectividad)
+      // Si es 200, también está funcionando
+      return response.status === 200 || response.status === 401;
+    } catch {
       return false;
     }
   }

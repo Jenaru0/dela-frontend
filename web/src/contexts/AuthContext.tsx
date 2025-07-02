@@ -127,7 +127,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
               });
             } else {
               // Token definitivamente inválido (401 del backend)
-              console.log('Token inválido en inicialización, intentando renovar...');
               try {
                 await authService.renovarToken();
                 const updatedToken = authService.getToken();
@@ -135,27 +134,22 @@ export function AuthProvider({ children }: AuthProviderProps) {
                   type: 'SET_USER',
                   payload: { usuario, token: updatedToken || token }
                 });
-              } catch (renewError) {
+              } catch {
                 // Si no se puede renovar, limpiar sesión completamente
-                console.log('No se pudo renovar token en inicialización:', renewError);
                 authService.clearAuth();
                 dispatch({ type: 'LOGIN_FAILURE' });
               }
             }
           } catch (verifyError) {
             // Error de red u otro error del servidor
-            console.log('Error al verificar token (posible error de red):', verifyError);
-            
             const errorMessage = verifyError instanceof Error ? verifyError.message : String(verifyError);
             
             // Si es un error específico que indica token inválido, limpiar sesión
             if (errorMessage.includes('401') || errorMessage.includes('Unauthorized')) {
-              console.log('Token definitivamente inválido, limpiando sesión');
               authService.clearAuth();
               dispatch({ type: 'LOGIN_FAILURE' });
             } else {
               // Para otros errores (red, servidor caído), mantener sesión temporal
-              console.log('Error de red/servidor detectado. Manteniendo sesión temporal y estableciendo modo offline');
               dispatch({
                 type: 'SET_USER',
                 payload: { usuario, token }
@@ -164,17 +158,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
               // Programar un reintento después de un tiempo
               setTimeout(async () => {
                 try {
-                  console.log('Reintentando verificación de token después de error de red...');
                   const isValidToken = await authService.verifyToken();
                   if (!isValidToken) {
-                    console.log('Token inválido en reintento, cerrando sesión');
                     authService.clearAuth();
                     dispatch({ type: 'LOGOUT' });
-                  } else {
-                    console.log('Token válido en reintento, sesión mantiene');
                   }
                 } catch {
-                  console.log('Error en reintento de verificación, manteniendo sesión temporal');
+                  // Mantener sesión temporal en caso de error
                 }
               }, 5000); // Reintentar después de 5 segundos
             }
@@ -212,7 +202,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     // Escuchar eventos de sesión expirada
     const handleSessionExpired = () => {
-      console.log('Sesión expirada detectada, cerrando sesión...');
       authService.clearAuth();
       dispatch({ type: 'LOGOUT' });
     };

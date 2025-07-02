@@ -64,16 +64,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
 
     try {
-      console.time('⏱️ loadCartIfNeeded time');
       setIsLoading(true);
       const apiCart = await carritoService.getCart();
       const localCart = apiCart.items.map(convertApiCartItemToLocal);
       setCart(localCart);
       setCartLoaded(true);
-      console.timeEnd('⏱️ loadCartIfNeeded time');
-      console.log('✅ Cart loaded lazily with', localCart.length, 'items');
     } catch (error) {
-      console.error('❌ Error loading cart lazily:', error);
       if (error instanceof Error && error.message.includes('401')) {
         setCart([]);
       }
@@ -91,16 +87,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
 
     try {
-      console.time('⏱️ refreshCart time');
       setIsLoading(true);
       const apiCart = await carritoService.getCart();
       const localCart = apiCart.items.map(convertApiCartItemToLocal);
       setCart(localCart);
       setCartLoaded(true);
-      console.timeEnd('⏱️ refreshCart time');
-      console.log('✅ Cart refreshed with', localCart.length, 'items');
-    } catch (error) {
-      console.error('❌ Error loading cart:', error);
+    } catch {
       // Keep local cart on error
     } finally {
       setIsLoading(false);
@@ -116,7 +108,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
       // Solo cargar el carrito cuando sea necesario, no automáticamente
       // Esto mejora significativamente el tiempo de carga inicial
-      console.log('🎯 User authenticated, cart will be loaded on first interaction');
     };
 
     handleAuthChange();

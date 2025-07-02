@@ -1,4 +1,5 @@
 import { EstadoPedido, MetodoPago, MetodoEnvio } from '@/types/enums';
+import { authService } from './auth.service';
 
 export interface PaginatedResponse<T> {
   data: T[];
@@ -147,9 +148,8 @@ class PedidosService {
   // Obtener pedido por ID
   async obtenerPorId(id: number): Promise<ApiResponse<Pedido>> {
     try {
-      const response = await fetch(`${API_BASE_URL}/pedidos/${id}`, {
+      const response = await authService.authenticatedFetch(`${API_BASE_URL}/pedidos/${id}`, {
         method: 'GET',
-        headers: this.getAuthHeaders(),
       });
 
       if (!response.ok) {
@@ -157,9 +157,9 @@ class PedidosService {
         throw new Error(errorData.message || 'Error al obtener pedido');
       }
 
-      return await response.json();
+      const data = await response.json();
+      return data;
     } catch (error) {
-      console.error('Error al obtener pedido:', error);
       throw error;
     }
   }
@@ -205,27 +205,18 @@ class PedidosService {
   }  // Obtener todos los pedidos para admin (sin paginación)
   async obtenerTodosAdmin(): Promise<ApiResponse<Pedido[]>> {
     try {
-      console.log('🔍 Frontend: Iniciando obtenerTodosAdmin');
-      console.log('🔍 Frontend: URL:', `${API_BASE_URL}/pedidos/admin/todos`);
-      console.log('🔍 Frontend: Headers:', this.getAuthHeaders());
-      
       const response = await fetch(`${API_BASE_URL}/pedidos/admin/todos`, {
         method: 'GET',
         headers: this.getAuthHeaders(),
       });
-
-      console.log('🔍 Frontend: Response status:', response.status);
-      console.log('🔍 Frontend: Response ok:', response.ok);
 
       if (!response.ok) {
         let errorData;
         try {
           errorData = await response.json();
         } catch (parseError) {
-          console.error('❌ Frontend: Error al parsear respuesta de error:', parseError);
           throw new Error(`Error HTTP ${response.status}: ${response.statusText}`);
         }
-        console.error('❌ Frontend: Error data:', errorData);
         throw new Error(errorData.message || 'Error al obtener pedidos');
       }
       
@@ -233,16 +224,13 @@ class PedidosService {
       try {
         result = await response.json();
       } catch (parseError) {
-        console.error('❌ Frontend: Error al parsear respuesta exitosa:', parseError);
         throw new Error('Error al procesar la respuesta del servidor');
       }
-      
-      console.log('✅ Frontend: Success data:', result);
       
       // El backend ya devuelve el formato correcto {mensaje, data}
       return result;
     } catch (error) {
-      console.error('❌ Frontend: Error completo:', error);
+      console.error('Error al obtener pedidos:', error);
       throw error;
     }
   }// Obtener todos los pedidos (admin)
