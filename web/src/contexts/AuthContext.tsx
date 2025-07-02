@@ -116,18 +116,50 @@ export function AuthProvider({ children }: AuthProviderProps) {
         const usuario = authService.getCurrentUser();
         
         if (token && usuario) {
-          // Intentar renovar el token para verificar validez
+          // Solo verificar si el token es válido, NO renovar automáticamente
           try {
-            await authService.renovarToken();
-            const updatedToken = authService.getToken();
-            dispatch({
-              type: 'SET_USER',
-              payload: { usuario, token: updatedToken || token }
-            });
-          } catch {
-            // Si no se puede renovar, limpiar sesión
-            authService.clearAuth();
-            dispatch({ type: 'LOGIN_FAILURE' });
+            const isValidToken = await authService.verifyToken();
+            if (isValidToken) {
+              dispatch({
+                type: 'SET_USER',
+                payload: { usuario, token }
+              });
+            } else {
+              // Token definitivamente inválido (401 del backend)
+              console.log('Token inválido en inicialización, intentando renovar...');
+              try {
+                await authService.renovarToken();
+                const updatedToken = authService.getToken();
+                dispatch({
+                  type: 'SET_USER',
+                  payload: { usuario, token: updatedToken || token }
+                });
+              } catch (renewError) {
+                // Si no se puede renovar, limpiar sesión completamente
+                console.log('No se pudo renovar token en inicialización:', renewError);
+                authService.clearAuth();
+                dispatch({ type: 'LOGIN_FAILURE' });
+              }
+            }
+          } catch (verifyError) {
+            // Error de red u otro error del servidor
+            console.log('Error al verificar token (posible error de red):', verifyError);
+            
+            // Si es un error específico que indica token inválido, limpiar sesión
+            const errorMessage = verifyError instanceof Error ? verifyError.message : String(verifyError);
+            if (errorMessage.includes('401') || errorMessage.includes('Unauthorized')) {
+              console.log('Token definitivamente inválido, limpiando sesión');
+              authService.clearAuth();
+              dispatch({ type: 'LOGIN_FAILURE' });
+            } else {
+              // Para otros errores (red, servidor caído), mantener sesión temporal
+              // pero intentar verificar en la próxima request
+              console.log('Manteniendo sesión offline temporalmente');
+              dispatch({
+                type: 'SET_USER',
+                payload: { usuario, token }
+              });
+            }
           }
         } else {
           // No hay sesión guardada, terminar carga
@@ -160,11 +192,20 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
     };
 
+    // Escuchar eventos de sesión expirada
+    const handleSessionExpired = () => {
+      console.log('Sesión expirada detectada, cerrando sesión...');
+      authService.clearAuth();
+      dispatch({ type: 'LOGOUT' });
+    };
+
     initializeAuth();
     window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('auth:session-expired', handleSessionExpired);
 
     return () => {
       window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('auth:session-expired', handleSessionExpired);
     };
   }, [isHydrated]);
 

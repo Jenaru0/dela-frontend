@@ -12,6 +12,7 @@ import { AuthModalProvider } from '@/contexts/AuthModalContext';
 import AuthModalMount from '@/components/auth/AuthModalMount';
 import TokenInterceptor from '@/components/auth/TokenInterceptor';
 import ScrollToTopWrapper from '@/components/common/ScrollToTopWrapper';
+import { SessionExpiredNotification } from '@/components/common/SessionExpiredNotification';
 
 const geistSans = Geist({ variable: '--font-geist-sans', subsets: ['latin'] });
 const geistMono = Geist_Mono({
@@ -45,6 +46,7 @@ export default function RootLayout({
                     <ShoppingCartDrawer />
                     <main id="main-content">{children}</main>
                     <AuthModalMount/>
+                    <SessionExpiredNotification />
                     <Toaster 
                       position="top-right"
                       toastOptions={{

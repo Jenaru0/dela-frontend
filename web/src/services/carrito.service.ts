@@ -70,6 +70,18 @@ class CarritoService {  private getAuthHeaders() {
     };
   }
   async getCart(): Promise<Cart> {
+    // Si no hay token, retornar carrito vacío en lugar de hacer la petición
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    if (!token) {
+      return {
+        id: 0,
+        usuarioId: 0,
+        creadoEn: new Date().toISOString(),
+        actualizadoEn: new Date().toISOString(),
+        items: []
+      };
+    }
+
     const response = await fetch(`${API_BASE_URL}/carrito`, {
       method: 'GET',
       headers: this.getAuthHeaders(),
@@ -77,7 +89,19 @@ class CarritoService {  private getAuthHeaders() {
 
     if (!response.ok) {
       if (response.status === 401) {
-        throw new Error('401: Unauthorized - Token may be invalid or expired');
+        // Si es 401, limpiar token y retornar carrito vacío
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('token');
+          localStorage.removeItem('refresh_token');
+          localStorage.removeItem('usuario');
+        }
+        return {
+          id: 0,
+          usuarioId: 0,
+          creadoEn: new Date().toISOString(),
+          actualizadoEn: new Date().toISOString(),
+          items: []
+        };
       }
       throw new Error(`Error al obtener el carrito: ${response.status} ${response.statusText}`);
     }

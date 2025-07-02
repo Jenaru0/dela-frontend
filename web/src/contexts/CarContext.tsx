@@ -19,6 +19,7 @@ interface CartContextProps {
   clearCart: () => Promise<void>;
   refreshCart: () => Promise<void>;
   syncCartInBackground: () => Promise<void>;
+  loadCartIfNeeded: () => Promise<void>;
 }
 
 const CartContext = createContext<CartContextProps | undefined>(undefined);
@@ -32,6 +33,7 @@ export const useCart = () => {
 export function CartProvider({ children }: { children: ReactNode }) {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [cartLoaded, setCartLoaded] = useState(false); // Para saber si ya se cargó
   const { isAuthenticated, usuario } = useAuth();
 
   // Utility function to convert API cart item to local cart item
@@ -49,10 +51,41 @@ export function CartProvider({ children }: { children: ReactNode }) {
     };
   };
 
+  // Load cart only when needed (lazy loading)
+  const loadCartIfNeeded = async () => {
+    if (!isAuthenticated || !usuario || cartLoaded) {
+      return;
+    }
+
+    const token = localStorage.getItem('token');
+    if (!token) {
+      return;
+    }
+
+    try {
+      console.time('⏱️ loadCartIfNeeded time');
+      setIsLoading(true);
+      const apiCart = await carritoService.getCart();
+      const localCart = apiCart.items.map(convertApiCartItemToLocal);
+      setCart(localCart);
+      setCartLoaded(true);
+      console.timeEnd('⏱️ loadCartIfNeeded time');
+      console.log('✅ Cart loaded lazily with', localCart.length, 'items');
+    } catch (error) {
+      console.error('❌ Error loading cart lazily:', error);
+      if (error instanceof Error && error.message.includes('401')) {
+        setCart([]);
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // Load cart from API when user is authenticated
   const refreshCart = async () => {
     if (!isAuthenticated || !usuario) {
       setCart([]);
+      setCartLoaded(false);
       return;
     }
 
@@ -62,6 +95,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       const apiCart = await carritoService.getCart();
       const localCart = apiCart.items.map(convertApiCartItemToLocal);
       setCart(localCart);
+      setCartLoaded(true);
       console.timeEnd('⏱️ refreshCart time');
       console.log('✅ Cart refreshed with', localCart.length, 'items');
     } catch (error) {
@@ -72,43 +106,30 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   };  // Load cart on auth change
   useEffect(() => {
-    const loadCart = async () => {
+    const handleAuthChange = () => {
       if (!isAuthenticated || !usuario) {
         setCart([]);
+        setCartLoaded(false);
         return;
       }
 
-      // Double check token exists
-      const token = localStorage.getItem('token');
-      if (!token) {
-        setCart([]);
-        return;
-      }
-
-      try {
-        setIsLoading(true);
-        const apiCart = await carritoService.getCart();
-        const localCart = apiCart.items.map(convertApiCartItemToLocal);
-        setCart(localCart);
-      } catch (error) {
-        console.error('Error loading cart:', error);
-        // If it's an auth error, don't retry and clear the cart
-        if (error instanceof Error && error.message.includes('401')) {
-          setCart([]);
-        }
-        // Keep local cart on other errors
-      } finally {
-        setIsLoading(false);
-      }
+      // Solo cargar el carrito cuando sea necesario, no automáticamente
+      // Esto mejora significativamente el tiempo de carga inicial
+      console.log('🎯 User authenticated, cart will be loaded on first interaction');
     };
 
-    loadCart();
+    handleAuthChange();
   }, [isAuthenticated, usuario]);
   const addToCart = async (product: Product, quantity: number = 1) => {
     console.log('🛒 addToCart called', { isAuthenticated, usuario, product, quantity });
     
     if (!isAuthenticated) {
       throw new Error('Debes iniciar sesión para añadir productos al carrito');
+    }
+
+    // Cargar carrito si no se ha cargado aún
+    if (!cartLoaded) {
+      await loadCartIfNeeded();
     }
 
     // Validar stock disponible
@@ -187,6 +208,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
       throw new Error('Debes iniciar sesión para modificar el carrito');
     }
 
+    // Cargar carrito si no se ha cargado aún
+    if (!cartLoaded) {
+      await loadCartIfNeeded();
+    }
+
     try {
       setIsLoading(true);
       console.log('🗑️ Removing item from cart:', productId);
@@ -216,6 +242,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
     if (!isAuthenticated) {
       throw new Error('Debes iniciar sesión para modificar el carrito');
+    }
+
+    // Cargar carrito si no se ha cargado aún
+    if (!cartLoaded) {
+      await loadCartIfNeeded();
     }
 
     // Validar stock disponible
@@ -404,7 +435,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
         setQty, 
         clearCart,
         refreshCart,
-        syncCartInBackground
+        syncCartInBackground,
+        loadCartIfNeeded
       }}
     >
       {children}

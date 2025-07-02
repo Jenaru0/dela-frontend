@@ -200,13 +200,25 @@ class AuthService {  private getAuthHeaders() {
       if (!token) return false;
 
       const response = await fetch(`${API_BASE_URL}/autenticacion/verify`, {
-        method: 'GET',
+        method: 'POST',
         headers: this.getAuthHeaders(),
       });
 
-      return response.ok;
-    } catch {
-      return false;
+      // Si es 401, el token es inválido (no es error de red)
+      if (response.status === 401) {
+        return false;
+      }
+
+      // Para otros errores (500, error de red, etc.), lanzar excepción
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error al verificar token:', error);
+      // Re-lanzar el error para que el llamador pueda distinguir
+      throw error;
     }
   }
 
@@ -228,10 +240,13 @@ class AuthService {  private getAuthHeaders() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        // Si el refresh token es inválido, limpiar todo
+        
+        // Si el refresh token es inválido o expirado, limpiar todo
         if (response.status === 401) {
+          console.log('Refresh token inválido o expirado, limpiando datos');
           this.limpiarDatos();
         }
+        
         throw new Error(errorData.message || 'Error al renovar token');
       }
 
@@ -271,6 +286,7 @@ class AuthService {  private getAuthHeaders() {
     // Si obtenemos un 401, intentar renovar el token y reintentar
     if (response.status === 401) {
       try {
+        console.log('Token expirado, intentando renovar...');
         await this.renovarToken();
         
         // Reintentar la petición con el nuevo token
@@ -281,9 +297,25 @@ class AuthService {  private getAuthHeaders() {
             ...options.headers,
           },
         });
-      } catch {
+        
+        // Si sigue dando 401 después de renovar, la sesión debe cerrarse
+        if (response.status === 401) {
+          console.log('Sesión inválida después de renovar token');
+          this.limpiarDatos();
+          // Disparar evento para que el contexto se entere
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('auth:session-expired'));
+          }
+          throw new Error('Sesión expirada. Inicie sesión nuevamente.');
+        }
+      } catch (renewError) {
         // Si la renovación falla, limpiar datos y lanzar error
+        console.log('Error al renovar token:', renewError);
         this.limpiarDatos();
+        // Disparar evento para que el contexto se entere
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('auth:session-expired'));
+        }
         throw new Error('Sesión expirada. Inicie sesión nuevamente.');
       }
     }

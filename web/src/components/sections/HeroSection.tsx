@@ -140,11 +140,11 @@ const HeroSection: React.FC = () => {
               {/* Stats */}
               <div className="flex items-center gap-8 pt-6 border-t border-[#E6D5A8]">
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-[#CC9F53]">50+</div>
+                  <div className="text-2xl font-bold text-[#CC9F53]">30+</div>
                   <div className="text-sm text-gray-600">Productos Lácteos</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-[#CC9F53]">24+</div>
+                  <div className="text-2xl font-bold text-[#CC9F53]">25+</div>
                   <div className="text-sm text-gray-600">Años de Experiencia</div>
                 </div>
                 <div className="text-center">
@@ -254,7 +254,11 @@ const HeroSection: React.FC = () => {
             <div className="flex items-center gap-8 pt-6 border-t border-[#E6D5A8]">
               <div className="text-center">
                 <div className="text-2xl font-bold text-[#CC9F53]">
-                  {statsLoading ? '...' : `${totalProductos || 50}+`}
+                  {statsLoading ? (
+                    <div className="animate-pulse bg-[#CC9F53] rounded h-6 w-12"></div>
+                  ) : (
+                    `${totalProductos || 30}+`
+                  )}
                 </div>
                 <div className="text-sm text-gray-600">Productos Lácteos</div>
               </div>

@@ -34,7 +34,7 @@ const Header: React.FC = () => {
   const [mounted, setMounted] = useState(false);
 
   const { isAuthenticated, usuario, cerrarSesion, isLoading } = useAuth();
-  const { cart } = useCart();
+  const { cart, loadCartIfNeeded } = useCart();
   const { favorites } = useFavorites();
   const router = useRouter();
 
@@ -51,6 +51,13 @@ const Header: React.FC = () => {
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Cargar carrito cuando el usuario esté autenticado y el componente esté montado
+  useEffect(() => {
+    if (mounted && isAuthenticated && usuario) {
+      loadCartIfNeeded();
+    }
+  }, [mounted, isAuthenticated, usuario, loadCartIfNeeded]);
 
   useEffect(() => {
     const handleScroll = () => {
