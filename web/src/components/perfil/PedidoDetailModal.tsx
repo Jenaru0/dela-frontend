@@ -11,7 +11,6 @@ import {
   CreditCard,
   Truck,
   Star,
-  Eye,
   MessageSquare,
   AlertCircle,
 } from 'lucide-react';

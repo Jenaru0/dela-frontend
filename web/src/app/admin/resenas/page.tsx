@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/input';
 import { 
   Star, 
@@ -11,14 +10,13 @@ import {
   X,
   AlertTriangle,
   User,
-  ShoppingBag,
-  MessageSquare,
   AlertCircle,
   CheckCircle,
   TrendingUp
 } from 'lucide-react';
 import { resenasService, Resena } from '@/services/resenas.service';
 import { EstadoResena } from '@/types/enums';
+import { ReviewDetailModal } from '@/components/admin/modals/resena/ReviewDetailModal';
 
 const ResenasAdminPage: React.FC = () => {
   const [resenas, setResenas] = useState<Resena[]>([]);
@@ -36,6 +34,8 @@ const ResenasAdminPage: React.FC = () => {
     type: 'success' | 'error';
     message: string;
   } | null>(null);
+  const [selectedResena, setSelectedResena] = useState<Resena | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Función para mostrar notificaciones
   const showNotification = (type: 'success' | 'error', message: string) => {
@@ -48,7 +48,7 @@ const ResenasAdminPage: React.FC = () => {
     try {
       setIsLoading(true);
       const response = await resenasService.obtenerTodas();
-      setResenas(response.data);
+      setResenas(response?.data || []);
     } catch (error) {
       console.error('Error al cargar reseñas:', error);
       showNotification('error', 'Error al cargar reseñas');
@@ -62,15 +62,22 @@ const ResenasAdminPage: React.FC = () => {
   const loadEstadisticas = useCallback(async () => {
     try {
       const response = await resenasService.obtenerEstadisticas();
-      setEstadisticas(response.data);
+      setEstadisticas(response?.data || {
+        total: 0,
+        pendientes: 0,
+        aprobadas: 0,
+        rechazadas: 0,
+        promedioCalificacion: 0
+      });
     } catch (error) {
       console.error('Error al cargar estadísticas:', error);
+      const resenasArray = resenas || [];
       setEstadisticas({
-        total: resenas.length,
-        pendientes: resenas.filter(r => r.estado === EstadoResena.PENDIENTE).length,
-        aprobadas: resenas.filter(r => r.estado === EstadoResena.APROBADO).length,
-        rechazadas: resenas.filter(r => r.estado === EstadoResena.RECHAZADO).length,
-        promedioCalificacion: resenas.length > 0 ? resenas.reduce((acc, r) => acc + r.calificacion, 0) / resenas.length : 0
+        total: resenasArray.length,
+        pendientes: resenasArray.filter(r => r.estado === EstadoResena.PENDIENTE).length,
+        aprobadas: resenasArray.filter(r => r.estado === EstadoResena.APROBADO).length,
+        rechazadas: resenasArray.filter(r => r.estado === EstadoResena.RECHAZADO).length,
+        promedioCalificacion: resenasArray.length > 0 ? resenasArray.reduce((acc, r) => acc + r.calificacion, 0) / resenasArray.length : 0
       });
     }
   }, [resenas]);
@@ -80,13 +87,13 @@ const ResenasAdminPage: React.FC = () => {
   }, [loadResenas]);
 
   useEffect(() => {
-    if (resenas.length > 0) {
+    if (resenas && resenas.length > 0) {
       loadEstadisticas();
     }
   }, [resenas, loadEstadisticas]);
 
   // Filtrar reseñas
-  const filteredResenas = resenas.filter(resena => {
+  const filteredResenas = (resenas || []).filter(resena => {
     const matchesSearch = resena.comentario?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          resena.usuario?.nombres?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          resena.producto?.nombre?.toLowerCase().includes(searchTerm.toLowerCase());
@@ -102,10 +109,23 @@ const ResenasAdminPage: React.FC = () => {
       await resenasService.cambiarEstado(id, newStatus);
       await loadResenas();
       showNotification('success', `Reseña ${newStatus.toLowerCase()} correctamente`);
+      setIsModalOpen(false);
     } catch (error) {
       console.error('Error al cambiar estado:', error);
       showNotification('error', 'Error al cambiar estado de la reseña');
     }
+  };
+
+  // Abrir modal de detalle
+  const handleViewDetails = (resena: Resena) => {
+    setSelectedResena(resena);
+    setIsModalOpen(true);
+  };
+
+  // Cerrar modal
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedResena(null);
   };
 
 
@@ -118,19 +138,6 @@ const ResenasAdminPage: React.FC = () => {
         }`}
       />
     ));
-  };
-
-  const getStatusColor = (estado: string) => {
-    switch (estado) {
-      case 'PENDIENTE':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'APROBADO':
-        return 'bg-green-100 text-green-800 border-green-200';
-      case 'RECHAZADO':
-        return 'bg-red-100 text-red-800 border-red-200';
-      default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
-    }
   };
 
   return (
@@ -156,8 +163,8 @@ const ResenasAdminPage: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-[#3A3A3A]">Gestión de Reseñas</h1>
-          <p className="text-[#9A8C61] mt-1">
+          <h1 className="text-3xl font-bold text-[#2D2D2D]">Gestión de Reseñas</h1>
+          <p className="text-[#8B7355] mt-1">
             Modera y gestiona todas las reseñas de productos de los clientes
           </p>
         </div>
@@ -171,8 +178,8 @@ const ResenasAdminPage: React.FC = () => {
               <Star className="w-6 h-6 text-blue-600" />
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-[#9A8C61]">Total Reseñas</p>
-              <p className="text-2xl font-bold text-[#3A3A3A]">{estadisticas.total}</p>
+              <p className="text-sm font-medium text-[#8B7355]">Total Reseñas</p>
+              <p className="text-2xl font-bold text-[#2D2D2D]">{estadisticas.total}</p>
             </div>
           </div>
         </div>
@@ -182,8 +189,8 @@ const ResenasAdminPage: React.FC = () => {
               <AlertTriangle className="w-6 h-6 text-yellow-600" />
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-[#9A8C61]">Pendientes</p>
-              <p className="text-2xl font-bold text-[#3A3A3A]">{estadisticas.pendientes}</p>
+              <p className="text-sm font-medium text-[#8B7355]">Pendientes</p>
+              <p className="text-2xl font-bold text-[#2D2D2D]">{estadisticas.pendientes}</p>
             </div>
           </div>
         </div>
@@ -193,8 +200,8 @@ const ResenasAdminPage: React.FC = () => {
               <Check className="w-6 h-6 text-green-600" />
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-[#9A8C61]">Aprobadas</p>
-              <p className="text-2xl font-bold text-[#3A3A3A]">{estadisticas.aprobadas}</p>
+              <p className="text-sm font-medium text-[#8B7355]">Aprobadas</p>
+              <p className="text-2xl font-bold text-[#2D2D2D]">{estadisticas.aprobadas}</p>
             </div>
           </div>
         </div>
@@ -204,8 +211,8 @@ const ResenasAdminPage: React.FC = () => {
               <X className="w-6 h-6 text-red-600" />
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-[#9A8C61]">Rechazadas</p>
-              <p className="text-2xl font-bold text-[#3A3A3A]">{estadisticas.rechazadas}</p>
+              <p className="text-sm font-medium text-[#8B7355]">Rechazadas</p>
+              <p className="text-2xl font-bold text-[#2D2D2D]">{estadisticas.rechazadas}</p>
             </div>
           </div>
         </div>
@@ -215,8 +222,8 @@ const ResenasAdminPage: React.FC = () => {
               <TrendingUp className="w-6 h-6 text-orange-600" />
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-[#9A8C61]">Promedio</p>
-              <p className="text-2xl font-bold text-[#3A3A3A]">{estadisticas.promedioCalificacion.toFixed(1)}</p>
+              <p className="text-sm font-medium text-[#8B7355]">Promedio</p>
+              <p className="text-2xl font-bold text-[#2D2D2D]">{estadisticas.promedioCalificacion.toFixed(1)}</p>
             </div>
           </div>
         </div>
@@ -226,7 +233,7 @@ const ResenasAdminPage: React.FC = () => {
       <div className="bg-white rounded-xl p-6 shadow-sm border border-[#ecd8ab]/30">
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#9A8C61] h-5 w-5" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#8B7355] h-5 w-5" />
             <Input
               type="text"
               placeholder="Buscar por comentario, cliente o producto..."
@@ -249,155 +256,112 @@ const ResenasAdminPage: React.FC = () => {
       </div>
 
       {/* Reviews Table */}
-      <div className="bg-white rounded-xl shadow-sm border border-[#ecd8ab]/30 overflow-hidden">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         {isLoading ? (
-          <div className="p-8 text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#CC9F53] mx-auto mb-4"></div>
-            <p className="text-[#9A8C61]">Cargando reseñas...</p>
+          <div className="p-12 text-center">
+            <div className="animate-spin rounded-full h-10 w-10 border-b-3 border-[#CC9F53] mx-auto mb-6"></div>
+            <p className="text-gray-600 text-lg">Cargando reseñas...</p>
           </div>
         ) : filteredResenas.length === 0 ? (
-          <div className="p-12 text-center">
-            <div className="w-16 h-16 bg-gradient-to-br from-[#CC9F53] to-[#b08a3c] rounded-xl flex items-center justify-center mx-auto mb-4">
-              <Star className="h-8 w-8 text-white" />
+          <div className="p-16 text-center">
+            <div className="w-20 h-20 bg-gradient-to-br from-[#CC9F53] to-[#b08a3c] rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
+              <Star className="h-10 w-10 text-white" />
             </div>
-            <h3 className="text-lg font-bold text-[#3A3A3A] mb-2">
-              {resenas.length === 0 ? 'No hay reseñas' : 'Sin resultados'}
+            <h3 className="text-xl font-bold text-gray-900 mb-3">
+              {!resenas || resenas.length === 0 ? 'No hay reseñas disponibles' : 'Sin resultados'}
             </h3>
-            <p className="text-[#9A8C61] mb-6">
-              {resenas.length === 0 
-                ? 'Aún no hay reseñas de productos para moderar.'
-                : 'No se encontraron reseñas que coincidan con tu búsqueda.'
+            <p className="text-gray-600 text-lg max-w-md mx-auto">
+              {!resenas || resenas.length === 0 
+                ? 'Aún no hay reseñas de productos para moderar en el sistema.'
+                : 'No se encontraron reseñas que coincidan con los criterios de búsqueda.'
               }
             </p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gradient-to-r from-[#F5E6C6]/50 to-[#FAF3E7]/30 border-b border-[#ecd8ab]">
+              <thead className="bg-gray-50/50 border-b border-gray-100">
                 <tr>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#3A3A3A]">
-                    Reseña
+                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wide">
+                    cliente
                   </th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#3A3A3A]">
-                    Cliente
+                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wide">
+                    producto
                   </th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#3A3A3A]">
-                    Producto
+                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wide">
+                    puntuación
                   </th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#3A3A3A]">
-                    Puntuación
+                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wide">
+                    estado
                   </th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#3A3A3A]">
-                    Estado
+                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wide">
+                    fecha
                   </th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#3A3A3A]">
-                    Fecha
-                  </th>
-                  <th className="px-6 py-4 text-right text-sm font-semibold text-[#3A3A3A]">
-                    Acciones
+                  <th className="px-6 py-4 text-right text-xs font-medium text-gray-400 uppercase tracking-wide">
+                    acción
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#ecd8ab]/30">
+              <tbody className="bg-white divide-y divide-gray-50">
                 {filteredResenas.map((resena) => (
-                  <tr key={resena.id} className="hover:bg-[#F5E6C6]/20 transition-colors duration-200">
-                    <td className="px-6 py-4">
-                      <div className="flex items-start">
-                        <div className="w-10 h-10 bg-[#F5E6C6]/30 rounded-lg flex items-center justify-center mr-3 flex-shrink-0">
-                          <MessageSquare className="w-5 h-5 text-[#CC9F53]" />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center mb-1">
-                            {renderStars(resena.calificacion)}
+                  <tr key={resena.id} className="hover:bg-gray-50/50 transition-colors duration-150">
+                    <td className="px-6 py-5">
+                      <div className="flex items-center">
+                        <div className="flex-shrink-0 h-8 w-8">
+                          <div className="h-8 w-8 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
+                            <User className="h-4 w-4 text-gray-500" />
                           </div>
-                          <p className="text-sm text-[#3A3A3A] line-clamp-2">
-                            {resena.comentario || 'Sin comentario'}
-                          </p>
                         </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center">
-                        <User className="w-4 h-4 text-[#CC9F53] mr-2" />
-                        <div>
-                          <p className="font-medium text-[#3A3A3A]">
+                        <div className="ml-3">
+                          <div className="text-sm font-medium text-gray-900">
                             {resena.usuario?.nombres} {resena.usuario?.apellidos}
-                          </p>
+                          </div>
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center">
-                        <ShoppingBag className="w-4 h-4 text-[#CC9F53] mr-2" />
-                        <div>
-                          <p className="font-medium text-[#3A3A3A]">
-                            {resena.producto?.nombre}
-                          </p>
-                        </div>
+                    <td className="px-6 py-5">
+                      <div className="text-sm text-gray-900 font-medium max-w-xs truncate">
+                        {resena.producto?.nombre}
                       </div>
                     </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center">
+                    <td className="px-6 py-5">
+                      <div className="flex items-center space-x-1">
                         {renderStars(resena.calificacion)}
-                        <span className="ml-2 text-sm font-medium text-[#3A3A3A]">
-                          {resena.calificacion}/5
+                        <span className="ml-2 text-sm text-gray-600 font-medium">
+                          {resena.calificacion}
                         </span>
                       </div>
                     </td>
-                    <td className="px-6 py-4">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(resena.estado)}`}>
+                    <td className="px-6 py-5">
+                      <span className={`inline-flex px-3 py-1 text-xs font-medium rounded-full ${
+                        resena.estado === 'PENDIENTE' 
+                          ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                          : resena.estado === 'APROBADO'
+                          ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                          : 'bg-red-50 text-red-700 border border-red-200'
+                      }`}>
                         {resena.estado === 'PENDIENTE' && 'Pendiente'}
                         {resena.estado === 'APROBADO' && 'Aprobada'}
                         {resena.estado === 'RECHAZADO' && 'Rechazada'}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-sm text-[#9A8C61]">
-                      {new Date(resena.creadoEn).toLocaleDateString('es-PE')}
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end space-x-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            // TODO: Implementar ver detalles
-                            showNotification('success', 'Ver detalles próximamente disponible');
-                          }}
-                          className="hover:bg-[#F5E6C6]/30"
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        {resena.estado === EstadoResena.PENDIENTE && (
-                          <>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleChangeStatus(resena.id, EstadoResena.APROBADO)}
-                              className="text-green-600 hover:bg-green-50"
-                            >
-                              <Check className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleChangeStatus(resena.id, EstadoResena.RECHAZADO)}
-                              className="text-red-600 hover:bg-red-50"
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
-                          </>
-                        )}
-                        {resena.estado !== EstadoResena.PENDIENTE && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleChangeStatus(resena.id, EstadoResena.PENDIENTE)}
-                            className="text-orange-600 hover:bg-orange-50"
-                          >
-                            <AlertTriangle className="h-4 w-4" />
-                          </Button>
-                        )}
+                    <td className="px-6 py-5">
+                      <div className="text-sm text-gray-600">
+                        {new Date(resena.creadoEn).toLocaleDateString('es-PE', {
+                          day: '2-digit',
+                          month: '2-digit',
+                          year: 'numeric'
+                        })}
                       </div>
+                    </td>
+                    <td className="px-6 py-5 text-right">
+                      <button
+                        onClick={() => handleViewDetails(resena)}
+                        className="inline-flex items-center justify-center w-8 h-8 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-all duration-150"
+                        title="Ver detalle"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </button>
                     </td>
                   </tr>
                 ))}
@@ -406,6 +370,14 @@ const ResenasAdminPage: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Modal de detalle */}
+      <ReviewDetailModal
+        resena={selectedResena}
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        onChangeStatus={handleChangeStatus}
+      />
     </div>
   );
 };

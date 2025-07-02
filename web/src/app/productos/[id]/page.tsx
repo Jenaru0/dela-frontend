@@ -14,7 +14,10 @@ import { fetchCatalogoProductoById } from '@/services/catalogo.service';
 import type { Producto } from '@/types/productos';
 import { ProductoGallery } from '@/components/producto/ProductoGallery';
 import { ProductoInfo } from '@/components/producto/ProductoInfo';
+import { ProductReviews } from '@/components/producto/ProductReviews';
 import ProductosRelacionados from '@/components/producto/ProductosRelacionados';
+import { obtenerResenasAprobadas } from '@/services/resenas.service';
+import type { Resena } from '@/services/resenas.service';
 
 export default function ProductDetailPage() {
   const params = useParams();
@@ -29,6 +32,8 @@ export default function ProductDetailPage() {
   const [product, setProduct] = useState<Producto | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [resenas, setResenas] = useState<Resena[]>([]);
+  const [resenasLoading, setResenasLoading] = useState(false);
 
   // Busca producto desde API
   const id = typeof params.id === 'string' ? params.id : params.id?.[0];
@@ -39,6 +44,8 @@ export default function ProductDetailPage() {
       .then((data) => {
         setProduct(data);
         setError('');
+        // Cargar reseñas del producto
+        loadProductReviews(data.id);
       })
       .catch(() => {
         setProduct(null as Producto | null);
@@ -46,6 +53,20 @@ export default function ProductDetailPage() {
       })
       .finally(() => setLoading(false));
   }, [id]);
+
+  // Cargar reseñas del producto
+  const loadProductReviews = async (productoId: number) => {
+    try {
+      setResenasLoading(true);
+      const response = await obtenerResenasAprobadas(productoId, 3);
+      setResenas(response.data || []);
+    } catch (error) {
+      console.error('Error al cargar reseñas:', error);
+      setResenas([]);
+    } finally {
+      setResenasLoading(false);
+    }
+  };
   if (loading) {
     return (
       <Layout>
@@ -242,7 +263,19 @@ export default function ProductDetailPage() {
             </div>
           </div>
         </div>
-      </section>        {/* Productos relacionados */}
+      </section>
+
+      {/* Sección de Reseñas */}
+      <section className="bg-gradient-to-br from-gray-50 via-white to-[#FFF9EC]/30">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <ProductReviews 
+            resenas={resenas} 
+            loading={resenasLoading} 
+          />
+        </div>
+      </section>
+        
+      {/* Productos relacionados */}
       {product && (
         <section className="bg-gray-50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
