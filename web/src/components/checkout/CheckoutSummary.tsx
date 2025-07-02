@@ -15,6 +15,8 @@ interface CheckoutSummaryProps {
   };
   direccionSeleccionada: DireccionCliente | null;
   metodoEnvio: MetodoEnvio;
+  codigoPromocion: string;
+  onCodigoPromocionChange: (codigo: string) => void;
 }
 
 export function CheckoutSummary({
@@ -22,6 +24,8 @@ export function CheckoutSummary({
   totales,
   direccionSeleccionada,
   metodoEnvio,
+  codigoPromocion,
+  onCodigoPromocionChange,
 }: CheckoutSummaryProps) {
   return (
     <div className="bg-white rounded-lg shadow-sm p-6">
@@ -91,6 +95,28 @@ export function CheckoutSummary({
         <p className="text-sm text-gray-600">
           {metodoEnvio === MetodoEnvio.DELIVERY ? 'Delivery a domicilio' : 'Recojo en tienda'}
         </p>
+      </div>
+
+      {/* Código de promoción */}
+      <div className="border-t pt-4 mb-4">
+        <h4 className="text-sm font-medium text-gray-900 mb-2">
+          Código de Promoción
+        </h4>
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={codigoPromocion}
+            onChange={(e) => onCodigoPromocionChange(e.target.value.toUpperCase())}
+            placeholder="Ingresa tu código"
+            className="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            maxLength={20}
+          />
+        </div>
+        {codigoPromocion && (
+          <p className="text-xs text-gray-500 mt-1">
+            Código aplicado: <span className="font-medium text-green-600">{codigoPromocion}</span>
+          </p>
+        )}
       </div>
 
       {/* Totales */}

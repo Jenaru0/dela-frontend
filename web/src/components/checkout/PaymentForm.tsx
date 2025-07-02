@@ -105,7 +105,7 @@ export function PaymentForm({ total, userEmail, onProcesarPago, loading }: Payme
     } else if (process.env.NODE_ENV === 'development' && !esTargetapruebaOficial(datosTarjeta.numeroTarjeta)) {
       const numero = datosTarjeta.numeroTarjeta.replace(/\s/g, '');
       const firstSix = numero.slice(0, 6);
-      nuevosErrores.numeroTarjeta = `❌ Tarjeta ${firstSix}... no es de prueba oficial. Use los botones de arriba o las tarjetas listadas en la guía.`;
+      nuevosErrores.numeroTarjeta = `❌ Tarjeta ${firstSix}... no es de prueba oficial.`;
     }
 
     if (!datosTarjeta.fechaExpiracion.trim()) {
@@ -120,7 +120,14 @@ export function PaymentForm({ total, userEmail, onProcesarPago, loading }: Payme
     if (!datosTarjeta.codigoSeguridad.trim()) {
       nuevosErrores.codigoSeguridad = 'El código de seguridad es requerido';
     } else if (!/^\d{3,4}$/.test(datosTarjeta.codigoSeguridad)) {
-      nuevosErrores.codigoSeguridad = 'Código de seguridad inválido';
+      nuevosErrores.codigoSeguridad = 'El código de seguridad debe tener exactamente 3 o 4 dígitos';
+    } else {
+      // Validación estricta según el tipo de tarjeta
+      const longitudEsperada = metodoPagoDetectado === MetodoPago.amex ? 4 : 3;
+      if (datosTarjeta.codigoSeguridad.length !== longitudEsperada) {
+        const tipoTarjeta = metodoPagoDetectado === MetodoPago.amex ? 'American Express' : 'Visa/MasterCard';
+        nuevosErrores.codigoSeguridad = `${tipoTarjeta} requiere exactamente ${longitudEsperada} dígitos`;
+      }
     }
 
     if (!datosTarjeta.nombreTitular.trim()) {
@@ -133,6 +140,24 @@ export function PaymentForm({ total, userEmail, onProcesarPago, loading }: Payme
 
     if (!datosTarjeta.numeroDocumento.trim()) {
       nuevosErrores.numeroDocumento = 'El número de documento es requerido';
+    } else if (datosTarjeta.tipoDocumento) {
+      // Validación estricta según el tipo de documento seleccionado
+      const tipoSeleccionado = tiposIdentificacion.find(tipo => tipo.id === datosTarjeta.tipoDocumento);
+      if (tipoSeleccionado) {
+        const longitudActual = datosTarjeta.numeroDocumento.length;
+        const longitudMinima = tipoSeleccionado.min_length;
+        const longitudMaxima = tipoSeleccionado.max_length;
+        
+        if (longitudActual < longitudMinima || longitudActual > longitudMaxima) {
+          if (longitudMinima === longitudMaxima) {
+            nuevosErrores.numeroDocumento = `${tipoSeleccionado.name} debe tener exactamente ${longitudMinima} dígitos`;
+          } else {
+            nuevosErrores.numeroDocumento = `${tipoSeleccionado.name} debe tener entre ${longitudMinima} y ${longitudMaxima} dígitos`;
+          }
+        } else if (!/^\d+$/.test(datosTarjeta.numeroDocumento)) {
+          nuevosErrores.numeroDocumento = 'El número de documento solo debe contener dígitos';
+        }
+      }
     }
 
     setErrores(nuevosErrores);
@@ -148,9 +173,38 @@ export function PaymentForm({ total, userEmail, onProcesarPago, loading }: Payme
       setMetodoPagoDetectado(tipoDetectado);
     }
     
+    // Si cambia el tipo de documento, limpiar el número de documento
+    if (campo === 'tipoDocumento') {
+      setDatosTarjeta(prev => ({ ...prev, numeroDocumento: '' }));
+      setErrores(prev => ({ ...prev, numeroDocumento: '' }));
+    }
+    
     // Limpiar error cuando el usuario empiece a escribir
     if (errores[campo]) {
       setErrores(prev => ({ ...prev, [campo]: '' }));
+    }
+    
+    // Validación en tiempo real para campos críticos
+    if (campo === 'codigoSeguridad' && valor.length > 0) {
+      const nuevoError: Record<string, string> = {};
+      if (!/^\d+$/.test(valor)) {
+        nuevoError.codigoSeguridad = 'Solo se permiten números';
+      } else if (metodoPagoDetectado) {
+        const longitudEsperada = metodoPagoDetectado === MetodoPago.amex ? 4 : 3;
+        if (valor.length > longitudEsperada) {
+          nuevoError.codigoSeguridad = `Máximo ${longitudEsperada} dígitos`;
+        }
+      }
+      setErrores(prev => ({ ...prev, ...nuevoError }));
+    }
+    
+    if (campo === 'numeroDocumento' && valor.length > 0 && datosTarjeta.tipoDocumento) {
+      const nuevoError: Record<string, string> = {};
+      const tipoSeleccionado = tiposIdentificacion.find(tipo => tipo.id === datosTarjeta.tipoDocumento);
+      if (tipoSeleccionado && valor.length > tipoSeleccionado.max_length) {
+        nuevoError.numeroDocumento = `Máximo ${tipoSeleccionado.max_length} dígitos`;
+        setErrores(prev => ({ ...prev, ...nuevoError }));
+      }
     }
   };
 
@@ -204,10 +258,64 @@ export function PaymentForm({ total, userEmail, onProcesarPago, loading }: Payme
     return { esValida: true };
   };
 
+  // Función para verificar si el formulario está completo y válido
+  const esFormularioValido = (): boolean => {
+    // Verificar campos obligatorios
+    if (!datosTarjeta.numeroTarjeta.trim() || 
+        !datosTarjeta.fechaExpiracion.trim() || 
+        !datosTarjeta.codigoSeguridad.trim() || 
+        !datosTarjeta.nombreTitular.trim() || 
+        !datosTarjeta.tipoDocumento || 
+        !datosTarjeta.numeroDocumento.trim()) {
+      return false;
+    }
+
+    // Verificar que no haya errores
+    if (Object.values(errores).some(error => error.length > 0)) {
+      return false;
+    }
+
+    // Verificar validaciones específicas
+    const numeroTarjetaLimpio = datosTarjeta.numeroTarjeta.replace(/\s/g, '');
+    if (!/^\d{13,19}$/.test(numeroTarjetaLimpio) || !metodoPagoDetectado) {
+      return false;
+    }
+
+    // Validar CSV según tipo de tarjeta
+    const longitudCSVEsperada = metodoPagoDetectado === MetodoPago.amex ? 4 : 3;
+    if (datosTarjeta.codigoSeguridad.length !== longitudCSVEsperada) {
+      return false;
+    }
+
+    // Validar documento según tipo
+    if (datosTarjeta.tipoDocumento) {
+      const tipoSeleccionado = tiposIdentificacion.find(tipo => tipo.id === datosTarjeta.tipoDocumento);
+      if (tipoSeleccionado) {
+        const longitudActual = datosTarjeta.numeroDocumento.length;
+        if (longitudActual < tipoSeleccionado.min_length || longitudActual > tipoSeleccionado.max_length) {
+          return false;
+        }
+      }
+    }
+
+    // Validar fecha de expiración
+    const validacionFecha = validarFechaExpiracion(datosTarjeta.fechaExpiracion);
+    if (!validacionFecha.esValida) {
+      return false;
+    }
+
+    return true;
+  };
+
   const manejarSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!validarFormulario()) {
+      // Mostrar toast con errores específicos
+      const erroresEncontrados = Object.values(errores).filter(error => error.length > 0);
+      if (erroresEncontrados.length > 0) {
+        toast.error('Por favor, corrige los errores en el formulario antes de continuar');
+      }
       return;
     }
 
@@ -306,7 +414,7 @@ export function PaymentForm({ total, userEmail, onProcesarPago, loading }: Payme
                 value={datosTarjeta.codigoSeguridad}
                 onChange={(e) => manejarCambio('codigoSeguridad', e.target.value.replace(/\D/g, ''))}
                 placeholder="123"
-                maxLength={4}
+                maxLength={metodoPagoDetectado === MetodoPago.amex ? 4 : 3}
                 className={errores.codigoSeguridad ? 'border-red-500' : ''}
               />
               {errores.codigoSeguridad && (
@@ -350,11 +458,13 @@ export function PaymentForm({ total, userEmail, onProcesarPago, loading }: Payme
                 }`}
               >
                 <option value="">Seleccionar</option>
-                {tiposIdentificacion.map((tipo) => (
-                  <option key={tipo.id} value={tipo.id}>
-                    {tipo.name}
-                  </option>
-                ))}
+                {tiposIdentificacion
+                  .filter((tipo) => tipo.id !== 'otros' && tipo.name.toLowerCase() !== 'otros')
+                  .map((tipo) => (
+                    <option key={tipo.id} value={tipo.id}>
+                      {tipo.name}
+                    </option>
+                  ))}
               </select>
               {errores.tipoDocumento && (
                 <p className="mt-1 text-sm text-red-600 flex items-center">
@@ -372,9 +482,14 @@ export function PaymentForm({ total, userEmail, onProcesarPago, loading }: Payme
               <Input
                 type="text"
                 value={datosTarjeta.numeroDocumento}
-                onChange={(e) => manejarCambio('numeroDocumento', e.target.value)}
+                onChange={(e) => manejarCambio('numeroDocumento', e.target.value.replace(/\D/g, ''))}
                 placeholder="Número de documento"
                 className={errores.numeroDocumento ? 'border-red-500' : ''}
+                maxLength={
+                  datosTarjeta.tipoDocumento 
+                    ? tiposIdentificacion.find(tipo => tipo.id === datosTarjeta.tipoDocumento)?.max_length || 15
+                    : 15
+                }
               />
               {errores.numeroDocumento && (
                 <p className="mt-1 text-sm text-red-600 flex items-center">
@@ -388,19 +503,12 @@ export function PaymentForm({ total, userEmail, onProcesarPago, loading }: Payme
         </div>
 
         {/* Información adicional sobre el email */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-          <p className="text-sm text-blue-700">
+        <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
+          <p className="text-sm text-orange-700">
             <strong>Email:</strong> Se usará tu email registrado ({userEmail}) para el procesamiento del pago
           </p>
         </div>
 
-        {/* Resumen del total */}
-        <div className="border-t pt-4">
-          <div className="flex justify-between items-center text-lg font-medium">
-            <span>Total a pagar:</span>
-            <span className="text-blue-600">S/{total.toFixed(2)}</span>
-          </div>
-        </div>
 
         {/* Información de seguridad */}
         <div className="bg-gray-50 rounded-lg p-4">
@@ -423,7 +531,7 @@ export function PaymentForm({ total, userEmail, onProcesarPago, loading }: Payme
           type="submit"
           className="w-full"
           size="lg"
-          disabled={loading}
+          disabled={loading || !esFormularioValido()}
         >
           {loading ? (
             <>

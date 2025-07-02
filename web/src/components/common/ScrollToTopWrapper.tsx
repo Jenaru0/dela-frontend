@@ -1,6 +1,6 @@
 'use client';
 
-import { useScrollToTop } from '@/hooks/useScrollToTop';
+import { useEffect } from 'react';
 
 interface ScrollToTopWrapperProps {
   children: React.ReactNode;
@@ -12,7 +12,14 @@ interface ScrollToTopWrapperProps {
  */
 export default function ScrollToTopWrapper({ children }: ScrollToTopWrapperProps) {
   // Aplicar scroll hacia arriba cuando se monta el componente (recarga de página)
-  useScrollToTop();
+  useEffect(() => {
+    // Hacer scroll hacia arriba suavemente al cargar la página
+    window.scrollTo({
+      top: 0,
+      left: 0,
+      behavior: 'smooth'
+    });
+  }, []);
   
   return <>{children}</>;
 }

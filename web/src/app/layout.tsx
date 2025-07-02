@@ -13,6 +13,7 @@ import AuthModalMount from '@/components/auth/AuthModalMount';
 import TokenInterceptor from '@/components/auth/TokenInterceptor';
 import ScrollToTopWrapper from '@/components/common/ScrollToTopWrapper';
 import { SessionExpiredNotification } from '@/components/common/SessionExpiredNotification';
+import { ScrollToTopOnRouteChange } from '@/components/common/ScrollToTopOnRouteChange';
 
 const geistSans = Geist({ variable: '--font-geist-sans', subsets: ['latin'] });
 const geistMono = Geist_Mono({
@@ -47,6 +48,7 @@ export default function RootLayout({
                     <main id="main-content">{children}</main>
                     <AuthModalMount/>
                     <SessionExpiredNotification />
+                    <ScrollToTopOnRouteChange />
                     <Toaster 
                       position="top-right"
                       toastOptions={{

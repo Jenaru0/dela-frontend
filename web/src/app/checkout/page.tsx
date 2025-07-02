@@ -17,11 +17,12 @@ import { direccionesService } from '@/services/direcciones.service';
 import { pedidosService, CreatePedidoDto } from '@/services/pedidos.service';
 import { pagosService, CrearPagoDto, DatosTarjeta } from '@/services/pagos.service';
 import { toast } from 'react-hot-toast';
+import { scrollToTopInstant } from '@/lib/scroll';
 
 export default function CheckoutPage() {
   const router = useRouter();
   const { cart: carrito, clearCart: limpiarCarrito, isLoading: carritoLoading } = useCart();
-  const { isAuthenticated, usuario } = useAuth();
+  const { isAuthenticated, usuario, isLoading: authLoading } = useAuth();
 
   const [step, setStep] = useState<'address' | 'payment' | 'processing'>('address');
   const [direcciones, setDirecciones] = useState<DireccionCliente[]>([]);
@@ -29,14 +30,28 @@ export default function CheckoutPage() {
   const [metodoEnvio, setMetodoEnvio] = useState<MetodoEnvio>(MetodoEnvio.DELIVERY);
   const [loading, setLoading] = useState(false);
   const [loadingDirecciones, setLoadingDirecciones] = useState(true);
+  const [codigoPromocion, setCodigoPromocion] = useState<string>('');
 
-  // Verificar autenticación
+  // Verificar autenticación - solo redirigir cuando termine de cargar
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (!authLoading && !isAuthenticated) {
       router.push('/?showAuthModal=true&mode=login&redirect=/checkout');
       return;
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, authLoading, router]);
+
+  // Scroll al top cuando se monta la página
+  useEffect(() => {
+    // Scroll inmediato
+    scrollToTopInstant();
+    
+    // Scroll adicional para asegurar que funcione
+    const timeoutId = setTimeout(() => {
+      scrollToTopInstant();
+    }, 100);
+    
+    return () => clearTimeout(timeoutId);
+  }, []);
 
   // Verificar que haya productos en el carrito - solo si no está cargando
   useEffect(() => {
@@ -45,7 +60,6 @@ export default function CheckoutPage() {
     
     // Solo redirigir si definitivamente no hay productos
     if (!carrito || carrito.length === 0) {
-      console.log('Carrito vacío, redirigiendo...');
       router.push('/carrito');
       return;
     }
@@ -77,6 +91,13 @@ export default function CheckoutPage() {
     cargarDirecciones();
   }, [isAuthenticated]);
 
+  // Scroll al top cuando cambia el step del checkout
+  useEffect(() => {
+    if (step !== 'address') { // No hacer scroll en el primer render
+      scrollToTopInstant();
+    }
+  }, [step]);
+
   const calcularTotales = () => {
     if (!carrito || carrito.length === 0) {
       return { subtotal: 0, envio: 0, impuestos: 0, total: 0 };
@@ -84,7 +105,7 @@ export default function CheckoutPage() {
 
     const subtotal = carrito.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     const envio = metodoEnvio === MetodoEnvio.DELIVERY ? 15 : 0; // S/15 por delivery
-    const impuestos = subtotal * 0.12; // 12% de impuestos
+    const impuestos = subtotal * 0.18; // 18% IGV (Impuesto General a las Ventas - Perú)
     const total = subtotal + envio + impuestos;
 
     return { subtotal, envio, impuestos, total };
@@ -139,13 +160,11 @@ export default function CheckoutPage() {
         })),
         metodoPago,
         metodoEnvio,
+        promocionCodigo: codigoPromocion.trim() || undefined,
         notasCliente: '', // Podrías agregar un campo para esto
       };
 
       const responsePedido = await pedidosService.crear(datosPedido);
-      console.log('Respuesta completa del servicio de pedidos:', responsePedido);
-      console.log('Tipo de responsePedido:', typeof responsePedido);
-      console.log('Keys de responsePedido:', Object.keys(responsePedido));
       
       if (!responsePedido) {
         throw new Error('No se recibió respuesta del servidor');
@@ -162,8 +181,6 @@ export default function CheckoutPage() {
         console.error('Estructura de respuesta inesperada:', responsePedido);
         throw new Error('Estructura de respuesta del pedido no válida');
       }
-      
-      console.log('Pedido extraído:', pedido);
 
       if (!pedido || typeof pedido !== 'object' || !('id' in pedido) || !(pedido as { id: unknown }).id) {
         throw new Error('El pedido no tiene ID válido');
@@ -202,20 +219,26 @@ export default function CheckoutPage() {
 
   const manejarVolver = () => {
     if (step === 'payment') {
+      scrollToTopInstant();
       setStep('address');
     } else if (step === 'address') {
+      scrollToTopInstant();
       router.push('/carrito');
     }
   };
 
-  if (!isAuthenticated || carritoLoading || loadingDirecciones) {
+  if (authLoading || carritoLoading || loadingDirecciones) {
     return (
       <Layout>
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-[#F5EFD7]/20 to-white">
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#fffbe6] via-[#fffaf1] to-[#fff]">
           <LoadingSpinner size="lg" />
         </div>
       </Layout>
     );
+  }
+
+  if (!isAuthenticated) {
+    return null; // El useEffect ya redirige
   }
 
   if (!carrito || carrito.length === 0) {
@@ -226,7 +249,7 @@ export default function CheckoutPage() {
 
   return (
     <Layout>
-      <div className="min-h-screen bg-gradient-to-b from-[#F5EFD7]/20 to-white">
+      <div className="min-h-screen bg-gradient-to-br from-[#fffbe6] via-[#fffaf1] to-[#fff]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Header */}
           <div className="mb-8">
@@ -309,6 +332,8 @@ export default function CheckoutPage() {
                 totales={totales}
                 direccionSeleccionada={direccionSeleccionada}
                 metodoEnvio={metodoEnvio}
+                codigoPromocion={codigoPromocion}
+                onCodigoPromocionChange={setCodigoPromocion}
               />
             </div>
           </div>

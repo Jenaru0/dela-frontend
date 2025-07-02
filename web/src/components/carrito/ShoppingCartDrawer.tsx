@@ -1,12 +1,13 @@
 "use client";
 import React, { useRef, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useCart } from "@/contexts/CarContext";
 import { useCartDrawer } from "@/contexts/CartDrawerContext";
 import { X, ShoppingBag, Trash2, Plus, Minus, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/input";
 import Image from "next/image";
-import Link from "next/link";
+import { scrollToTopInstant } from "@/lib/scroll";
 
 // Componente para el header del drawer
 const DrawerHeader: React.FC<{ onClose: () => void; itemCount: number }> = ({ onClose, itemCount }) => (
@@ -241,9 +242,9 @@ const EmptyCart: React.FC = () => (
 const DrawerFooter: React.FC<{
   subtotal: number;
   onClearCart: () => void;
-  onClose: () => void;
   isClearingCart: boolean;
-}> = ({ subtotal, onClearCart, onClose, isClearingCart }) => (
+  onNavigateToCart: () => void;
+}> = ({ subtotal, onClearCart, isClearingCart, onNavigateToCart }) => (
   <div className="relative border-t border-[#ECD8AB]/30 bg-gradient-to-r from-white to-[#FAF3E7]/80 backdrop-blur-sm p-6">
     {/* Decorative background */}
     <div className="absolute inset-0 bg-gradient-to-t from-[#CC9F53]/5 to-transparent opacity-50"></div>
@@ -261,12 +262,13 @@ const DrawerFooter: React.FC<{
 
       {/* Enhanced action buttons */}
       <div className="space-y-3">
-        <Link href="/carrito" onClick={onClose}>
-          <Button className="w-full bg-gradient-to-r from-[#CC9F53] via-[#D4A859] to-[#b08a3c] hover:from-[#b08a3c] hover:via-[#CC9F53] hover:to-[#9a7635] text-white font-bold py-4 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 flex items-center justify-center gap-3 text-base hover:scale-[1.02]">
-            Ver carrito completo
-            <ArrowRight className="w-5 h-5" />
-          </Button>
-        </Link>
+        <Button 
+          onClick={onNavigateToCart}
+          className="w-full bg-gradient-to-r from-[#CC9F53] via-[#D4A859] to-[#b08a3c] hover:from-[#b08a3c] hover:via-[#CC9F53] hover:to-[#9a7635] text-white font-bold py-4 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 flex items-center justify-center gap-3 text-base hover:scale-[1.02]"
+        >
+          Ver carrito completo
+          <ArrowRight className="w-5 h-5" />
+        </Button>
         <div className="flex gap-3">
           <Button
             variant="outline"
@@ -301,6 +303,7 @@ const DrawerFooter: React.FC<{
 
 // Componente principal del drawer
 const ShoppingCartDrawer: React.FC = () => {
+  const router = useRouter();
   const { cart, increaseQty, decreaseQty, setQty, removeFromCart, clearCart } = useCart();
   const { open, closeDrawer } = useCartDrawer();
   const [isClearingCart, setIsClearingCart] = useState(false);
@@ -309,6 +312,25 @@ const ShoppingCartDrawer: React.FC = () => {
 
   // Calcular subtotal
   const subtotal = cart.reduce((acc, item) => acc + item.price * item.quantity, 0);
+
+  // Función para navegar al carrito con scroll
+  const handleNavigateToCart = () => {
+    // Cerrar el drawer inmediatamente
+    handleClose();
+    
+    // Scroll al top antes de navegar
+    scrollToTopInstant();
+    
+    // Navegar con un pequeño delay
+    setTimeout(() => {
+      router.push('/carrito');
+      
+      // Scroll adicional después de la navegación
+      setTimeout(() => {
+        scrollToTopInstant();
+      }, 100);
+    }, 150);
+  };
 
   // Manejar click en overlay
   const handleOverlayClick = (e: React.MouseEvent) => {
@@ -540,8 +562,8 @@ const ShoppingCartDrawer: React.FC = () => {
           <DrawerFooter
             subtotal={subtotal}
             onClearCart={handleClearCart}
-            onClose={handleClose}
             isClearingCart={isClearingCart}
+            onNavigateToCart={handleNavigateToCart}
           />
         )}
       </div>

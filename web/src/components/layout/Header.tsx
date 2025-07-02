@@ -169,7 +169,7 @@ const Header: React.FC = () => {
               </div>
             </div>
             <div className="hidden md:block">
-              <span>🚚 Envío gratis en pedidos superiores a S/100</span>
+              <span>🚚 Envíos a todo Perú</span>
             </div>
           </div>
         </div>
@@ -296,7 +296,7 @@ const Header: React.FC = () => {
             </div>
           </div>
           <div className="hidden md:block">
-            <span>🚚 Envío gratis en pedidos superiores a S/100</span>
+            <span>🚚 Envíos a todo Perú</span>
           </div>
         </div>
       </div>

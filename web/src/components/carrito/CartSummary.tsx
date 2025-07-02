@@ -2,17 +2,23 @@ import React from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { ShoppingBag } from "lucide-react";
+import { scrollToTopInstant } from "@/lib/scroll";
 
 interface CartSummaryProps {
   subtotal: number;
-  envio: number;
 }
 
-export const CartSummary: React.FC<CartSummaryProps> = ({ subtotal, envio }) => {
+export const CartSummary: React.FC<CartSummaryProps> = ({ subtotal }) => {
   const router = useRouter();
 
   const manejarIrAPagar = () => {
-    router.push('/checkout');
+    // Scroll inmediato
+    scrollToTopInstant();
+    
+    // Navegar con un pequeño delay para asegurar el scroll
+    setTimeout(() => {
+      router.push('/checkout');
+    }, 50);
   };
 
   return (
@@ -22,17 +28,10 @@ export const CartSummary: React.FC<CartSummaryProps> = ({ subtotal, envio }) => 
         <span>Subtotal</span>
         <span>S/ {subtotal.toFixed(2)}</span>
       </div>
-      <div className="flex justify-between text-base text-[#8F734A] mb-2">
-        <span>Envío</span>
-        <span>S/ {envio.toFixed(2)}</span>
-      </div>
-      <div className="flex justify-between font-bold border-t border-[#ecd8ab] pt-2 mt-2 text-lg text-[#C59D5F]">
-        <span>Total</span>
-        <span>S/ {(subtotal + envio).toFixed(2)}</span>
-      </div>
+
       <Button 
         onClick={manejarIrAPagar}
-        className="w-full mt-5 bg-gradient-to-r from-[#C59D5F] via-[#CC9F53] to-[#FFD795] hover:from-[#B88D42] hover:to-[#C59D5F] text-white font-extrabold py-3 rounded-xl text-lg shadow-lg flex items-center justify-center gap-2 transition-all active:scale-95"
+        className="w-full mt-3 bg-gradient-to-r from-[#C59D5F] via-[#CC9F53] to-[#FFD795] hover:from-[#B88D42] hover:to-[#C59D5F] text-white font-extrabold py-3 rounded-xl text-lg shadow-lg flex items-center justify-center gap-2 transition-all active:scale-95"
       >
         <ShoppingBag className="w-5 h-5" />
         Ir a pagar

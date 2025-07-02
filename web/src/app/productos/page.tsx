@@ -13,6 +13,7 @@ import { useCart } from '@/contexts/CarContext';
 import { useCartDrawer } from '@/contexts/CartDrawerContext';
 import { useRouter } from 'next/navigation';
 import { Product } from '@/lib/products';
+import { scrollToTop } from '@/lib/scroll';
 
 import type { FilterState } from '@/types/productos';
 
@@ -52,13 +53,60 @@ export default function CatalogoProductosPage() {
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState<FilterState>(initialFilters);
   const [page, setPage] = useState(1);
+
+  // Función para actualizar URL con filtros
+  const updateURL = useCallback((newFilters: FilterState, newPage: number) => {
+    const params = new URLSearchParams();
+    
+    // Agregar filtros a la URL
+    if (newFilters.search.trim()) params.set('search', newFilters.search);
+    if (newFilters.category) params.set('categoria', newFilters.category);
+    if (newFilters.priceMin) params.set('precio_min', newFilters.priceMin);
+    if (newFilters.priceMax) params.set('precio_max', newFilters.priceMax);
+    if (newFilters.destacado) params.set('destacado', 'true');
+    if (newFilters.disponible) params.set('disponible', 'true');
+    if (newFilters.sortBy !== 'default') params.set('orden', newFilters.sortBy);
+    if (newFilters.sortOrder !== 'asc') params.set('direccion', newFilters.sortOrder);
+    if (newPage > 1) params.set('pagina', newPage.toString());
+    
+    // Actualizar URL sin recargar la página
+    const newURL = params.toString() ? `?${params.toString()}` : '/productos';
+    router.replace(newURL, { scroll: false });
+  }, [router]);
+
   // Función para manejar cambios en los parámetros de URL
-  const handleParamsChange = useCallback((newFilters: Partial<FilterState>) => {
+  const handleParamsChange = useCallback((newFilters: Partial<FilterState>, newPage?: number) => {
     setFilters((prev) => ({
       ...prev,
       ...newFilters,
     }));
+    
+    if (newPage !== undefined) {
+      setPage(newPage);
+    }
   }, []);
+
+  // Función para manejar cambios en filtros
+  const handleFilterChange = useCallback((key: keyof FilterState, value: string | boolean) => {
+    const newFilters = { ...filters, [key]: value };
+    setFilters(newFilters);
+    setPage(1); // Reset página al cambiar filtros
+    updateURL(newFilters, 1);
+  }, [filters, updateURL]);
+
+  // Función para limpiar filtros
+  const handleClearFilters = useCallback(() => {
+    setFilters(initialFilters);
+    setPage(1);
+    router.replace('/productos', { scroll: false });
+  }, [router]);
+
+  // Función para cambiar página
+  const handlePageChange = useCallback((newPage: number) => {
+    setPage(newPage);
+    updateURL(filters, newPage);
+    scrollToTop();
+  }, [filters, updateURL]);
 
   // Extraer categorías únicas
   const categorias = useMemo(() => {
@@ -181,25 +229,6 @@ export default function CatalogoProductosPage() {
   const endIdx = startIdx + PAGE_SIZE;
   const productosPagina = productosFiltrados.slice(startIdx, endIdx);
 
-  // Handlers
-  const handleFilterChange = (
-    key: keyof FilterState,
-    value: string | boolean
-  ) => {
-    setFilters((prev) => ({ ...prev, [key]: value }));
-    setPage(1); // Reinicia la página al cambiar filtros
-  };
-  const clearFilters = useCallback(() => {
-    setFilters(initialFilters);
-    setPage(1); // Reinicia la página al limpiar filtros
-
-    // Limpiar los parámetros de URL
-    const url = new URL(window.location.href);
-    url.searchParams.delete('search');
-    url.searchParams.delete('categoria');
-    router.replace(url.pathname, { scroll: false });
-  }, [router]);
-
   const handleSortChange = (sortValue: string) => {
     const [sortBy, sortOrderRaw] = sortValue.split(':');
     const sortOrder: 'asc' | 'desc' = sortOrderRaw === 'desc' ? 'desc' : 'asc';
@@ -266,7 +295,7 @@ export default function CatalogoProductosPage() {
                   categorias={categorias}
                   activeFiltersCount={activeFiltersCount}
                   onFilterChange={handleFilterChange}
-                  onClearFilters={clearFilters}
+                  onClearFilters={handleClearFilters}
                 />
               </div>
             )}
@@ -334,7 +363,7 @@ export default function CatalogoProductosPage() {
                       <div className="flex items-center bg-white/95 border border-[#e7d7b6] rounded-full shadow px-4 py-1 gap-2 min-w-[150px]">
                         <button
                           className="w-8 h-8 flex items-center justify-center rounded-full border-none text-[#CC9F53] hover:bg-[#FFF9EC] transition disabled:opacity-40 disabled:cursor-not-allowed text-xl"
-                          onClick={() => setPage((p) => Math.max(1, p - 1))}
+                          onClick={() => handlePageChange(Math.max(1, page - 1))}
                           disabled={page === 1}
                           aria-label="Página anterior"
                         >
@@ -355,15 +384,13 @@ export default function CatalogoProductosPage() {
                         >
                           {page}{' '}
                           <span className="text-[#CC9F53] font-semibold uppercase tracking-widest">
-                            OF
+                            DE
                           </span>{' '}
                           {totalPages}
                         </span>
                         <button
                           className="w-8 h-8 flex items-center justify-center rounded-full border-none text-[#CC9F53] hover:bg-[#FFF9EC] transition disabled:opacity-40 disabled:cursor-not-allowed text-xl"
-                          onClick={() =>
-                            setPage((p) => Math.min(totalPages, p + 1))
-                          }
+                          onClick={() => handlePageChange(Math.min(totalPages, page + 1))}
                           disabled={page === totalPages}
                           aria-label="Página siguiente"
                         >

@@ -84,9 +84,7 @@ const CatalogoListCard: React.FC<CatalogoListCardProps> = ({
           <div className="absolute left-1.5 top-1.5 z-10">
             <div className="flex items-center gap-1">
               {showStar && product.destacado && (
-                <span className="rounded-full p-0.5 bg-[#CC9F53] shadow-sm">
-                  <Star className="w-2.5 h-2.5 text-white fill-current" />
-                </span>
+                <Star className="w-3 h-3 text-[#CC9F53] fill-[#CC9F53] drop-shadow-sm" />
               )}
               <div className="text-[8px] leading-tight bg-white/90 rounded px-1 py-0.5">
                 <span className="font-bold text-[#CC9F53] block">DELA</span>

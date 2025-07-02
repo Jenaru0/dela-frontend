@@ -81,9 +81,7 @@ const CatalogoCard: React.FC<CatalogoCardProps> = ({
         {/* Marca y Estrella */}
         <div className="absolute flex gap-1 sm:gap-2 left-2 sm:left-3 top-2 sm:top-3 z-10 items-center">
           {showStar && product.destacado && (
-            <span className="rounded-full p-0.5 sm:p-1 bg-[#CC9F53] shadow">
-              <Star className="w-3 h-3 sm:w-5 sm:h-5 text-white" />
-            </span>
+            <Star className="w-4 h-4 sm:w-6 sm:h-6 text-[#CC9F53] fill-[#CC9F53] drop-shadow-md" />
           )}
           <div>
             <span className="text-sm sm:text-lg font-extrabold text-[#cc9f53] leading-none block">
