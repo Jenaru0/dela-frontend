@@ -6,8 +6,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import Layout from '@/components/layout/Layout';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { Button } from '@/components/ui/Button';
-import { CheckCircle, ShoppingBag, Home, Calendar, CreditCard, MapPin, Package } from 'lucide-react';
+import { CheckCircle, ShoppingBag, Home, CreditCard, MapPin, Package } from 'lucide-react';
 import { pedidosService, Pedido } from '@/services/pedidos.service';
+import { CardIcon } from '@/components/ui/CardIcon';
 import Image from 'next/image';
 import { toast } from 'react-hot-toast';
 
@@ -106,7 +107,11 @@ function PagoExitosoContent() {
   };
 
   const calcularTiempoEstimado = (metodoEnvio: string) => {
-    return metodoEnvio === 'DELIVERY' ? '24-48 horas' : '2-4 horas';
+    return metodoEnvio === 'DELIVERY' ? '1-2 días hábiles (lunes a sábado)' : '30-60 minutos';
+  };
+
+  const obtenerTituloTiempo = (metodoEnvio: string) => {
+    return metodoEnvio === 'DELIVERY' ? 'Tiempo estimado de entrega' : 'Tiempo estimado de preparación';
   };
 
   if (authLoading) {
@@ -158,7 +163,8 @@ function PagoExitosoContent() {
 
   return (
     <Layout>
-      <div className="max-w-4xl mx-auto px-4 py-8">
+      <div className="min-h-screen py-10 bg-gradient-to-br from-[#fffbe6] via-[#fffaf1] to-[#fff]">
+        <div className="max-w-4xl mx-auto px-4">
         {/* Header de éxito */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4">
@@ -202,7 +208,7 @@ function PagoExitosoContent() {
                   </span>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-600">Tiempo estimado de entrega</p>
+                  <p className="text-sm text-gray-600">{obtenerTituloTiempo(pedido.metodoEnvio || 'DELIVERY')}</p>
                   <p className="font-semibold text-gray-900">
                     {calcularTiempoEstimado(pedido.metodoEnvio || 'DELIVERY')}
                   </p>
@@ -292,6 +298,29 @@ function PagoExitosoContent() {
               
               <div className="space-y-3">
                 <div>
+                  <p className="text-sm text-gray-600">Subtotal</p>
+                  <p className="font-semibold text-gray-900">
+                    S/ {parseFloat(String(pedido.subtotal || 0)).toFixed(2)}
+                  </p>
+                </div>
+                
+                {pedido.metodoEnvio === 'DELIVERY' && parseFloat(String(pedido.envioMonto || 0)) > 0 && (
+                  <div>
+                    <p className="text-sm text-gray-600">Envío</p>
+                    <p className="font-semibold text-gray-900">
+                      S/ {parseFloat(String(pedido.envioMonto || 0)).toFixed(2)}
+                    </p>
+                  </div>
+                )}
+                
+                <div>
+                  <p className="text-sm text-gray-600">IGV (18%)</p>
+                  <p className="font-semibold text-gray-900">
+                    S/ {parseFloat(String(pedido.impuestos || 0)).toFixed(2)}
+                  </p>
+                </div>
+                
+                <div className="pt-3 border-t">
                   <p className="text-sm text-gray-600">Total pagado</p>
                   <p className="text-2xl font-bold text-green-600">
                     S/ {parseFloat(String(pedido.total || 0)).toFixed(2)}
@@ -300,9 +329,16 @@ function PagoExitosoContent() {
                 
                 <div>
                   <p className="text-sm text-gray-600">Método de pago</p>
-                  <p className="font-semibold text-gray-900">
-                    {pedido.metodoPago || 'Tarjeta de crédito'}
-                  </p>
+                  <div className="flex items-center gap-3">
+                    <CardIcon type={pedido.metodoPago} size="md" className="w-12 h-8" />
+                    <div className="font-semibold text-gray-900">
+                      {pedido.pagos && pedido.pagos.length > 0 && pedido.pagos[0].ultimosCuatroDigitos && (
+                        <div className="text-sm text-gray-600 font-normal">
+                          Terminada en ****{pedido.pagos[0].ultimosCuatroDigitos}
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
                 
                 <div className="pt-3 border-t">
@@ -320,15 +356,6 @@ function PagoExitosoContent() {
               </h3>
               
               <div className="space-y-3">
-                <Button
-                  onClick={() => router.push('/pedidos')}
-                  className="w-full"
-                  variant="outline"
-                >
-                  <Calendar className="w-4 h-4 mr-2" />
-                  Ver mis pedidos
-                </Button>
-                
                 <Button
                   onClick={() => router.push('/productos')}
                   className="w-full"
@@ -359,6 +386,7 @@ function PagoExitosoContent() {
               </p>
             </div>
           </div>
+        </div>
         </div>
       </div>
     </Layout>

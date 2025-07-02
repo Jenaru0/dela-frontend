@@ -62,6 +62,7 @@ export interface Pedido {
     estado: string;
     metodoPago: string;
     referencia: string;
+    ultimosCuatroDigitos?: string;
     creadoEn: string;
   }>;
 }
