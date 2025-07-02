@@ -782,16 +782,6 @@ const ProfilePage: React.FC = () => {
                         </p>
                       </div>
                     </div>
-                    <Button
-                      onClick={() => {
-                        setClaimData(null);
-                        setIsCreateClaimModalOpen(true);
-                      }}
-                      className="bg-[#CC9F53] hover:bg-[#B8903D] text-white"
-                    >
-                      <Plus className="h-4 w-4 mr-2" />
-                      Nuevo Reclamo
-                    </Button>
                   </div>
                 </div>
 
