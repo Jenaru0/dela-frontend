@@ -5,6 +5,7 @@ import { useCatalogo } from '@/hooks/useCatalogo';
 import CatalogoCard from '@/components/catalogo/CatalogoCard';
 import { useCart } from '@/contexts/CarContext';
 import { useCartDrawer } from '@/contexts/CartDrawerContext';
+import { useStockAlertGlobal } from '@/contexts/StockAlertContext';
 import { useRouter } from 'next/navigation';
 
 interface ProductosRelacionadosProps {
@@ -27,6 +28,7 @@ const ProductosRelacionados: React.FC<ProductosRelacionadosProps> = ({
 }) => {const { productos, loading } = useCatalogo();
   const { addToCart } = useCart();
   const { openDrawer } = useCartDrawer();
+  const { showError } = useStockAlertGlobal();
   const router = useRouter();
 
   // Filtrar productos relacionados
@@ -68,16 +70,30 @@ const ProductosRelacionados: React.FC<ProductosRelacionadosProps> = ({
   }
 
   const handleAddToCart = async (product: CatalogoCardProduct) => {
-    try {      await addToCart({
+    try {
+      const result = await addToCart({
         id: product.id.toString(),
         name: product.name,
         price: product.price || 0,
         image: product.image,
-        category: product.category || 'Sin categoría'
+        category: product.category || 'Sin categoría',
+        stock: undefined, // Dejar que el backend maneje el stock real
       });
-      openDrawer();
+      
+      if (result.success) {
+        openDrawer();
+      } else {
+        showError(
+          'Error al agregar al carrito',
+          result.error || 'No se pudo agregar el producto al carrito. Por favor, intenta nuevamente.'
+        );
+      }
     } catch (error) {
       console.error('Error adding to cart:', error);
+      showError(
+        'Error al agregar al carrito',
+        'Error inesperado al agregar el producto al carrito.'
+      );
     }
   };
 

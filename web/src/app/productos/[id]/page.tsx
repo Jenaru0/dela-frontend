@@ -2,6 +2,7 @@
 import { useParams, useRouter } from 'next/navigation';
 import { useCart } from '@/contexts/CarContext';
 import { useCartDrawer } from '@/contexts/CartDrawerContext';
+import { useStockAlertGlobal } from '@/contexts/StockAlertContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAuthModalGlobal } from '@/contexts/AuthModalContext';
 import { Button } from '@/components/ui/Button';
@@ -19,6 +20,7 @@ export default function ProductDetailPage() {
   const router = useRouter();
   const { addToCart } = useCart();
   const { openDrawer } = useCartDrawer();
+  const { showError } = useStockAlertGlobal();
   const { isAuthenticated } = useAuth();
   const { open: openAuthModal } = useAuthModalGlobal();
   const [added, setAdded] = useState(false);
@@ -107,7 +109,7 @@ export default function ProductDetailPage() {
     try {
       setIsAddingToCart(true);
       // Si tu carrito espera Product, aquí deberías mapear Producto a Product
-      await addToCart({
+      const result = await addToCart({
         id: String(product.id),
         name: product.nombre,
         price: typeof product.precioUnitario === 'string' ? parseFloat(product.precioUnitario) : product.precioUnitario,
@@ -117,11 +119,23 @@ export default function ProductDetailPage() {
         description: product.descripcion,
         stock: product.stock,
       });
-      openDrawer();
-      setAdded(true);
-      setTimeout(() => setAdded(false), 1200);
+      
+      if (result.success) {
+        openDrawer();
+        setAdded(true);
+        setTimeout(() => setAdded(false), 1200);
+      } else {
+        showError(
+          'Error al agregar al carrito',
+          result.error || 'No se pudo agregar el producto al carrito. Por favor, intenta nuevamente.'
+        );
+      }
     } catch (error) {
       console.error('Error adding to cart:', error);
+      showError(
+        'Error al agregar al carrito',
+        'Error inesperado al agregar el producto al carrito.'
+      );
     } finally {
       setIsAddingToCart(false);
     }

@@ -108,10 +108,11 @@ class CarritoService {  private getAuthHeaders() {
 
     return response.json();
   }
-  async addItemToCart(item: AddCartItemRequest): Promise<CartItem> {
-    console.log('CarritoService.addItemToCart called with:', item);
-    console.log('API_BASE_URL:', API_BASE_URL);
-    console.log('Headers:', this.getAuthHeaders());
+  async addItemToCart(item: AddCartItemRequest): Promise<{ success: boolean; data?: CartItem; error?: string }> {
+    console.log('🛒 CarritoService.addItemToCart called with:', item);
+    console.log('🌐 API_BASE_URL:', API_BASE_URL);
+    console.log('🔑 Headers:', this.getAuthHeaders());
+    console.log('📦 Request body:', JSON.stringify(item));
     
     const response = await fetch(`${API_BASE_URL}/carrito/items`, {
       method: 'POST',
@@ -119,18 +120,76 @@ class CarritoService {  private getAuthHeaders() {
       body: JSON.stringify(item),
     });
 
-    console.log('Response status:', response.status);
-    console.log('Response ok:', response.ok);
+    console.log('📊 Response status:', response.status);
+    console.log('✅ Response ok:', response.ok);
+    console.log('📝 Response headers:', Object.fromEntries(response.headers.entries()));
 
     if (!response.ok) {
-      const error = await response.json();
-      console.error('API Error response:', error);
-      throw new Error(error.message || 'Error al añadir producto al carrito');
+      let errorMessage = 'Error al añadir producto al carrito';
+      
+      try {
+        const error = await response.json();
+        
+        // Verificar si el error tiene contenido útil
+        if (error && typeof error === 'object' && (error.message || error.error || error.statusCode)) {
+          console.log('📋 API Error Details:', {
+            status: response.status,
+            message: error.message,
+            error: error.error,
+            statusCode: error.statusCode
+          });
+          
+          // Extraer mensaje de error según la estructura de respuesta
+          if (error.message) {
+            errorMessage = error.message;
+          } else if (error.error) {
+            errorMessage = error.error;
+          } else if (typeof error === 'string') {
+            errorMessage = error;
+          }
+        } else {
+          console.log('⚠️ API returned empty or invalid error response for status:', response.status);
+        }
+        
+        // Si no pudimos extraer un mensaje específico, usar uno basado en el status
+        if (errorMessage === 'Error al añadir producto al carrito') {
+          if (response.status === 400) {
+            errorMessage = 'Datos de producto inválidos';
+          } else if (response.status === 401) {
+            errorMessage = 'Tu sesión ha expirado. Por favor inicia sesión nuevamente';
+          } else if (response.status === 403) {
+            errorMessage = 'No tienes permisos para realizar esta acción';
+          } else if (response.status === 404) {
+            errorMessage = 'Producto no encontrado';
+          } else if (response.status === 409) {
+            errorMessage = 'No hay suficiente stock disponible para este producto';
+          } else if (response.status >= 500) {
+            errorMessage = 'Error del servidor. Por favor intenta nuevamente';
+          } else {
+            errorMessage = `Error del servidor (${response.status}). Por favor intenta nuevamente`;
+          }
+        }
+      } catch (parseError) {
+        console.log('⚠️ Could not parse error response:', parseError);
+        console.log('📄 Raw response status:', response.status);
+        // Usar mensaje por defecto basado en status code
+        if (response.status === 401) {
+          errorMessage = 'Tu sesión ha expirado. Por favor inicia sesión nuevamente';
+        } else if (response.status === 409) {
+          errorMessage = 'No hay suficiente stock disponible para este producto';
+        } else if (response.status >= 500) {
+          errorMessage = 'Error del servidor. Por favor intenta nuevamente';
+        } else {
+          errorMessage = `Error del servidor (${response.status}). Por favor intenta nuevamente`;
+        }
+      }
+      
+      return { success: false, error: errorMessage };
     }
 
     const result = await response.json();
-    console.log('API Success response:', result);
-    return result;
+    console.log('✅ API Success response:', result);
+    return { success: true, data: result };
   }
 
   async updateCartItem(productoId: number, update: UpdateCartItemRequest): Promise<CartItem> {

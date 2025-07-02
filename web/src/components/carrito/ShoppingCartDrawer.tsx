@@ -3,6 +3,7 @@ import React, { useRef, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/contexts/CarContext";
 import { useCartDrawer } from "@/contexts/CartDrawerContext";
+import { useStockAlertGlobal } from "@/contexts/StockAlertContext";
 import { X, ShoppingBag, Trash2, Plus, Minus, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/input";
@@ -56,6 +57,7 @@ const CartItem: React.FC<{
     quantity: number;
     category: string;
     stock?: number;
+    stockMinimo?: number;
   };
   onIncrease: () => void;
   onDecrease: () => void;
@@ -65,8 +67,13 @@ const CartItem: React.FC<{
 }> = ({ item, onIncrease, onDecrease, onSetQty, onRemove, isUpdating }) => {
   const [showQuantityInput, setShowQuantityInput] = useState(false);
   const [quantityInput, setQuantityInput] = useState(item.quantity.toString());
+  
+  // Usar el contexto global del modal de stock
+  const { showWarning, showError } = useStockAlertGlobal();
 
   const availableStock = item.stock || 0;
+  const stockMinimo = item.stockMinimo || 0;
+  const stockDisponibleParaVenta = Math.max(0, availableStock - stockMinimo);
 
   const handleQuantityInputChange = (value: string) => {
     const numericValue = value.replace(/[^0-9]/g, '');
@@ -77,14 +84,18 @@ const CartItem: React.FC<{
     const newQty = parseInt(quantityInput);
     
     if (isNaN(newQty) || newQty < 0) {
-      alert('Por favor ingresa una cantidad válida');
+      showError(item.name, 'Por favor ingresa una cantidad válida');
       setQuantityInput(item.quantity.toString());
       setShowQuantityInput(false);
       return;
     }
 
-    if (newQty > availableStock && availableStock > 0) {
-      alert(`Solo quedan ${availableStock} unidades disponibles`);
+    if (newQty > stockDisponibleParaVenta) {
+      if (stockDisponibleParaVenta === 0) {
+        showError(item.name, `${item.name} está temporalmente agotado. Repondremos stock pronto.`);
+      } else {
+        showWarning(item.name, stockDisponibleParaVenta, newQty);
+      }
       setQuantityInput(item.quantity.toString());
       return;
     }
@@ -103,8 +114,12 @@ const CartItem: React.FC<{
   };
 
   const handleIncreaseClick = () => {
-    if (availableStock > 0 && item.quantity >= availableStock) {
-      alert(`No hay más stock disponible. Solo quedan ${availableStock} unidades.`);
+    if (item.quantity >= stockDisponibleParaVenta) {
+      if (stockDisponibleParaVenta === 0) {
+        showError(item.name, `${item.name} está temporalmente agotado. Repondremos stock pronto.`);
+      } else {
+        showWarning(item.name, stockDisponibleParaVenta, item.quantity + 1);
+      }
       return;
     }
     onIncrease();
@@ -154,9 +169,15 @@ const CartItem: React.FC<{
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               {/* Stock warning */}
-              {availableStock <= 5 && availableStock > 0 && (
-                <div className="text-xs text-orange-600 bg-orange-50 px-2 py-1 rounded">
-                  ¡Solo quedan {availableStock}!
+              {stockDisponibleParaVenta <= 5 && stockDisponibleParaVenta > 0 && (
+                <div className="text-xs text-orange-600 bg-orange-50 px-2 py-1 rounded-full">
+                  ¡Solo quedan {stockDisponibleParaVenta} disponibles!
+                </div>
+              )}
+              
+              {stockDisponibleParaVenta === 0 && (
+                <div className="text-xs text-red-600 bg-red-50 px-2 py-1 rounded-full">
+                  Temporalmente agotado
                 </div>
               )}
               
@@ -199,7 +220,7 @@ const CartItem: React.FC<{
                   className="h-9 w-9 text-[#B88D42] hover:bg-[#FFF8E1] hover:scale-110 rounded-full disabled:opacity-50 transition-all"
                   title="Aumentar cantidad"
                   onClick={handleIncreaseClick}
-                  disabled={isUpdating || (availableStock > 0 && item.quantity >= availableStock)}
+                  disabled={isUpdating || item.quantity >= stockDisponibleParaVenta}
                 >
                   <Plus className="w-4 h-4" />
                 </Button>
@@ -306,6 +327,7 @@ const ShoppingCartDrawer: React.FC = () => {
   const router = useRouter();
   const { cart, increaseQty, decreaseQty, setQty, removeFromCart, clearCart } = useCart();
   const { open, closeDrawer } = useCartDrawer();
+  const { showError } = useStockAlertGlobal();
   const [isClearingCart, setIsClearingCart] = useState(false);
   const [updatingItems, setUpdatingItems] = useState<Set<string>>(new Set());
   const drawerRef = useRef<HTMLDivElement>(null);
@@ -357,7 +379,10 @@ const ShoppingCartDrawer: React.FC = () => {
       await increaseQty(id);
     } catch (error) {
       console.error('Error increasing quantity:', error);
-      alert(error instanceof Error ? error.message : 'Error al aumentar cantidad');
+      showError(
+        'Error del Sistema',
+        error instanceof Error ? error.message : 'Error al aumentar cantidad'
+      );
     } finally {
       setUpdatingItems(prev => {
         const newSet = new Set(prev);
@@ -373,7 +398,10 @@ const ShoppingCartDrawer: React.FC = () => {
       await decreaseQty(id);
     } catch (error) {
       console.error('Error decreasing quantity:', error);
-      alert(error instanceof Error ? error.message : 'Error al disminuir cantidad');
+      showError(
+        'Error del Sistema',
+        error instanceof Error ? error.message : 'Error al disminuir cantidad'
+      );
     } finally {
       setUpdatingItems(prev => {
         const newSet = new Set(prev);
@@ -389,7 +417,10 @@ const ShoppingCartDrawer: React.FC = () => {
       await removeFromCart(id);
     } catch (error) {
       console.error('Error removing from cart:', error);
-      alert(error instanceof Error ? error.message : 'Error al eliminar del carrito');
+      showError(
+        'Error del Sistema',
+        error instanceof Error ? error.message : 'Error al eliminar del carrito'
+      );
     } finally {
       setUpdatingItems(prev => {
         const newSet = new Set(prev);
@@ -405,7 +436,10 @@ const ShoppingCartDrawer: React.FC = () => {
       await setQty(id, qty);
     } catch (error) {
       console.error('Error setting quantity:', error);
-      alert(error instanceof Error ? error.message : 'Error al actualizar cantidad');
+      showError(
+        'Error del Sistema',
+        error instanceof Error ? error.message : 'Error al actualizar cantidad'
+      );
     } finally {
       setUpdatingItems(prev => {
         const newSet = new Set(prev);
@@ -421,7 +455,10 @@ const ShoppingCartDrawer: React.FC = () => {
       await clearCart();
     } catch (error) {
       console.error('Error clearing cart:', error);
-      alert(error instanceof Error ? error.message : 'Error al vaciar carrito');
+      showError(
+        'Error del Sistema',
+        error instanceof Error ? error.message : 'Error al vaciar carrito'
+      );
     } finally {
       setIsClearingCart(false);
     }

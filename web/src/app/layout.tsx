@@ -9,6 +9,7 @@ import { CartDrawerProvider } from '@/contexts/CartDrawerContext';
 import ShoppingCartDrawer from '@/components/carrito/ShoppingCartDrawer';
 import { FavoritoProvider } from '@/contexts/FavoritoContext';
 import { AuthModalProvider } from '@/contexts/AuthModalContext';
+import { StockAlertProvider } from '@/contexts/StockAlertContext';
 import AuthModalMount from '@/components/auth/AuthModalMount';
 import TokenInterceptor from '@/components/auth/TokenInterceptor';
 import ScrollToTopWrapper from '@/components/common/ScrollToTopWrapper';
@@ -40,15 +41,16 @@ export default function RootLayout({
       >        <AuthProvider>
           <TokenInterceptor />
           <AuthModalProvider>
-            <CartProvider>
-              <FavoritoProvider>
-                <CartDrawerProvider>
-                  <ScrollToTopWrapper>
-                    <ShoppingCartDrawer />
-                    <main id="main-content">{children}</main>
-                    <AuthModalMount/>
-                    <SessionExpiredNotification />
-                    <ScrollToTopOnRouteChange />
+            <StockAlertProvider>
+              <CartProvider>
+                <FavoritoProvider>
+                  <CartDrawerProvider>
+                    <ScrollToTopWrapper>
+                      <ShoppingCartDrawer />
+                      <main id="main-content">{children}</main>
+                      <AuthModalMount/>
+                      <SessionExpiredNotification />
+                      <ScrollToTopOnRouteChange />
                     <Toaster 
                       position="top-right"
                       toastOptions={{
@@ -77,8 +79,9 @@ export default function RootLayout({
                 </CartDrawerProvider>
               </FavoritoProvider>
             </CartProvider>
-          </AuthModalProvider>
-        </AuthProvider>
+          </StockAlertProvider>
+        </AuthModalProvider>
+      </AuthProvider>
       </body>
     </html>
   );

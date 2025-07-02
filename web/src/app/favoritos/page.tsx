@@ -9,6 +9,7 @@ import { useFavorites } from '@/contexts/FavoritoContext';
 import { useCart } from '@/contexts/CarContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAuthModalGlobal } from '@/contexts/AuthModalContext';
+import { useStockAlertGlobal } from '@/contexts/StockAlertContext';
 import { Button } from '@/components/ui/Button';
 import { Heart, Trash2, Lock, ShoppingCart, Home, User, CheckCircle, AlertCircle } from 'lucide-react';
 import { Producto, ImagenProducto } from '@/types/productos';
@@ -173,6 +174,7 @@ export default function FavoritosPage() {
   const { addToCart } = useCart();
   const { isAuthenticated, usuario, isLoading } = useAuth();
   const { open: openAuthModal } = useAuthModalGlobal();
+  const { showError, showMultipleProductsError } = useStockAlertGlobal();
 
   // Estado para el modal de limpiar favoritos
   const [isClearModalOpen, setIsClearModalOpen] = useState(false);
@@ -206,8 +208,7 @@ export default function FavoritosPage() {
     }
     
     try {
-      // Agregar al carrito
-      addToCart({
+      const result = await addToCart({
         id: product.id,
         name: product.name,
         image: product.image,
@@ -216,14 +217,22 @@ export default function FavoritosPage() {
         stock: product.stock, // ✅ Incluir stock
       });
       
-      // Remover de favoritos después de agregarlo al carrito
-      await removeFavorite(product.id);
-      
-      // Mostrar notificación de éxito
-      showNotification('success', `${product.name} agregado al carrito`);
+      if (!result.success) {
+        showError(
+          product.name,
+          result.error || 'No se pudo agregar el producto al carrito. Por favor, intenta nuevamente.'
+        );
+      } else {
+        // Si se agregó exitosamente al carrito, remover de favoritos
+        await removeFavorite(product.id);
+        showNotification('success', `${product.name} agregado al carrito`);
+      }
     } catch (error) {
       console.error('Error al agregar producto al carrito:', error);
-      showNotification('error', 'Error al agregar producto al carrito');
+      showError(
+        product.name,
+        'Error inesperado al agregar el producto al carrito.'
+      );
       // El producto se queda en favoritos si hay error
     }
   };
@@ -236,38 +245,63 @@ export default function FavoritosPage() {
     
     const totalProductos = favorites.length;
     let productosAgregados = 0;
-    let productosConError = 0;
+    const failedProducts: Array<{ name: string; message?: string }> = [];
 
     for (const fav of favorites) {
       try {
-        const product = {
+        const result = await addToCart({
           id: fav.producto.id.toString(),
           name: fav.producto.nombre,
           image: getImagenPrincipal(fav.producto),
           category: fav.producto.categoria?.nombre || '',
           price: Number(fav.producto.precioUnitario),
           stock: fav.producto.stock || 0,
-        };
-
-        // Agregar al carrito
-        addToCart(product);
+        });
         
-        // Remover de favoritos
-        await removeFavorite(product.id);
-        
-        productosAgregados++;
+        if (!result.success) {
+          failedProducts.push({
+            name: fav.producto.nombre,
+            message: result.error
+          });
+        } else {
+          // Si se agregó exitosamente, remover de favoritos
+          await removeFavorite(fav.producto.id.toString());
+          productosAgregados++;
+        }
       } catch (error) {
         console.error('Error al agregar producto:', error);
-        productosConError++;
+        failedProducts.push({
+          name: fav.producto.nombre,
+          message: 'Error inesperado al agregar el producto al carrito.'
+        });
       }
     }
 
-    // Mostrar notificación resumen
-    if (productosConError === 0) {
-      showNotification('success', `${productosAgregados} productos agregados al carrito`);
-    } else if (productosAgregados > 0) {
-      showNotification('info', `${productosAgregados} de ${totalProductos} productos agregados al carrito`);
-    } else {
+    // Mostrar notificaciones apropiadas
+    if (failedProducts.length > 0) {
+      if (failedProducts.length === 1) {
+        // Si solo un producto falló, usar el modal de producto único
+        showError(
+          failedProducts[0].name,
+          failedProducts[0].message || 'No se pudo agregar el producto al carrito.'
+        );
+      } else {
+        // Si múltiples productos fallaron, usar el modal de múltiples productos
+        showMultipleProductsError(
+          failedProducts,
+          `${failedProducts.length} de ${totalProductos} productos no se pudieron agregar al carrito por problemas de stock.`
+        );
+      }
+    }
+    
+    // Mostrar mensaje de éxito si algunos productos se agregaron correctamente
+    if (productosAgregados > 0) {
+      if (failedProducts.length === 0) {
+        showNotification('success', `${productosAgregados} productos agregados al carrito`);
+      } else {
+        showNotification('info', `${productosAgregados} de ${totalProductos} productos agregados al carrito`);
+      }
+    } else if (failedProducts.length === 0) {
       showNotification('error', 'No se pudo agregar ningún producto al carrito');
     }
   };
