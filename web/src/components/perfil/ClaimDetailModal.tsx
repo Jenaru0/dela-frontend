@@ -39,32 +39,32 @@ const ClaimDetailModal: React.FC<ClaimDetailModalProps> = ({
   // Cargar reclamo completo con comentarios cuando se abre el modal
   useEffect(() => {
     const loadFullReclamo = async () => {
-      if (isOpen && initialReclamo?.id) {
-        console.log('🔍 Cargando reclamo completo:', initialReclamo.id);
-        try {
-          setIsLoadingReclamo(true);
-          const response = await reclamosService.obtenerPorId(initialReclamo.id);
-          console.log('🔍 Respuesta completa:', response);
-          console.log('✅ Reclamo cargado:', response.data);
-          
-          // Si response.data es undefined, usar el reclamo inicial
-          if (response.data) {
-            setReclamo(response.data);
-            // Scroll al final después de cargar comentarios
-            setTimeout(scrollToBottom, 100);
-          } else {
-            console.log('⚠️  response.data es undefined, usando reclamo inicial');
-            setReclamo(initialReclamo);
-          }
-        } catch (error) {
-          console.error('❌ Error al cargar reclamo:', error);
-          setReclamo(initialReclamo);
-        } finally {
-          setIsLoadingReclamo(false);
-        }
-      } else if (isOpen) {
-        console.log('⚠️  Modal abierto pero sin reclamo inicial:', { isOpen, initialReclamo });
+      if (isOpen && initialReclamo) {
+        console.log('🔍 Cargando reclamo:', initialReclamo.id);
+        
+        // Primero usar el reclamo inicial inmediatamente
         setReclamo(initialReclamo);
+        setIsLoadingReclamo(false);
+        
+        // Luego intentar cargar la versión completa en background
+        if (initialReclamo.id) {
+          try {
+            const response = await reclamosService.obtenerPorId(initialReclamo.id);
+            console.log('✅ Reclamo completo cargado:', response.data);
+            
+            if (response.data) {
+              setReclamo(response.data);
+              // Scroll al final después de cargar comentarios
+              setTimeout(scrollToBottom, 100);
+            }
+          } catch (error) {
+            console.error('❌ Error al cargar reclamo completo (usando datos iniciales):', error);
+            // Ya tenemos los datos iniciales, no es crítico este error
+          }
+        }
+      } else {
+        setReclamo(null);
+        setIsLoadingReclamo(false);
       }
     };
 
@@ -246,19 +246,7 @@ const ClaimDetailModal: React.FC<ClaimDetailModalProps> = ({
                              'Cerrado'}
                           </span>
                         </div>
-                        
-                        <div>
-                          <label className="block text-sm font-medium text-[#9A8C61] mb-1">Prioridad</label>
-                          <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${
-                            reclamo.prioridad === 'ALTA' ? 'bg-red-50 text-red-700 border-red-200' :
-                            reclamo.prioridad === 'MEDIA' ? 'bg-yellow-50 text-yellow-700 border-yellow-200' :
-                            'bg-gray-50 text-gray-700 border-gray-200'
-                          }`}>
-                            {reclamo.prioridad === 'ALTA' ? 'Alta' :
-                             reclamo.prioridad === 'MEDIA' ? 'Media' :
-                             'Baja'}
-                          </span>
-                        </div>
+                              
                       </div>
 
                       {/* Tipo de Reclamo */}
