@@ -10,7 +10,7 @@ import { useCart } from '@/contexts/CarContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAuthModalGlobal } from '@/contexts/AuthModalContext';
 import { Button } from '@/components/ui/Button';
-import { Heart, Trash2, Lock, ShoppingCart, Home, User } from 'lucide-react';
+import { Heart, Trash2, Lock, ShoppingCart, Home, User, CheckCircle, AlertCircle } from 'lucide-react';
 import { Producto, ImagenProducto } from '@/types/productos';
 import { Favorito } from '@/types/favorito';
 
@@ -29,6 +29,7 @@ interface CartProductData {
   image: string;
   price: number;
   category: string;
+  stock: number; // ✅ Agregar stock
 }
 
 function getImagenPrincipal(producto: Producto): string {
@@ -57,6 +58,7 @@ const FavoriteItem: React.FC<{
     image: getImagenPrincipal(fav.producto),
     category: fav.producto.categoria?.nombre || '',
     price: Number(fav.producto.precioUnitario),
+    stock: fav.producto.stock || 0, // ✅ Incluir stock
     priceFormatted: fav.producto.precioUnitario
       ? `S/ ${fav.producto.precioUnitario}`
       : 'Precio no disponible',
@@ -174,53 +176,116 @@ export default function FavoritosPage() {
 
   // Estado para el modal de limpiar favoritos
   const [isClearModalOpen, setIsClearModalOpen] = useState(false);
+  
+  // Estado para notificaciones
+  const [notification, setNotification] = useState<{
+    type: 'success' | 'error' | 'info';
+    message: string;
+  } | null>(null);
+
+  // Función para mostrar notificaciones
+  const showNotification = (type: 'success' | 'error' | 'info', message: string) => {
+    setNotification({ type, message });
+    setTimeout(() => setNotification(null), 5000);
+  };
 
   const handleRemoveFavorite = async (productId: string) => {
-    await removeFavorite(productId);
+    try {
+      await removeFavorite(productId);
+      showNotification('success', 'Producto eliminado de favoritos');
+    } catch (error) {
+      console.error('Error al eliminar favorito:', error);
+      showNotification('error', 'Error al eliminar producto de favoritos');
+    }
   };
 
-  const handleAddToCart = (product: CartProductData) => {
+  const handleAddToCart = async (product: CartProductData) => {
     if (!isAuthenticated) {
       openAuthModal('login');
       return;
     }
-    addToCart({
-      id: product.id,
-      name: product.name,
-      image: product.image,
-      price: product.price,
-      category: product.category,
-    });
-    // Aquí podrías añadir una notificación de éxito
+    
+    try {
+      // Agregar al carrito
+      addToCart({
+        id: product.id,
+        name: product.name,
+        image: product.image,
+        price: product.price,
+        category: product.category,
+        stock: product.stock, // ✅ Incluir stock
+      });
+      
+      // Remover de favoritos después de agregarlo al carrito
+      await removeFavorite(product.id);
+      
+      // Mostrar notificación de éxito
+      showNotification('success', `${product.name} agregado al carrito`);
+    } catch (error) {
+      console.error('Error al agregar producto al carrito:', error);
+      showNotification('error', 'Error al agregar producto al carrito');
+      // El producto se queda en favoritos si hay error
+    }
   };
 
-  const handleAddAllToCart = () => {
+  const handleAddAllToCart = async () => {
     if (!isAuthenticated) {
       openAuthModal('login');
       return;
     }
-    favorites.forEach((fav) =>
-      handleAddToCart({
-        id: fav.producto.id.toString(),
-        name: fav.producto.nombre,
-        image: getImagenPrincipal(fav.producto),
-        category: fav.producto.categoria?.nombre || '',
-        price: Number(fav.producto.precioUnitario),
-      })
-    );
-    // Aquí podrías añadir una notificación de éxito masivo
+    
+    const totalProductos = favorites.length;
+    let productosAgregados = 0;
+    let productosConError = 0;
+
+    for (const fav of favorites) {
+      try {
+        const product = {
+          id: fav.producto.id.toString(),
+          name: fav.producto.nombre,
+          image: getImagenPrincipal(fav.producto),
+          category: fav.producto.categoria?.nombre || '',
+          price: Number(fav.producto.precioUnitario),
+          stock: fav.producto.stock || 0,
+        };
+
+        // Agregar al carrito
+        addToCart(product);
+        
+        // Remover de favoritos
+        await removeFavorite(product.id);
+        
+        productosAgregados++;
+      } catch (error) {
+        console.error('Error al agregar producto:', error);
+        productosConError++;
+      }
+    }
+
+    // Mostrar notificación resumen
+    if (productosConError === 0) {
+      showNotification('success', `${productosAgregados} productos agregados al carrito`);
+    } else if (productosAgregados > 0) {
+      showNotification('info', `${productosAgregados} de ${totalProductos} productos agregados al carrito`);
+    } else {
+      showNotification('error', 'No se pudo agregar ningún producto al carrito');
+    }
   };
 
   const handleClearAllFavorites = async () => {
     try {
+      const totalFavoritos = favorites.length;
+      
       // Eliminar todos los favoritos uno por uno
       for (const fav of favorites) {
         await removeFavorite(fav.producto.id.toString());
       }
-      // Aquí podrías añadir una notificación de éxito
+      
+      // Mostrar notificación de éxito
+      showNotification('success', `${totalFavoritos} producto${totalFavoritos !== 1 ? 's' : ''} eliminado${totalFavoritos !== 1 ? 's' : ''} de favoritos`);
     } catch (error) {
       console.error('Error al limpiar favoritos:', error);
-      // Aquí podrías añadir una notificación de error
+      showNotification('error', 'Error al limpiar la lista de favoritos');
     }
   };
 
@@ -271,6 +336,28 @@ export default function FavoritosPage() {
   return (
     <>
       <Layout>
+        {/* Notification */}
+        {notification && (
+          <div className={`fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg ${
+            notification.type === 'success' 
+              ? 'bg-emerald-50 border border-emerald-200 text-emerald-800' 
+              : notification.type === 'info'
+              ? 'bg-blue-50 border border-blue-200 text-blue-800'
+              : 'bg-red-50 border border-red-200 text-red-800'
+          }`}>
+            <div className="flex items-center">
+              {notification.type === 'success' ? (
+                <CheckCircle className="h-5 w-5 mr-2" />
+              ) : notification.type === 'info' ? (
+                <AlertCircle className="h-5 w-5 mr-2" />
+              ) : (
+                <AlertCircle className="h-5 w-5 mr-2" />
+              )}
+              {notification.message}
+            </div>
+          </div>
+        )}
+        
         <div className="min-h-screen py-10 bg-gradient-to-br from-[#fffbe6] via-[#fffaf1] to-[#fff]">
           <div className="container mx-auto px-2 max-w-5xl">
             <h1 className="text-3xl md:text-4xl font-extrabold mb-6 text-[#C59D5F] tracking-tight flex items-center gap-3">

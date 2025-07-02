@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { ArrowRight } from "lucide-react";
-import { newsletterService } from "@/services/newsletterService";
+import { newsletterService } from "@/services/newsletter.service";
 
 export default function NewsletterSignup() {
   const [email, setEmail] = useState("");
@@ -16,7 +16,7 @@ export default function NewsletterSignup() {
     setError(null);
 
     try {
-      await newsletterService.suscribir(email);
+      await newsletterService.suscribirse(email);
       setIsSubmitted(true);
       setEmail("");
     } catch (err) {
