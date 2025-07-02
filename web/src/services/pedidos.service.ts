@@ -214,7 +214,7 @@ class PedidosService {
         let errorData;
         try {
           errorData = await response.json();
-        } catch (parseError) {
+        } catch {
           throw new Error(`Error HTTP ${response.status}: ${response.statusText}`);
         }
         throw new Error(errorData.message || 'Error al obtener pedidos');
@@ -223,7 +223,7 @@ class PedidosService {
       let result;
       try {
         result = await response.json();
-      } catch (parseError) {
+      } catch {
         throw new Error('Error al procesar la respuesta del servidor');
       }
       

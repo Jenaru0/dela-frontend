@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import Layout from '@/components/layout/Layout';
@@ -23,7 +23,7 @@ const formatearFecha = (fecha: string) => {
   });
 };
 
-export default function PagoExitosoPage() {
+function PagoExitosoContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
@@ -362,5 +362,19 @@ export default function PagoExitosoPage() {
         </div>
       </div>
     </Layout>
+  );
+}
+
+export default function PagoExitosoPage() {
+  return (
+    <Suspense fallback={
+      <Layout>
+        <div className="flex justify-center items-center min-h-[400px]">
+          <LoadingSpinner size="lg" />
+        </div>
+      </Layout>
+    }>
+      <PagoExitosoContent />
+    </Suspense>
   );
 }
