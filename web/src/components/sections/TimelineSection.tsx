@@ -18,7 +18,7 @@ export default function TimelineSection() {
         <div className="absolute inset-0 bg-[url('https://dela.com.pe/img/valle_pc.png')] bg-cover bg-center" />
       </div>
       <h2 className="font-display text-4xl sm:text-5xl font-extrabold text-[#3A3A3A] text-center mb-20 tracking-tight">
-        Nuestra <span className="text-[#CC9F53]">Historia</span>
+        Nuestros <span className="text-[#CC9F53]">Hitos</span>
       </h2>      <div className="relative container mx-auto px-4 md:px-8">
         {/* Grid de hitos con cards flotantes y diseño profesional */}
         <div className="relative grid grid-cols-1 md:grid-cols-5 gap-x-10 gap-y-24 z-10">

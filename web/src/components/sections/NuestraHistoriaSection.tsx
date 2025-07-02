@@ -16,7 +16,7 @@ export default function NuestraHistoriaSection() {
           {/* TEXTO */}
           <div className="flex flex-col justify-center space-y-6 lg:space-y-8">
             <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-tight">
-              <span className="text-[#CC9F53]">Nuestro</span>{' '}
+              <span className="text-[#CC9F53]">Nuestra</span>{' '}
               <span className="text-[#3A3A3A]">Historia</span>
             </h1>
             <p className="text-lg md:text-xl text-gray-600 max-w-2xl leading-relaxed">

@@ -3,7 +3,6 @@ import { useCatalogo } from "@/hooks/useCatalogo";
 import CatalogoDestacadosGrid from "@/components/catalogo/CatalogoDescatadoGrid";
 import HeroSection from "@/components/sections/HeroSection";
 import CategoriesSection from "@/components/sections/CategoriesSection";
-import AboutSection from "@/components/sections/AboutSection";
 import TestimonialsSection from "@/components/sections/TestimonialsSection";
 import NewsletterSection from "@/components/sections/NewsletterSection";
 import Layout from "@/components/layout/Layout";
@@ -47,7 +46,6 @@ export default function Home() {
           onAddToCart={handleAddToCart}
         />
       </section>
-      <AboutSection />
       <TestimonialsSection />
       <NewsletterSection />
     </Layout>
