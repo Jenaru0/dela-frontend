@@ -11,6 +11,7 @@
     "test": "echo \"No tests configured yet\" && exit 0"
   },
   "dependencies": {
+    "@maptiler/sdk": "^3.5.0",
     "class-variance-authority": "^0.7.1",
     "cloudinary": "^2.7.0",
     "clsx": "^2.1.1",

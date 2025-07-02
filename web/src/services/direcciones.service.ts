@@ -10,6 +10,42 @@ class DireccionesService {
     };
   }
 
+  // Validar que un número sea válido o devolver undefined
+  private validarNumero(valor: number | string | null | undefined): number | undefined {
+    if (valor === null || valor === undefined || valor === '') {
+      return undefined;
+    }
+    
+    const numero = typeof valor === 'string' ? parseFloat(valor) : Number(valor);
+    
+    if (isNaN(numero) || !isFinite(numero)) {
+      return undefined;
+    }
+    
+    return numero;
+  }
+
+  // Validar coordenadas geográficas
+  private validarCoordenadas(latitud?: number, longitud?: number): { latitud?: number; longitud?: number } {
+    const result: { latitud?: number; longitud?: number } = {};
+    
+    if (latitud !== undefined) {
+      const lat = this.validarNumero(latitud);
+      if (lat !== undefined && lat >= -90 && lat <= 90) {
+        result.latitud = lat;
+      }
+    }
+    
+    if (longitud !== undefined) {
+      const lng = this.validarNumero(longitud);
+      if (lng !== undefined && lng >= -180 && lng <= 180) {
+        result.longitud = lng;
+      }
+    }
+    
+    return result;
+  }
+
   // Obtener todas las direcciones del usuario autenticado
   async obtenerDirecciones(): Promise<ApiResponse<DireccionCliente[]>> {
     try {
@@ -33,10 +69,25 @@ class DireccionesService {
   // Crear nueva dirección
   async crearDireccion(datos: CreateDireccionDto): Promise<ApiResponse<DireccionCliente>> {
     try {
+      // Validar y limpiar las coordenadas
+      const coordenadasValidadas = this.validarCoordenadas(datos.latitud, datos.longitud);
+      
+      // Construir datos limpios
+      const datosLimpios = {
+        ...datos,
+        ...coordenadasValidadas,
+      };
+
+      // Debug: Verificar los datos que van al backend
+      console.log('Datos originales:', datos);
+      console.log('Coordenadas validadas:', coordenadasValidadas);
+      console.log('Datos limpios finales:', datosLimpios);
+      console.log('JSON que se enviará:', JSON.stringify(datosLimpios, null, 2));
+
       const response = await fetch(`${API_BASE_URL}/direcciones`, {
         method: 'POST',
         headers: this.getAuthHeaders(),
-        body: JSON.stringify(datos),
+        body: JSON.stringify(datosLimpios),
       });
 
       if (!response.ok) {
