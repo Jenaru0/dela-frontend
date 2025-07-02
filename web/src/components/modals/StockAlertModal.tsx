@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { AlertTriangle, Package, X, ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 
@@ -30,9 +31,17 @@ export const StockAlertModal: React.FC<StockAlertModalProps> = ({
   requestedQuantity,
   message,
 }) => {
+  const router = useRouter();
+  
   // Determinar si tenemos múltiples productos
   const hasMultipleProducts = products && products.length > 0;
   const isMultipleProducts = hasMultipleProducts && products!.length > 1;
+  
+  // Función para navegar al carrito
+  const handleGoToCart = () => {
+    onClose();
+    router.push('/carrito');
+  };
   // Cerrar modal con Escape
   useEffect(() => {
     const handleEscape = (event: KeyboardEvent) => {
@@ -149,7 +158,7 @@ export const StockAlertModal: React.FC<StockAlertModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 z-[10000] flex items-center justify-center p-4"
       style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
       onClick={handleBackdropClick}
     >
@@ -296,7 +305,7 @@ export const StockAlertModal: React.FC<StockAlertModalProps> = ({
             
             {type === 'error' && (
               <Button
-                onClick={onClose}
+                onClick={handleGoToCart}
                 variant="outline"
                 className="flex-1 py-3 px-4 rounded-lg border-amber-300 text-amber-700 hover:bg-amber-50"
               >

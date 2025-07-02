@@ -275,32 +275,43 @@ class AuthService {  private getAuthHeaders() {
 
   // Método para hacer peticiones autenticadas con renovación automática de token
   async authenticatedFetch(url: string, options: RequestInit = {}): Promise<Response> {
-    let response = await fetch(url, {
-      ...options,
-      headers: {
-        ...this.getAuthHeaders(),
-        ...options.headers,
-      },
-    });
+    try {
+      let response = await fetch(url, {
+        ...options,
+        headers: {
+          ...this.getAuthHeaders(),
+          ...options.headers,
+        },
+      });
 
-    // Si obtenemos un 401, intentar renovar el token y reintentar
-    if (response.status === 401) {
-      try {
-        console.log('Token expirado, intentando renovar...');
-        await this.renovarToken();
-        
-        // Reintentar la petición con el nuevo token
-        response = await fetch(url, {
-          ...options,
-          headers: {
-            ...this.getAuthHeaders(),
-            ...options.headers,
-          },
-        });
-        
-        // Si sigue dando 401 después de renovar, la sesión debe cerrarse
-        if (response.status === 401) {
-          console.log('Sesión inválida después de renovar token');
+      // Si obtenemos un 401, intentar renovar el token y reintentar
+      if (response.status === 401) {
+        try {
+          console.log('Token expirado, intentando renovar...');
+          await this.renovarToken();
+          
+          // Reintentar la petición con el nuevo token
+          response = await fetch(url, {
+            ...options,
+            headers: {
+              ...this.getAuthHeaders(),
+              ...options.headers,
+            },
+          });
+          
+          // Si sigue dando 401 después de renovar, la sesión debe cerrarse
+          if (response.status === 401) {
+            console.log('Sesión inválida después de renovar token');
+            this.limpiarDatos();
+            // Disparar evento para que el contexto se entere
+            if (typeof window !== 'undefined') {
+              window.dispatchEvent(new CustomEvent('auth:session-expired'));
+            }
+            throw new Error('Sesión expirada. Inicie sesión nuevamente.');
+          }
+        } catch (renewError) {
+          // Si la renovación falla, limpiar datos y lanzar error
+          console.log('Error al renovar token:', renewError);
           this.limpiarDatos();
           // Disparar evento para que el contexto se entere
           if (typeof window !== 'undefined') {
@@ -308,19 +319,38 @@ class AuthService {  private getAuthHeaders() {
           }
           throw new Error('Sesión expirada. Inicie sesión nuevamente.');
         }
-      } catch (renewError) {
-        // Si la renovación falla, limpiar datos y lanzar error
-        console.log('Error al renovar token:', renewError);
-        this.limpiarDatos();
-        // Disparar evento para que el contexto se entere
-        if (typeof window !== 'undefined') {
-          window.dispatchEvent(new CustomEvent('auth:session-expired'));
-        }
-        throw new Error('Sesión expirada. Inicie sesión nuevamente.');
       }
-    }
 
-    return response;
+      return response;
+    } catch (error) {
+      // Si es un error de red (fetch falló), podría ser que el backend se reinició
+      if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+        console.log('Error de red detectado, backend posiblemente reiniciado');
+        throw new Error('Error de conexión. El servidor podría estar reiniciando. Intenta nuevamente en unos momentos.');
+      }
+      
+      // Re-lanzar otros errores
+      throw error;
+    }
+  }
+
+  // Verificar si el backend está disponible (para casos de reinicios)
+  async checkBackendConnectivity(): Promise<boolean> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/autenticacion/health`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        // Timeout más corto para verificación de conectividad
+        signal: AbortSignal.timeout(3000),
+      });
+
+      return response.ok;
+    } catch (error) {
+      console.log('Backend no disponible:', error);
+      return false;
+    }
   }
 }
 

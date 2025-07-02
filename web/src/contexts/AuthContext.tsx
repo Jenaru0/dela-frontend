@@ -116,10 +116,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
         const usuario = authService.getCurrentUser();
         
         if (token && usuario) {
-          // Solo verificar si el token es válido, NO renovar automáticamente
+          // Intentar verificar si el token es válido, pero ser tolerante a errores de red
           try {
             const isValidToken = await authService.verifyToken();
             if (isValidToken) {
+              // Token válido, establecer sesión
               dispatch({
                 type: 'SET_USER',
                 payload: { usuario, token }
@@ -145,20 +146,37 @@ export function AuthProvider({ children }: AuthProviderProps) {
             // Error de red u otro error del servidor
             console.log('Error al verificar token (posible error de red):', verifyError);
             
-            // Si es un error específico que indica token inválido, limpiar sesión
             const errorMessage = verifyError instanceof Error ? verifyError.message : String(verifyError);
+            
+            // Si es un error específico que indica token inválido, limpiar sesión
             if (errorMessage.includes('401') || errorMessage.includes('Unauthorized')) {
               console.log('Token definitivamente inválido, limpiando sesión');
               authService.clearAuth();
               dispatch({ type: 'LOGIN_FAILURE' });
             } else {
               // Para otros errores (red, servidor caído), mantener sesión temporal
-              // pero intentar verificar en la próxima request
-              console.log('Manteniendo sesión offline temporalmente');
+              console.log('Error de red/servidor detectado. Manteniendo sesión temporal y estableciendo modo offline');
               dispatch({
                 type: 'SET_USER',
                 payload: { usuario, token }
               });
+              
+              // Programar un reintento después de un tiempo
+              setTimeout(async () => {
+                try {
+                  console.log('Reintentando verificación de token después de error de red...');
+                  const isValidToken = await authService.verifyToken();
+                  if (!isValidToken) {
+                    console.log('Token inválido en reintento, cerrando sesión');
+                    authService.clearAuth();
+                    dispatch({ type: 'LOGOUT' });
+                  } else {
+                    console.log('Token válido en reintento, sesión mantiene');
+                  }
+                } catch {
+                  console.log('Error en reintento de verificación, manteniendo sesión temporal');
+                }
+              }, 5000); // Reintentar después de 5 segundos
             }
           }
         } else {
