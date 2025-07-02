@@ -562,19 +562,7 @@ const PedidoDetailModal: React.FC<PedidoDetailModalProps> = ({
               )}
             </div>
 
-            <div className="flex flex-wrap gap-2">
-              {currentPedido.estado === 'ENTREGADO' && (
-                <Button
-                  className="bg-[#CC9F53] hover:bg-[#B8903D] text-white text-sm px-3 py-2 h-8"
-                  onClick={() => {
-                    console.log('Descargar factura del pedido:', currentPedido.id);
-                  }}
-                >
-                  <Eye className="w-3 h-3 mr-1" />
-                  Ver Factura
-                </Button>
-              )}
-            </div>
+          
           </div>
         </div>
       </div>
