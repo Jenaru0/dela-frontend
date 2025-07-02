@@ -112,7 +112,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
 
         {hasDiscount && (
           <Badge className="absolute left-3 top-3 z-10 bg-gradient-to-r from-red-500 to-red-600 text-white font-bold shadow-lg animate-pulse">
-            -{discountPercentage}% OFF
+            -{discountPercentage}% DE DESCUENTO
           </Badge>
         )}
 

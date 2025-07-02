@@ -29,6 +29,8 @@ type CatalogoCardProps = {
     priceFormatted?: string;
     shortDescription?: string;
     destacado?: boolean;
+    stock?: number;
+    stockMinimo?: number;
   };
 };
 
@@ -249,7 +251,8 @@ export default function CatalogoProductosPage() {
         image: product.image || '/images/products/producto_sinimage.svg',
         category: product.category || 'Sin categoría',
         description: product.shortDescription || '',
-        stock: undefined, // Dejar que el backend maneje el stock real
+        stock: product.stock, // ✅ Incluir información de stock
+        stockMinimo: product.stockMinimo, // ✅ Incluir stock mínimo
       };
 
       const result = await addToCart(cartProduct);

@@ -61,9 +61,38 @@ export function ProductoInfo({ producto, precioUnitario, precioAnterior, hasDisc
               S/ {precioAnterior!.toFixed(2)}
             </span>
             <span className="bg-green-100 text-green-700 px-2 py-1 rounded-md text-sm font-semibold">
-              -{discount}% OFF
+              -{discount}% DE DESCUENTO
             </span>
           </>
+        )}
+      </div>
+
+      {/* Información de Stock */}
+      <div className="flex items-center gap-3 p-3 rounded-lg bg-gradient-to-r from-gray-50 to-gray-100 border border-gray-200">
+        <div className="flex items-center gap-2">
+          <div className={`w-3 h-3 rounded-full ${
+            producto.stock && producto.stock > 0 
+              ? producto.stock <= 5 
+                ? 'bg-orange-500' 
+                : 'bg-green-500'
+              : 'bg-red-500'
+          }`}></div>
+          <span className="text-sm font-medium text-gray-700">
+            {producto.stock && producto.stock > 0 
+              ? `${producto.stock} unidades disponibles`
+              : 'Temporalmente agotado'
+            }
+          </span>
+        </div>
+        {producto.stock && producto.stock > 0 && producto.stock <= 5 && (
+          <span className="bg-orange-100 text-orange-700 px-2 py-1 rounded-md text-xs font-semibold">
+            ¡Últimas unidades!
+          </span>
+        )}
+        {producto.stock && producto.stock > 10 && (
+          <span className="bg-green-100 text-green-700 px-2 py-1 rounded-md text-xs font-semibold">
+            En stock
+          </span>
         )}
       </div>
       

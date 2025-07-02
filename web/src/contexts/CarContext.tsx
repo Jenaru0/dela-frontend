@@ -3,6 +3,7 @@ import React, { createContext, useContext, useState, ReactNode, useEffect } from
 import { Product } from "@/lib/products";
 import { useAuth } from "@/contexts/AuthContext";
 import { carritoService, CartItem as ApiCartItem } from "@/services/carrito.service";
+import { getProductMainImage } from "@/lib/productImageUtils";
 
 export interface CartItem extends Product {
   quantity: number;
@@ -43,7 +44,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       name: apiItem.producto.nombre,
       price: parseFloat(apiItem.producto.precioUnitario),
       oldPrice: apiItem.producto.precioAnterior ? parseFloat(apiItem.producto.precioAnterior) : undefined,
-      image: apiItem.producto.imagenes?.[0]?.url || '/images/products/producto_sinimage.svg',
+      image: getProductMainImage(apiItem.producto),
       category: apiItem.producto.categoria.nombre,
       description: apiItem.producto.descripcion,
       stock: apiItem.producto.stock,

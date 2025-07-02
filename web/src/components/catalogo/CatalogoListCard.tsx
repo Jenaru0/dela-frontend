@@ -19,6 +19,8 @@ interface CatalogoListCardProps {
     priceFormatted?: string;
     shortDescription?: string;
     destacado?: boolean;
+    stock?: number;
+    stockMinimo?: number;
   };
   showFavorite?: boolean;
   showStar?: boolean;
@@ -122,9 +124,37 @@ const CatalogoListCard: React.FC<CatalogoListCardProps> = ({
                 {product.name}
               </h3>
               {product.shortDescription && (
-                <p className="text-sm text-gray-600 line-clamp-1">
+                <p className="text-sm text-gray-600 line-clamp-1 mb-2">
                   {product.shortDescription}
                 </p>
+              )}
+              
+              {/* Información de stock */}
+              {product.stock !== undefined && (
+                <div className="flex items-center gap-1.5 mb-2">
+                  {product.stock > 0 ? (
+                    <>
+                      <div className={`w-2 h-2 rounded-full ${
+                        product.stock <= 5 ? 'bg-yellow-500' : 'bg-green-500'
+                      }`}></div>
+                      <span className={`text-xs font-medium ${
+                        product.stock <= 5 ? 'text-yellow-600' : 'text-green-600'
+                      }`}>
+                        {product.stock <= 5 
+                          ? `¡Solo quedan ${product.stock}!` 
+                          : `${product.stock} en stock`
+                        }
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                      <span className="text-xs text-red-600 font-medium">
+                        Sin stock
+                      </span>
+                    </>
+                  )}
+                </div>
               )}
             </div>
             
@@ -139,11 +169,13 @@ const CatalogoListCard: React.FC<CatalogoListCardProps> = ({
               {/* Botón añadir al carrito */}
               <Button
                 size="sm"
-                className="h-9 px-4 text-sm bg-[#CC9F53] hover:bg-[#b08a3c] text-white font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="h-9 px-4 text-sm bg-[#CC9F53] hover:bg-[#b08a3c] text-white font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-400"
                 onClick={handleAddToCart}
-                disabled={isAddingToCart}
+                disabled={isAddingToCart || (product.stock !== undefined && product.stock <= 0)}
                 title={
-                  isAuthenticated
+                  product.stock !== undefined && product.stock <= 0
+                    ? 'Sin stock disponible'
+                    : isAuthenticated
                     ? isAddingToCart
                       ? 'Añadiendo al carrito...'
                       : 'Añadir al carrito'
@@ -152,10 +184,18 @@ const CatalogoListCard: React.FC<CatalogoListCardProps> = ({
               >
                 <ShoppingBag className={`w-4 h-4 mr-1.5 ${isAddingToCart ? 'animate-pulse' : ''}`} />
                 <span className="hidden sm:inline">
-                  {isAddingToCart ? 'Añadiendo...' : 'Añadir al carrito'}
+                  {product.stock !== undefined && product.stock <= 0
+                    ? 'Sin stock'
+                    : isAddingToCart
+                    ? 'Añadiendo...'
+                    : 'Añadir al carrito'}
                 </span>
                 <span className="sm:hidden">
-                  {isAddingToCart ? 'Añadiendo...' : 'Añadir'}
+                  {product.stock !== undefined && product.stock <= 0
+                    ? 'Sin stock'
+                    : isAddingToCart
+                    ? 'Añadiendo...'
+                    : 'Añadir'}
                 </span>
               </Button>
             </div>

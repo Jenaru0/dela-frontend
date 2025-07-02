@@ -13,6 +13,8 @@ type CatalogoCardProduct = {
   shortDescription?: string;
   destacado?: boolean;
   disponible?: boolean;
+  stock?: number;
+  stockMinimo?: number;
 };
 
 function normalizaProducto(prod: Producto): CatalogoCardProduct {
@@ -45,6 +47,8 @@ function normalizaProducto(prod: Producto): CatalogoCardProduct {
     shortDescription: (prod as { descripcionCorta?: string; descripcion?: string }).descripcionCorta ?? prod.descripcion ?? '',
     destacado: !!prod.destacado,
     disponible: prod.stock === undefined ? undefined : prod.stock > 0,
+    stock: prod.stock,
+    stockMinimo: (prod as { stockMinimo?: number }).stockMinimo,
   };
 }
 

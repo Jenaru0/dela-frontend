@@ -3,6 +3,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useCart } from '@/contexts/CarContext';
 import { useCartDrawer } from '@/contexts/CartDrawerContext';
 import { useStockAlertGlobal } from '@/contexts/StockAlertContext';
+import { getProductMainImage } from '@/lib/productImageUtils';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAuthModalGlobal } from '@/contexts/AuthModalContext';
 import { Button } from '@/components/ui/Button';
@@ -114,7 +115,7 @@ export default function ProductDetailPage() {
         name: product.nombre,
         price: typeof product.precioUnitario === 'string' ? parseFloat(product.precioUnitario) : product.precioUnitario,
         oldPrice: typeof product.precioAnterior === 'string' ? parseFloat(product.precioAnterior) : product.precioAnterior,
-        image: product.imagenes?.[0]?.url || '/images/product-placeholder.png',
+        image: getProductMainImage(product),
         category: product.categoria?.nombre || 'Sin categoría',
         description: product.descripcion,
         stock: product.stock,

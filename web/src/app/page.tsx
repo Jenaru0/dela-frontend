@@ -30,7 +30,8 @@ export default function Home() {
         image: product.image || "/images/products/producto_sinimage.svg",
         category: product.category || "Sin categoría",
         description: product.shortDescription || "",
-        stock: undefined, // Dejar que el backend maneje el stock real
+        stock: product.stock, // ✅ Incluir información de stock
+        stockMinimo: product.stockMinimo, // ✅ Incluir stock mínimo
       });
       
       if (result.success) {

@@ -21,6 +21,8 @@ interface CatalogoCardProduct {
   priceFormatted?: string;
   shortDescription?: string;
   destacado?: boolean;
+  stock?: number;
+  stockMinimo?: number;
 }
 
 const ProductosRelacionados: React.FC<ProductosRelacionadosProps> = ({ 
@@ -77,7 +79,8 @@ const ProductosRelacionados: React.FC<ProductosRelacionadosProps> = ({
         price: product.price || 0,
         image: product.image,
         category: product.category || 'Sin categoría',
-        stock: undefined, // Dejar que el backend maneje el stock real
+        stock: product.stock, // ✅ Incluir información de stock
+        stockMinimo: product.stockMinimo, // ✅ Incluir stock mínimo
       });
       
       if (result.success) {

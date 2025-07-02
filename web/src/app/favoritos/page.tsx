@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import dynamic from 'next/dynamic';
 import Layout from '@/components/layout/Layout';
+import { getProductMainImage } from '@/lib/productImageUtils';
 import { useFavorites } from '@/contexts/FavoritoContext';
 import { useCart } from '@/contexts/CarContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -12,7 +13,6 @@ import { useAuthModalGlobal } from '@/contexts/AuthModalContext';
 import { useStockAlertGlobal } from '@/contexts/StockAlertContext';
 import { Button } from '@/components/ui/Button';
 import { Heart, Trash2, Lock, ShoppingCart, Home, User, CheckCircle, AlertCircle } from 'lucide-react';
-import { Producto, ImagenProducto } from '@/types/productos';
 import { Favorito } from '@/types/favorito';
 
 // Cargar el modal de forma dinámica para evitar problemas de SSR
@@ -33,20 +33,6 @@ interface CartProductData {
   stock: number; // ✅ Agregar stock
 }
 
-function getImagenPrincipal(producto: Producto): string {
-  if (Array.isArray(producto.imagenes) && producto.imagenes.length > 0) {
-    const principal = producto.imagenes.find(
-      (img: ImagenProducto) => img.principal
-    );
-    return (
-      principal?.url ||
-      producto.imagenes[0]?.url ||
-      '/images/product-placeholder.png'
-    );
-  }
-  return '/images/product-placeholder.png';
-}
-
 // Componente para un item de favorito individual
 const FavoriteItem: React.FC<{
   fav: Favorito;
@@ -56,7 +42,7 @@ const FavoriteItem: React.FC<{
   const product = {
     id: fav.producto.id.toString(),
     name: fav.producto.nombre,
-    image: getImagenPrincipal(fav.producto),
+    image: getProductMainImage(fav.producto),
     category: fav.producto.categoria?.nombre || '',
     price: Number(fav.producto.precioUnitario),
     stock: fav.producto.stock || 0, // ✅ Incluir stock
@@ -252,7 +238,7 @@ export default function FavoritosPage() {
         const result = await addToCart({
           id: fav.producto.id.toString(),
           name: fav.producto.nombre,
-          image: getImagenPrincipal(fav.producto),
+          image: getProductMainImage(fav.producto),
           category: fav.producto.categoria?.nombre || '',
           price: Number(fav.producto.precioUnitario),
           stock: fav.producto.stock || 0,

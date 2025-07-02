@@ -46,3 +46,15 @@
   transform: scale(1.2);
   border-color: #CC9F53;
 }
+
+/* Asegurar altura uniforme en el carrusel de productos destacados */
+.swiper-slide {
+  height: auto !important;
+  display: flex !important;
+}
+
+.swiper-slide > div {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
