@@ -107,9 +107,12 @@ const CreateReviewModal: React.FC<CreateReviewModalProps> = ({
         comentario: comentario.trim(),
       });
       onClose();
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error al crear reseña:', error);
-      setError('Error al enviar la reseña. Por favor intenta de nuevo.');
+      
+      // Usar el mensaje del error si está disponible, sino usar uno genérico
+      const errorMessage = error instanceof Error ? error.message : 'Error al enviar la reseña. Por favor intenta de nuevo.';
+      setError(errorMessage);
     } finally {
       setIsSubmitting(false);
     }

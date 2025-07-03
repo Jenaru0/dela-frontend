@@ -12,6 +12,7 @@ import PedidoDetailModal from '@/components/perfil/PedidoDetailModal';
 import CreateReviewModal from '@/components/perfil/CreateReviewModal';
 import CreateClaimModal from '@/components/perfil/CreateClaimModal';
 import ClaimDetailModal from '@/components/perfil/ClaimDetailModal';
+import ReviewDetailModal from '@/components/perfil/ReviewDetailModal';
 import { usuariosService } from '@/services/usuarios.service';
 import { authService } from '@/services/auth.service';
 import { direccionesService } from '@/services/direcciones.service';
@@ -43,7 +44,9 @@ const ProfilePage: React.FC = () => {
   const [isCreateClaimModalOpen, setIsCreateClaimModalOpen] = useState(false);
   const [isClaimDetailModalOpen, setIsClaimDetailModalOpen] = useState(false);
   const [selectedReclamo, setSelectedReclamo] = useState<Reclamo | null>(null);
-  const [claimData, setClaimData] = useState<{ pedidoId: number; pedidoNumero: string } | null>(null);  const [activeTab, setActiveTab] = useState<'personal' | 'addresses' | 'orders' | 'claims' | 'reviews'>('personal');
+  const [claimData, setClaimData] = useState<{ pedidoId: number; pedidoNumero: string } | null>(null);
+  const [isReviewDetailModalOpen, setIsReviewDetailModalOpen] = useState(false);
+  const [selectedResena, setSelectedResena] = useState<Resena | null>(null);  const [activeTab, setActiveTab] = useState<'personal' | 'addresses' | 'orders' | 'claims' | 'reviews'>('personal');
   const [isNewsletterSubscribed, setIsNewsletterSubscribed] = useState(false);
   const [isLoadingNewsletter, setIsLoadingNewsletter] = useState(false);
   const [isDeactivating, setIsDeactivating] = useState(false);
@@ -348,17 +351,38 @@ const ProfilePage: React.FC = () => {
   // Manejar envío de reseña
   const handleSubmitReview = async (reviewData: { productoId: number; calificacion: number; comentario: string }) => {
     try {
-      // TODO: Implementar servicio de reseñas
-      console.log('Crear reseña:', reviewData);
+      await resenasService.crear({
+        productoId: reviewData.productoId,
+        calificacion: reviewData.calificacion,
+        comentario: reviewData.comentario,
+      });
+      
       showNotification('success', 'Reseña enviada correctamente. Será revisada antes de publicarse.');
       
-      // Opcional: Recargar reseñas si estamos en esa pestaña
+      // Recargar reseñas si estamos en esa pestaña
       if (activeTab === 'reviews') {
         setResenasLoaded(false);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error al crear reseña:', error);
-      throw error; // El modal manejará el error
+      
+      // Manejo de errores específicos
+      let errorMessage = 'Error al enviar la reseña. Por favor intenta de nuevo.';
+      
+      if (error instanceof Error && error.message) {
+        if (error.message.includes('Ya has dejado una reseña')) {
+          errorMessage = 'Ya has dejado una reseña para este producto.';
+        } else if (error.message.includes('no has comprado')) {
+          errorMessage = 'Solo puedes reseñar productos que hayas comprado.';
+        } else if (error.message.includes('Producto no encontrado')) {
+          errorMessage = 'El producto no existe.';
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
+      // Re-lanzar el error con el mensaje apropiado para que el modal lo maneje
+      throw new Error(errorMessage);
     }
   };
 
@@ -409,7 +433,16 @@ const ProfilePage: React.FC = () => {
     console.log('🚀 Abriendo modal de reclamo:', reclamo);
     setSelectedReclamo(reclamo);
     setIsClaimDetailModalOpen(true);
-  };// Mostrar loading durante la verificación inicial
+  };
+
+  // Manejar apertura del detalle de reseña
+  const handleOpenReviewDetails = (resena: Resena) => {
+    console.log('🔍 Abriendo modal de reseña:', resena);
+    setSelectedResena(resena);
+    setIsReviewDetailModalOpen(true);
+  };
+
+  // Mostrar loading durante la verificación inicial
   if (isLoading) {
     return (
       <Layout>
@@ -960,9 +993,7 @@ const ProfilePage: React.FC = () => {
                                   {resena.calificacion}/5
                                 </span>
                               </div>
-                              {resena.comentario && (
-                                <p className="text-sm text-gray-600 mt-2">{resena.comentario}</p>
-                              )}                              <p className="text-sm text-gray-500 mt-1">
+                              <p className="text-sm text-gray-500 mt-1">
                                 {new Date(resena.creadoEn).toLocaleDateString('es-PE', {
                                   year: 'numeric',
                                   month: 'long',
@@ -982,10 +1013,8 @@ const ProfilePage: React.FC = () => {
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => {
-                                // TODO: Implementar editar reseña
-                                console.log('Editar reseña:', resena.id);
-                              }}
+                              onClick={() => handleOpenReviewDetails(resena)}
+                              className=" text-[#CC9F53] hover:bg-[#CC9F53] hover:text-white"
                             >
                               <Eye className="h-4 w-4" />
                             </Button>
@@ -1076,6 +1105,16 @@ const ProfilePage: React.FC = () => {
                 reloadReclamos();
               }
             }}
+          />
+
+          {/* Modal de detalle de reseña */}
+          <ReviewDetailModal
+            isOpen={isReviewDetailModalOpen}
+            onClose={() => {
+              setIsReviewDetailModalOpen(false);
+              setSelectedResena(null);
+            }}
+            resena={selectedResena}
           />
         </div>
       </div>
