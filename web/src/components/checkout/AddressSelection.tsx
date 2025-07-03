@@ -145,28 +145,59 @@ export function AddressSelection({
                       </div>
                     </div>
                     <div className="flex-1 min-w-0">
-                      {direccion.alias && (
-                        <p className="font-medium text-gray-900">
-                          {direccion.alias}
+                      <div className="flex items-center justify-between mb-1">
+                        <div className="flex items-center space-x-2">
+                          {direccion.alias && (
+                            <p className="font-medium text-gray-900">
+                              {direccion.alias}
+                            </p>
+                          )}
                           {direccion.predeterminada && (
-                            <span className="ml-2 text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                            <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
                               Por defecto
                             </span>
                           )}
-                        </p>
-                      )}
-                      <p className="text-gray-700">{direccion.direccion}</p>
-                      {direccion.distrito && (
-                        <p className="text-sm text-gray-600">
-                          {direccion.distrito}
-                          {direccion.provincia && `, ${direccion.provincia}`}
-                        </p>
-                      )}
-                      {direccion.referencia && (
-                        <p className="text-sm text-gray-500 mt-1">
-                          Referencia: {direccion.referencia}
-                        </p>
-                      )}
+                        </div>
+                        <span className="text-xs text-gray-400">
+                          ID: {direccion.id}
+                        </span>
+                      </div>
+                      
+                      <div className="space-y-1">
+                        {/* Mostrar solo la dirección completa, no los campos separados para evitar redundancia */}
+                        <p className="text-gray-700 font-medium">{direccion.direccion}</p>
+                        
+                        {/* Solo mostrar números si existen y no son N/A */}
+                        {(direccion.numeroExterior && direccion.numeroExterior !== 'N/A') || 
+                         (direccion.numeroInterior && direccion.numeroInterior !== 'N/A') && (
+                          <p className="text-sm text-gray-600">
+                            {direccion.numeroExterior && direccion.numeroExterior !== 'N/A' && `Ext: ${direccion.numeroExterior}`}
+                            {direccion.numeroExterior && direccion.numeroExterior !== 'N/A' && 
+                             direccion.numeroInterior && direccion.numeroInterior !== 'N/A' && ' • '}
+                            {direccion.numeroInterior && direccion.numeroInterior !== 'N/A' && `Int: ${direccion.numeroInterior}`}
+                          </p>
+                        )}
+                        
+                        {/* Solo mostrar referencia si existe */}
+                        {direccion.referencia && direccion.referencia !== 'N/A' && (
+                          <p className="text-sm text-gray-500">
+                            📍 {direccion.referencia}
+                          </p>
+                        )}
+                        
+                        {/* Indicadores de estado */}
+                        <div className="flex items-center space-x-3 text-xs">
+                          {direccion.validadaGps && (
+                            <span className="text-green-600">✓ Validada GPS</span>
+                          )}
+                          {direccion.enZonaCobertura && (
+                            <span className="text-blue-600">📍 En cobertura</span>
+                          )}
+                          {direccion.codigoPostal && (
+                            <span className="text-gray-500">CP: {direccion.codigoPostal}</span>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </label>

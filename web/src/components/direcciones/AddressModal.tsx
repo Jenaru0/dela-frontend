@@ -402,8 +402,8 @@ const AddressModal: React.FC<AddressModalProps> = ({
             {/* Coordenadas precisas */}
             <div className="bg-neutral-50 border border-neutral-200 rounded-lg p-3">
               <div className="text-xs text-neutral-600 space-y-1">
-                <div><strong>Latitud:</strong> {(formData.latitud || -12.0463731).toFixed(6)}</div>
-                <div><strong>Longitud:</strong> {(formData.longitud || -77.0427934).toFixed(6)}</div>
+                <div><strong>Latitud:</strong> {(Number(formData.latitud) || -12.0463731).toFixed(6)}</div>
+                <div><strong>Longitud:</strong> {(Number(formData.longitud) || -77.0427934).toFixed(6)}</div>
                 {(!formData.latitud || !formData.longitud) && (
                   <div className="text-blue-600 mt-2">
                     💡 Busca una dirección o usa el botón de ubicación del mapa para obtener coordenadas precisas.

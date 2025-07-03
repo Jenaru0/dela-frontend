@@ -31,6 +31,7 @@ export default function CheckoutPage() {
   const [loading, setLoading] = useState(false);
   const [loadingDirecciones, setLoadingDirecciones] = useState(true);
   const [codigoPromocion, setCodigoPromocion] = useState<string>('');
+  const [pagoExitoso, setPagoExitoso] = useState(false);
 
   // Verificar autenticación - solo redirigir cuando termine de cargar
   useEffect(() => {
@@ -55,15 +56,16 @@ export default function CheckoutPage() {
 
   // Verificar que haya productos en el carrito - solo si no está cargando
   useEffect(() => {
-    // No hacer nada si estamos cargando o si es la primera carga
-    if (carritoLoading || loadingDirecciones) return;
+    // No hacer nada si estamos cargando, si es la primera carga, o si hemos procesado un pago exitoso
+    if (carritoLoading || loadingDirecciones || pagoExitoso) return;
     
     // Solo redirigir si definitivamente no hay productos
     if (!carrito || carrito.length === 0) {
+      console.log('🚨 REDIRECCIÓN POR CARRITO VACÍO: Carrito vacío detectado, redirigiendo a /carrito');
       router.push('/carrito');
       return;
     }
-  }, [carrito, carritoLoading, loadingDirecciones, router]);
+  }, [carrito, carritoLoading, loadingDirecciones, pagoExitoso, router]);
 
   // Cargar direcciones del usuario
   useEffect(() => {
@@ -198,23 +200,61 @@ export default function CheckoutPage() {
 
       const responsePago = await pagosService.crearPagoConTarjeta(datosPago);
       
-      if (['COMPLETADO', 'AUTORIZADO'].includes(responsePago.data.estado)) {
+      console.log('🔔 RESPUESTA COMPLETA DEL PAGO:', responsePago);
+      console.log('🔔 ESTADO DEL PAGO:', responsePago.data.estado);
+      console.log('🔔 PEDIDO ID PARA REDIRECCIÓN:', pedidoId);
+      
+      if (['COMPLETADO', 'AUTORIZADO', 'approved'].includes(responsePago.data.estado)) {
         // Limpiar carrito y redirigir a confirmación
+        console.log('✅ PAGO EXITOSO - Redirigiendo a pago-exitoso');
+        const redirectUrl = `/pago-exitoso?pedidoId=${pedidoId}`;
+        console.log('🔗 URL DE REDIRECCIÓN:', redirectUrl);
+        
+        // Marcar como pago exitoso ANTES de limpiar carrito para evitar redirección no deseada
+        setPagoExitoso(true);
+        
         limpiarCarrito();
         toast.success('¡Pago procesado exitosamente!');
-        router.push(`/pago-exitoso?pedidoId=${pedidoId}`);
+        
+        // Esperar un momento y luego redirigir para asegurar que todo se complete
+        console.log('⏳ Esperando 1 segundo antes de redirigir...');
+        setTimeout(() => {
+          console.log('🔗 Ejecutando redirección ahora...');
+          window.location.replace(redirectUrl);
+        }, 1000);
+        
       } else if (responsePago.data.estado === 'PROCESANDO') {
         // Para pagos en proceso, también redirigir pero con mensaje diferente
+        console.log('⏳ PAGO EN PROCESO - Redirigiendo a pago-exitoso');
+        const redirectUrl = `/pago-exitoso?pedidoId=${pedidoId}`;
+        console.log('🔗 URL DE REDIRECCIÓN (PROCESANDO):', redirectUrl);
+        
+        // Marcar como pago exitoso ANTES de limpiar carrito para evitar redirección no deseada
+        setPagoExitoso(true);
+        
         limpiarCarrito();
         toast.success('Pago en proceso. Te notificaremos cuando se confirme.');
-        router.push(`/pago-exitoso?pedidoId=${pedidoId}`);
+        
+        // Esperar un momento y luego redirigir
+        console.log('⏳ Esperando 1 segundo antes de redirigir (PROCESANDO)...');
+        setTimeout(() => {
+          console.log('🔗 Ejecutando redirección (PROCESANDO) ahora...');
+          window.location.replace(redirectUrl);
+        }, 1000);
+        
       } else {
+        console.log('❌ ESTADO DE PAGO NO RECONOCIDO:', responsePago.data.estado);
         toast.error(`El pago no pudo ser procesado. Estado: ${responsePago.data.estado}`);
         setStep('payment');
       }
     } catch (error: unknown) {
-      console.error('Error al procesar pago:', error);
+      console.error('❌ ERROR COMPLETO AL PROCESAR PAGO:', error);
+      console.error('❌ TIPO DE ERROR:', typeof error);
+      console.error('❌ ERROR STRINGIFY:', JSON.stringify(error, null, 2));
+      
       const errorMessage = error instanceof Error ? error.message : 'Error al procesar el pago';
+      console.error('❌ MENSAJE DE ERROR FINAL:', errorMessage);
+      
       toast.error(errorMessage);
       setStep('payment');
     } finally {
@@ -309,12 +349,15 @@ export default function CheckoutPage() {
               )}
 
               {step === 'payment' && (
-                <PaymentForm
-                  total={totales.total}
-                  userEmail={usuario?.email || ''}
-                  onProcesarPago={manejarProcesarPago}
-                  loading={loading}
-                />
+                <>
+                  <PaymentForm
+                    total={totales.total}
+                    userEmail={usuario?.email || ''}
+                    onProcesarPago={manejarProcesarPago}
+                    loading={loading}
+                  />
+                  
+                </>
               )}
 
               {step === 'processing' && (

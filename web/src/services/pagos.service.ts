@@ -115,20 +115,29 @@ class PagosService {
   // Crear pago con tarjeta
   async crearPagoConTarjeta(datos: CrearPagoDto): Promise<ApiResponse<RespuestaPago>> {
     try {
+      console.log('💳 ENVIANDO DATOS DE PAGO AL BACKEND:', datos);
+      
       const response = await fetch(`${API_BASE_URL}/pagos/con-tarjeta`, {
         method: 'POST',
         headers: this.getAuthHeaders(),
         body: JSON.stringify(datos),
       });
 
+      console.log('💳 RESPUESTA HTTP STATUS:', response.status);
+      console.log('💳 RESPUESTA HTTP OK:', response.ok);
+
       if (!response.ok) {
         const errorData = await response.json();
+        console.error('💳 ERROR RESPONSE DATA:', errorData);
         throw new Error(errorData.message || 'Error al procesar el pago');
       }
 
-      return await response.json();
+      const result = await response.json();
+      console.log('💳 RESPUESTA EXITOSA DEL BACKEND:', result);
+      
+      return result;
     } catch (error) {
-      console.error('Error al crear pago:', error);
+      console.error('💳 ERROR EN SERVICIO DE PAGOS:', error);
       throw error;
     }
   }

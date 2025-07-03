@@ -69,20 +69,45 @@ export function CheckoutSummary({
       {/* Dirección seleccionada */}
       {direccionSeleccionada && (
         <div className="border-t pt-4 mb-4">
-          <h4 className="text-sm font-medium text-gray-900 mb-2">
-            Dirección de Entrega
-          </h4>
-          <div className="text-sm text-gray-600">
+          <div className="flex items-center justify-between mb-2">
+            <h4 className="text-sm font-medium text-gray-900">
+              Dirección de Entrega
+            </h4>
+            <span className="text-xs text-gray-400">
+              ID: {direccionSeleccionada.id}
+            </span>
+          </div>
+          <div className="text-sm text-gray-600 space-y-1">
             {direccionSeleccionada.alias && (
-              <p className="font-medium">{direccionSeleccionada.alias}</p>
+              <div className="flex items-center space-x-2">
+                <p className="font-medium text-gray-900">{direccionSeleccionada.alias}</p>
+                {direccionSeleccionada.predeterminada && (
+                  <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full">
+                    Por defecto
+                  </span>
+                )}
+              </div>
             )}
-            <p>{direccionSeleccionada.direccion}</p>
-            {direccionSeleccionada.distrito && (
-              <p>{direccionSeleccionada.distrito}</p>
+            
+            {/* Mostrar solo la dirección completa para evitar redundancia */}
+            <p className="font-medium text-gray-900">{direccionSeleccionada.direccion}</p>
+            
+            {/* Solo mostrar información adicional si existe y no es redundante */}
+            {direccionSeleccionada.referencia && direccionSeleccionada.referencia !== 'N/A' && (
+              <p className="text-xs text-gray-500">
+                📍 {direccionSeleccionada.referencia}
+              </p>
             )}
-            {direccionSeleccionada.provincia && (
-              <p>{direccionSeleccionada.provincia}</p>
-            )}
+            
+            {/* Información de estado en una línea */}
+            <div className="flex items-center space-x-2 text-xs text-gray-500">
+              {direccionSeleccionada.codigoPostal && (
+                <span>CP: {direccionSeleccionada.codigoPostal}</span>
+              )}
+              {direccionSeleccionada.validadaGps && (
+                <span className="text-green-600">✓ Validada</span>
+              )}
+            </div>
           </div>
         </div>
       )}

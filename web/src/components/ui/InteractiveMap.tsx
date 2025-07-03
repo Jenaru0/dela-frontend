@@ -39,10 +39,11 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
   // Configurar MapTiler
   useEffect(() => {
     const apiKey = process.env.NEXT_PUBLIC_MAPTILER_API_KEY;
-    if (apiKey && apiKey !== 'tu_api_key_aqui') {
+    if (apiKey && apiKey !== 'tu_api_key_aqui' && apiKey !== 'ABCDEEEEFFF') {
       maptilersdk.config.apiKey = apiKey;
     } else {
-      setMapError('API Key de MapTiler no configurada');
+      console.warn('⚠️ API Key de MapTiler no configurada o usando valor de ejemplo');
+      setMapError('API Key de MapTiler no configurada correctamente');
     }
   }, []);
 
@@ -52,10 +53,20 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
     
     setIsReverseGeocoding(true);
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/geocoding/reverse?lat=${lat}&lng=${lng}`, {
+      // Verificar conectividad del backend
+      const backendUrl = process.env.NEXT_PUBLIC_API_URL;
+      if (!backendUrl) {
+        console.warn('⚠️ URL del backend no configurada');
+        return '';
+      }
+
+      const response = await fetch(`${backendUrl}/geocoding/reverse?lat=${lat}&lng=${lng}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token') || ''}`,
+          'Content-Type': 'application/json',
         },
+        // Timeout para evitar esperas indefinidas
+        signal: AbortSignal.timeout(10000),
       });
       
       if (response.ok) {
@@ -64,9 +75,15 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
           setCurrentAddress(data.data.direccionCompleta);
           return data.data.direccionCompleta;
         }
+      } else {
+        console.warn('⚠️ Backend no disponible o error en geocodificación:', response.status);
       }
     } catch (error) {
-      console.error('Error en geocodificación inversa:', error);
+      if (error instanceof Error && error.name === 'TimeoutError') {
+        console.warn('⚠️ Timeout en conexión con backend');
+      } else {
+        console.warn('⚠️ Error en geocodificación inversa:', error);
+      }
     } finally {
       setIsReverseGeocoding(false);
     }
@@ -78,49 +95,86 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
     if (!mapContainer.current || map.current || mapError) return;
 
     try {
+      // Configurar el estilo usando la API key
+      const apiKey = process.env.NEXT_PUBLIC_MAPTILER_API_KEY;
+      const styleUrl = apiKey && apiKey !== 'ABCDEEEEFFF' && apiKey !== 'tu_api_key_aqui'
+        ? `https://api.maptiler.com/maps/streets-v2/style.json?key=${apiKey}`
+        : 'https://api.maptiler.com/maps/streets-v2/style.json';
+
       const newMap = new maptilersdk.Map({
         container: mapContainer.current,
-        style: maptilersdk.MapStyle.STREETS,
+        style: styleUrl,
         center: [currentLng, currentLat],
         zoom: zoom,
-        // ✅ DESHABILITAR TODOS LOS CONTROLES AUTOMÁTICOS
+        // Configuraciones mejoradas para evitar warnings
         attributionControl: false,
-        geolocateControl: false, // ❌ No agregar control automático
-        navigationControl: false, // ❌ No agregar controles de navegación
-        fullscreenControl: false, // ❌ No agregar control de pantalla completa
-        scaleControl: false, // ❌ No agregar control de escala
-        terrainControl: false, // ❌ No agregar control de terreno
-        // Deshabilitar interacciones que podrían agregar controles automáticamente
         cooperativeGestures: false,
+        // No agregar controles automáticamente
+        geolocateControl: false,
+        navigationControl: false, 
+        fullscreenControl: false,
+        scaleControl: false,
+        terrainControl: false,
       });
 
       // Esperar a que el mapa cargue
       newMap.on('load', () => {
         setIsMapReady(true);
         
-        // ✅ AGREGAR SOLO LOS CONTROLES QUE QUEREMOS DE FORMA MANUAL
-        
-        // 1. Control de navegación MapTiler (zoom + brújula)
-        const navigationControl = new maptilersdk.MaptilerNavigationControl({
-          showCompass: true,
-          showZoom: true,
-          visualizePitch: true,
-        });
-        newMap.addControl(navigationControl, 'top-right');
-        
-        // 2. Control de geolocalización MapTiler
-        const geolocateControl = new maptilersdk.MaptilerGeolocateControl({
-          positionOptions: {
-            enableHighAccuracy: true,
-            timeout: 15000,
-            maximumAge: 60000,
-          },
-          trackUserLocation: false,
-          showAccuracyCircle: false,
-        });
-        newMap.addControl(geolocateControl, 'top-right');
+        // Agregar controles básicos de navegación
+        try {
+          const navigationControl = new maptilersdk.NavigationControl({
+            showCompass: true,
+            showZoom: true,
+          });
+          newMap.addControl(navigationControl, 'top-right');
+        } catch (error) {
+          console.warn('⚠️ No se pudo agregar control de navegación:', error);
+        }
 
-        // Crear marcador azul profesional y limpio
+        // Agregar control de geolocalización
+        try {
+          const geolocateControl = new maptilersdk.GeolocateControl({
+            positionOptions: {
+              enableHighAccuracy: true,
+              timeout: 10000,
+              maximumAge: 60000,
+            },
+            trackUserLocation: false,
+            showAccuracyCircle: false,
+          });
+          newMap.addControl(geolocateControl, 'top-right');
+          
+          // Escuchar eventos de geolocalización
+          geolocateControl.on('geolocate', async (e) => {
+            const lat = e.coords.latitude;
+            const lng = e.coords.longitude;
+            
+            setCurrentLat(lat);
+            setCurrentLng(lng);
+            
+            // Mover marcador a la nueva ubicación
+            if (marker.current) {
+              marker.current.setLngLat([lng, lat]);
+            }
+            
+            // Obtener dirección de la nueva ubicación
+            const address = await obtenerDireccionDesdeCoordenadas(lat, lng);
+            
+            // Notificar el cambio al componente padre
+            if (onLocationChange) {
+              onLocationChange(lat, lng, address);
+            }
+          });
+
+          geolocateControl.on('error', (e) => {
+            console.warn('⚠️ Error de geolocalización:', e.message || e);
+          });
+        } catch (error) {
+          console.warn('⚠️ No se pudo agregar control de geolocalización:', error);
+        }
+
+        // Crear marcador personalizado
         const markerElement = document.createElement('div');
         markerElement.className = 'custom-marker';
         markerElement.style.cssText = `
@@ -141,7 +195,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
           .setLngLat([currentLng, currentLat])
           .addTo(newMap);
 
-        // Manejar arrastre del marcador - Comportamiento profesional
+        // Manejar arrastre del marcador
         if (allowDrag) {
           newMarker.on('dragstart', () => {
             markerElement.style.cursor = 'grabbing';
@@ -168,31 +222,6 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
             }, 100);
           });
         }
-
-        // Escuchar eventos del control de geolocalización
-        geolocateControl.on('geolocate', async (e: GeolocationPosition) => {
-          const lat = e.coords.latitude;
-          const lng = e.coords.longitude;
-          
-          setCurrentLat(lat);
-          setCurrentLng(lng);
-          
-          // Mover nuestro marcador personalizado a la nueva ubicación
-          newMarker.setLngLat([lng, lat]);
-          
-          // Obtener dirección de la nueva ubicación
-          const address = await obtenerDireccionDesdeCoordenadas(lat, lng);
-          
-          // Notificar el cambio al componente padre
-          if (onLocationChange) {
-            onLocationChange(lat, lng, address);
-          }
-        });
-
-        // También escuchar errores de geolocalización
-        geolocateControl.on('error', (e: GeolocationPositionError) => {
-          console.error('❌ Error de geolocalización:', e);
-        });
 
         marker.current = newMarker;
       });
@@ -299,7 +328,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
                   </div>
                 ) : (
                   <div className="text-gray-600">
-                    {currentLat.toFixed(4)}, {currentLng.toFixed(4)}
+                    {Number(currentLat).toFixed(4)}, {Number(currentLng).toFixed(4)}
                   </div>
                 )}
                 {isReverseGeocoding && (
