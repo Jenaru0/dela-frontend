@@ -56,11 +56,20 @@ NODE_ENV=production
 NEXT_TELEMETRY_DISABLED=1
 NEXT_PUBLIC_API_URL=https://delabackend.episundc.pe
 NEXT_PUBLIC_MAPTILER_API_KEY=BcxILUtDMU5yrvpfcXrB
+NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=dhkwkavdd
+NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET=dela_platform
+NEXT_PUBLIC_MP_PUBLIC_KEY=TEST-da11d0a1-7427-4563-b238-cf271b08b3e2
 HOSTNAME=0.0.0.0
 PORT=3000
 ```
 
-**⚠️ IMPORTANTE**: Las variables `NEXT_PUBLIC_API_URL` y `NEXT_PUBLIC_MAPTILER_API_KEY` deben estar configuradas en Dokploy para que el frontend funcione correctamente. Sin `NEXT_PUBLIC_MAPTILER_API_KEY`, los mapas no funcionarán en producción. Ver [DOKPLOY_CONFIG.md](./DOKPLOY_CONFIG.md) para instrucciones detalladas.
+**⚠️ IMPORTANTE**: Todas las variables `NEXT_PUBLIC_*` deben estar configuradas en Dokploy para que el frontend funcione correctamente:
+- `NEXT_PUBLIC_API_URL`: Comunicación con el backend
+- `NEXT_PUBLIC_MAPTILER_API_KEY`: Mapas interactivos
+- `NEXT_PUBLIC_CLOUDINARY_*`: Subida y gestión de imágenes
+- `NEXT_PUBLIC_MP_PUBLIC_KEY`: Integración con MercadoPago
+
+Ver [DOKPLOY_CONFIG.md](./DOKPLOY_CONFIG.md) para instrucciones detalladas.
 
 ### Proceso de Deploy
 
