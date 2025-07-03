@@ -25,6 +25,17 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
   });  const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  // Actualizar formulario cuando cambien los datos del usuario
+  useEffect(() => {
+    console.log('Usuario en EditProfileModal:', usuario);
+    setFormData({
+      nombres: usuario.nombres || '',
+      apellidos: usuario.apellidos || '',
+      email: usuario.email,
+      celular: usuario.celular || '',
+    });
+  }, [usuario]);
+
   // Bloquear scroll del body cuando el modal esté abierto
   useEffect(() => {
     if (isOpen) {
