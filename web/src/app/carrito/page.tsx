@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Layout from '@/components/layout/Layout';
 import { Lock, ShoppingBag, Trash2, User } from 'lucide-react';
@@ -11,17 +11,32 @@ import { CartSummary } from '@/components/carrito/CartSummary';
 import { CartEmpty } from '@/components/carrito/CartEmpty';
 import ClearCartModal from '@/components/carrito/ClearCartModal';
 import { Button } from '@/components/ui/Button';
+import { scrollToTopInstant } from '@/lib/scroll';
 export default function CarritoPage() {
   const {
     cart,
     increaseQty,
     decreaseQty,
+    setQty,
     removeFromCart,
     clearCart,
   } = useCart();
   const { isAuthenticated, usuario, isLoading } = useAuth();
   const [isClearingCart, setIsClearingCart] = useState(false);
   const [isClearModalOpen, setIsClearModalOpen] = useState(false);
+
+  // Scroll al top cuando se monta la página
+  useEffect(() => {
+    // Scroll inmediato
+    scrollToTopInstant();
+    
+    // Scroll adicional después de un pequeño delay para asegurar que funcione
+    const timeoutId = setTimeout(() => {
+      scrollToTopInstant();
+    }, 100);
+    
+    return () => clearTimeout(timeoutId);
+  }, []);
 
   const handleClearCart = async () => {
     try {
@@ -38,7 +53,6 @@ export default function CarritoPage() {
     (acc, prod) => acc + prod.price * prod.quantity,
     0
   );
-  const envio = 10;
 
   // Mostrar loading durante la verificación inicial
   if (isLoading) {
@@ -136,6 +150,7 @@ export default function CarritoPage() {
                     prod={prod}
                     increaseQty={increaseQty}
                     decreaseQty={decreaseQty}
+                    setQty={setQty}
                     removeFromCart={removeFromCart}
                   />
                 ))}                {/* Acciones del carrito */}
@@ -163,7 +178,7 @@ export default function CarritoPage() {
                   </div>
                 </div>
               </div>
-              <CartSummary subtotal={subtotal} envio={envio} />
+              <CartSummary subtotal={subtotal} />
             </div>          )}
         </div>
       </div>

@@ -1,13 +1,20 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/Button';
-import { User, Shield, Mail, Phone, AlertCircle, CheckCircle, MapPin, Plus, Package, MessageSquare, Star, UserX, Eye } from 'lucide-react';
+import { User, Shield, Mail, Phone, AlertCircle, CheckCircle, MapPin, Plus, Package, MessageSquare, Star, UserX, Eye, Info } from 'lucide-react';
 import EditProfileModal from '@/components/auth/EditProfileModal';
 import ChangePasswordModal from '@/components/auth/ChangePasswordModal';
 import AddressModal from '@/components/direcciones/AddressModal';
 import AddressList from '@/components/direcciones/AddressList';
+import PedidoDetailModal from '@/components/perfil/PedidoDetailModal';
+import CreateReviewModal from '@/components/perfil/CreateReviewModal';
+import CreateClaimModal from '@/components/perfil/CreateClaimModal';
+import ClaimDetailModal from '@/components/perfil/ClaimDetailModal';
+import ReviewDetailModal from '@/components/perfil/ReviewDetailModal';
+import { NewsletterModal } from '@/components/modals/NewsletterModal';
+import { DeactivateAccountModal } from '@/components/modals/DeactivateAccountModal';
 import { usuariosService } from '@/services/usuarios.service';
 import { authService } from '@/services/auth.service';
 import { direccionesService } from '@/services/direcciones.service';
@@ -17,19 +24,52 @@ import { reclamosService, Reclamo } from '@/services/reclamos.service';
 import { resenasService, Resena } from '@/services/resenas.service';
 import { UpdateUsuarioDto } from '@/types/usuarios';
 import { DireccionCliente, CreateDireccionDto, UpdateDireccionDto } from '@/types/direcciones';
-import { EstadoPedidoLabels, EstadoPedidoColors, EstadoReclamoLabels, EstadoReclamoColors, PrioridadReclamoLabels, PrioridadReclamoColors, EstadoResenaLabels, MetodoPagoLabels, MetodoEnvioLabels } from '@/types/enums';
+import { useReclamos } from '@/hooks/useReclamos';
+import { useUserDataRefresh } from '@/hooks/useUserDataRefresh';
+import { useSelectiveDataRefresh, dataRefreshConfigs } from '@/hooks/useSelectiveDataRefresh';
+import { EstadoPedidoLabels, EstadoPedidoColors, EstadoReclamoLabels, PrioridadReclamoLabels, EstadoResenaLabels, MetodoPagoLabels, MetodoEnvioLabels } from '@/types/enums';
 import Layout from '@/components/layout/Layout';
 
 const ProfilePage: React.FC = () => {
   const { usuario, isAuthenticated, actualizarUsuario, isLoading, cerrarSesion } = useAuth();
+  const { crearReclamo} = useReclamos();
+  
+  // Auto-refresh de datos del usuario al entrar al perfil
+  // Auto-refresh de datos del usuario para esta página crítica
+  const { refrescarDatosUsuario } = useUserDataRefresh({
+    enabled: isAuthenticated && !!usuario,
+    onMount: true, // Refrescar al montar en perfil
+    interval: 0 // Sin auto-refresh periódico, solo manual
+  });
+
+  // Hook para manejo selectivo de datos secundarios
+  const { loadData: loadSelectiveData } = useSelectiveDataRefresh();
+
+  // Memoizar ID del usuario para optimizar dependencias
+  const usuarioId = useMemo(() => usuario?.id, [usuario?.id]);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
   const [selectedAddress, setSelectedAddress] = useState<DireccionCliente | null>(null);
   const [direcciones, setDirecciones] = useState<DireccionCliente[]>([]);
-  const [isLoadingAddresses, setIsLoadingAddresses] = useState(false);  const [activeTab, setActiveTab] = useState<'personal' | 'addresses' | 'orders' | 'claims' | 'reviews'>('personal');
+  const [isLoadingAddresses, setIsLoadingAddresses] = useState(false);
+  
+  // Estados para modales de pedidos y reseñas
+  const [isPedidoDetailModalOpen, setIsPedidoDetailModalOpen] = useState(false);
+  const [selectedPedido, setSelectedPedido] = useState<Pedido | null>(null);
+  const [isCreateReviewModalOpen, setIsCreateReviewModalOpen] = useState(false);
+  const [reviewData, setReviewData] = useState<{ productoId: number; productoNombre: string } | null>(null);
+  const [isCreateClaimModalOpen, setIsCreateClaimModalOpen] = useState(false);
+  const [isClaimDetailModalOpen, setIsClaimDetailModalOpen] = useState(false);
+  const [selectedReclamo, setSelectedReclamo] = useState<Reclamo | null>(null);
+  const [claimData, setClaimData] = useState<{ pedidoId: number; pedidoNumero: string } | null>(null);
+  const [isReviewDetailModalOpen, setIsReviewDetailModalOpen] = useState(false);
+  const [selectedResena, setSelectedResena] = useState<Resena | null>(null);  const [activeTab, setActiveTab] = useState<'personal' | 'addresses' | 'orders' | 'claims' | 'reviews'>('personal');
   const [isNewsletterSubscribed, setIsNewsletterSubscribed] = useState(false);
   const [isLoadingNewsletter, setIsLoadingNewsletter] = useState(false);
+  const [isNewsletterModalOpen, setIsNewsletterModalOpen] = useState(false);
+  const [newsletterModalType, setNewsletterModalType] = useState<'subscribe' | 'unsubscribe'>('subscribe');
+  const [isDeactivateModalOpen, setIsDeactivateModalOpen] = useState(false);
   const [isDeactivating, setIsDeactivating] = useState(false);
   
   // Estados para pedidos, reclamos y reseñas
@@ -40,7 +80,7 @@ const ProfilePage: React.FC = () => {
   const [isLoadingReclamos, setIsLoadingReclamos] = useState(false);
   const [isLoadingResenas, setIsLoadingResenas] = useState(false);
     const [notification, setNotification] = useState<{
-    type: 'success' | 'error';
+    type: 'success' | 'error' | 'info';
     message: string;
   } | null>(null);
   
@@ -50,7 +90,7 @@ const ProfilePage: React.FC = () => {
   const [resenasLoaded, setResenasLoaded] = useState(false);
   
   // Función para mostrar notificaciones
-  const showNotification = (type: 'success' | 'error', message: string) => {
+  const showNotification = (type: 'success' | 'error' | 'info', message: string) => {
     setNotification({ type, message });    setTimeout(() => setNotification(null), 5000);
   };
 
@@ -66,8 +106,14 @@ const ProfilePage: React.FC = () => {
     }
   }, [usuario?.email]);
 
-  // Manejar suscripción/desuscripción al newsletter
-  const handleNewsletterToggle = async () => {
+  // Manejar apertura del modal de newsletter
+  const handleNewsletterToggle = () => {
+    setNewsletterModalType(isNewsletterSubscribed ? 'unsubscribe' : 'subscribe');
+    setIsNewsletterModalOpen(true);
+  };
+
+  // Confirmar suscripción/desuscripción al newsletter
+  const confirmNewsletterAction = async () => {
     if (!usuario?.email) return;
     
     try {
@@ -82,6 +128,11 @@ const ProfilePage: React.FC = () => {
         setIsNewsletterSubscribed(true);
         showNotification('success', 'Te has suscrito al newsletter');
       }
+      
+      // Refrescar datos del usuario para sincronizar el estado
+      await refrescarDatosUsuario(true);
+      
+      setIsNewsletterModalOpen(false);
     } catch (error) {
       console.error('Error al manejar newsletter:', error);
       showNotification('error', 'Error al procesar la suscripción');
@@ -89,18 +140,20 @@ const ProfilePage: React.FC = () => {
       setIsLoadingNewsletter(false);
     }
   };
-  // Manejar desactivación de cuenta
-  const handleDeactivateAccount = async () => {
-    const confirmed = window.confirm(
-      '¿Estás seguro de que quieres desactivar tu cuenta? Esta acción no se puede deshacer y perderás acceso a tu perfil, pedidos y datos guardados.'
-    );
-    
-    if (!confirmed) return;
-    
+  // Manejar apertura del modal de desactivación
+  const handleDeactivateAccount = () => {
+    setIsDeactivateModalOpen(true);
+  };
+
+  // Confirmar desactivación de cuenta desde el modal
+  const confirmDeactivateAccount = async () => {
     try {
       setIsDeactivating(true);
       await usuariosService.desactivarCuenta();
       showNotification('success', 'Cuenta desactivada correctamente. Serás redirigido al inicio...');
+      
+      // Cerrar el modal
+      setIsDeactivateModalOpen(false);
       
       // Cerrar sesión inmediatamente después de desactivar
       setTimeout(async () => {
@@ -114,7 +167,8 @@ const ProfilePage: React.FC = () => {
           localStorage.removeItem('usuario');
           window.location.href = '/';
         }
-      }, 1500);    } catch (error: unknown) {
+      }, 1500);
+    } catch (error: unknown) {
       console.error('Error al desactivar cuenta:', error);
       const errorMessage = error instanceof Error ? error.message : 'Error al desactivar la cuenta. Por favor, inténtalo de nuevo.';
       showNotification('error', errorMessage);
@@ -122,25 +176,45 @@ const ProfilePage: React.FC = () => {
       setIsDeactivating(false);
     }
   };
+  // Función optimizada para recargar direcciones (evita recargas innecesarias)
+  const loadAddresses = useCallback(async (force = false) => {
+    try {
+      setIsLoadingAddresses(true);
+      
+      // Usar el hook selectivo para evitar recargas innecesarias
+      const direccionesData = await loadSelectiveData<DireccionCliente[]>(
+        'direcciones', 
+        {
+          loader: async () => {
+            const response = await direccionesService.obtenerDirecciones();
+            return response?.data || [];
+          },
+          shouldReload: force ? () => true : dataRefreshConfigs.direcciones.shouldReload,
+          throttleMs: force ? 0 : dataRefreshConfigs.direcciones.throttleMs
+        },
+        usuario
+      );
+      
+      if (direccionesData) {
+        setDirecciones(direccionesData);
+      }
+    } catch (error) {
+      console.error('Error al cargar direcciones:', error);
+      showNotification('error', 'Error al cargar direcciones');
+      setDirecciones([]); // Set empty array on error
+    } finally {
+      setIsLoadingAddresses(false);
+    }
+  }, [loadSelectiveData, usuario]);
+
   // Cargar direcciones cuando el usuario esté autenticado
   useEffect(() => {
-    const loadAddresses = async () => {
-      try {
-        setIsLoadingAddresses(true);
-        const response = await direccionesService.obtenerDirecciones();
-        setDirecciones(response?.data || []);
-      } catch (error) {
-        console.error('Error al cargar direcciones:', error);
-        showNotification('error', 'Error al cargar direcciones');
-        setDirecciones([]); // Set empty array on error
-      } finally {
-        setIsLoadingAddresses(false);
-      }
-    };    if (isAuthenticated && usuario) {
+    if (isAuthenticated && usuarioId) {
+      // Llamar a loadAddresses sin forzar (usa cache inteligente)
       loadAddresses();
       checkNewsletterSubscription(); // Verificar suscripción al cargar perfil
     }
-  }, [isAuthenticated, usuario, checkNewsletterSubscription]);
+  }, [isAuthenticated, usuarioId, checkNewsletterSubscription, loadAddresses]); // Incluir loadAddresses
   // Verificar suscripción al newsletter cuando cargue el usuario
   useEffect(() => {
     if (usuario?.email) {
@@ -206,20 +280,8 @@ const ProfilePage: React.FC = () => {
     };
 
     loadData();
-  }, [activeTab, isAuthenticated, usuario, isLoadingPedidos, isLoadingReclamos, isLoadingResenas, pedidosLoaded, reclamosLoaded, resenasLoaded]);
-  const loadAddresses = async () => {
-    try {
-      setIsLoadingAddresses(true);
-      const response = await direccionesService.obtenerDirecciones();
-      setDirecciones(response?.data || []);
-    } catch (error) {
-      console.error('Error al cargar direcciones:', error);
-      showNotification('error', 'Error al cargar direcciones');
-      setDirecciones([]); // Set empty array on error
-    } finally {
-      setIsLoadingAddresses(false);
-    }
-  };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, isAuthenticated, usuario]);
 
   // Manejar actualización de perfil
   const handleUpdateProfile = async (datos: UpdateUsuarioDto) => {
@@ -263,7 +325,7 @@ const ProfilePage: React.FC = () => {
         await direccionesService.crearDireccion(datos as CreateDireccionDto);
         showNotification('success', 'Dirección creada correctamente');
       }
-      await loadAddresses();
+      await loadAddresses(true); // Forzar recarga después de modificar
       setIsAddressModalOpen(false);
       setSelectedAddress(null);
     } catch (error) {
@@ -277,7 +339,7 @@ const ProfilePage: React.FC = () => {
     try {
       await direccionesService.eliminarDireccion(id);
       showNotification('success', 'Dirección eliminada correctamente');
-      await loadAddresses();
+      await loadAddresses(true); // Forzar recarga después de eliminar
     } catch (error) {
       console.error('Error al eliminar dirección:', error);
       showNotification('error', 'Error al eliminar la dirección');
@@ -289,7 +351,7 @@ const ProfilePage: React.FC = () => {
     try {
       await direccionesService.establecerPredeterminada(id);
       showNotification('success', 'Dirección predeterminada actualizada');
-      await loadAddresses();
+      await loadAddresses(true); // Forzar recarga después de cambiar predeterminada
     } catch (error) {
       console.error('Error al establecer dirección predeterminada:', error);
       showNotification('error', 'Error al establecer dirección predeterminada');
@@ -306,7 +368,123 @@ const ProfilePage: React.FC = () => {
   const handleEditAddress = (direccion: DireccionCliente) => {
     setSelectedAddress(direccion);
     setIsAddressModalOpen(true);
-  };// Mostrar loading durante la verificación inicial
+  };
+
+  // Manejar visualización de detalles del pedido
+  const handleViewPedidoDetails = (pedido: Pedido) => {
+    setSelectedPedido(pedido);
+    setIsPedidoDetailModalOpen(true);
+  };
+
+  // Manejar creación de reseña
+  const handleCreateReview = (productoId: number, productoNombre: string) => {
+    setReviewData({ productoId, productoNombre });
+    setIsCreateReviewModalOpen(true);
+    setIsPedidoDetailModalOpen(false); // Cerrar modal de pedido si está abierto
+  };
+
+  // Manejar creación de reclamo
+  const handleCreateClaim = (pedidoId: number, pedidoNumero: string) => {
+    setClaimData({ pedidoId, pedidoNumero });
+    setIsCreateClaimModalOpen(true);
+    setIsPedidoDetailModalOpen(false); // Cerrar modal de pedido si está abierto
+  };
+
+  // Manejar envío de reseña
+  const handleSubmitReview = async (reviewData: { productoId: number; calificacion: number; comentario: string }) => {
+    try {
+      await resenasService.crear({
+        productoId: reviewData.productoId,
+        calificacion: reviewData.calificacion,
+        comentario: reviewData.comentario,
+      });
+      
+      showNotification('success', 'Reseña enviada correctamente. Será revisada antes de publicarse.');
+      
+      // Recargar reseñas si estamos en esa pestaña
+      if (activeTab === 'reviews') {
+        setResenasLoaded(false);
+      }
+    } catch (error: unknown) {
+      console.error('Error al crear reseña:', error);
+      
+      // Manejo de errores específicos
+      let errorMessage = 'Error al enviar la reseña. Por favor intenta de nuevo.';
+      
+      if (error instanceof Error && error.message) {
+        if (error.message.includes('Ya has dejado una reseña')) {
+          errorMessage = 'Ya has dejado una reseña para este producto.';
+        } else if (error.message.includes('no has comprado')) {
+          errorMessage = 'Solo puedes reseñar productos que hayas comprado.';
+        } else if (error.message.includes('Producto no encontrado')) {
+          errorMessage = 'El producto no existe.';
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
+      // Re-lanzar el error con el mensaje apropiado para que el modal lo maneje
+      throw new Error(errorMessage);
+    }
+  };
+
+  // Función para recargar reclamos
+  const reloadReclamos = useCallback(async () => {
+    if (activeTab === 'claims') {
+      try {
+        setIsLoadingReclamos(true);
+        const response = await reclamosService.obtenerMisReclamos();
+        setReclamos(response?.data || []);
+      } catch (error) {
+        console.error('Error al recargar reclamos:', error);
+      } finally {
+        setIsLoadingReclamos(false);
+      }
+    }
+  }, [activeTab]);
+
+  // Manejar envío de reclamo
+  const handleSubmitClaim = async (claimData: { pedidoId?: number; asunto: string; descripcion: string; tipoReclamo: string }) => {
+    try {
+      const reclamoCreado = await crearReclamo({
+        ...(claimData.pedidoId && { pedidoId: claimData.pedidoId }),
+        asunto: claimData.asunto,
+        descripcion: claimData.descripcion,
+        tipoReclamo: claimData.tipoReclamo,
+      });
+      
+      console.log('Reclamo creado:', reclamoCreado);
+      showNotification('success', 'Reclamo enviado correctamente. Te contactaremos pronto.');
+      
+      // Recargar reclamos
+      await reloadReclamos();
+      
+      // Abrir automáticamente el detalle del reclamo recién creado
+      setTimeout(() => {
+        setSelectedReclamo(reclamoCreado);
+        setIsClaimDetailModalOpen(true);
+      }, 1000);
+    } catch (error) {
+      console.error('Error al crear reclamo:', error);
+      throw error; // El modal manejará el error
+    }
+  };
+
+  // Manejar apertura del detalle de reclamo
+  const handleOpenClaimDetails = (reclamo: Reclamo) => {
+    console.log('🚀 Abriendo modal de reclamo:', reclamo);
+    setSelectedReclamo(reclamo);
+    setIsClaimDetailModalOpen(true);
+  };
+
+  // Manejar apertura del detalle de reseña
+  const handleOpenReviewDetails = (resena: Resena) => {
+    console.log('🔍 Abriendo modal de reseña:', resena);
+    setSelectedResena(resena);
+    setIsReviewDetailModalOpen(true);
+  };
+
+  // Mostrar loading durante la verificación inicial
   if (isLoading) {
     return (
       <Layout>
@@ -354,11 +532,15 @@ const ProfilePage: React.FC = () => {
             <div className={`fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg ${
               notification.type === 'success' 
                 ? 'bg-emerald-50 border border-emerald-200 text-emerald-800' 
+                : notification.type === 'info'
+                ? 'bg-blue-50 border border-blue-200 text-blue-800'
                 : 'bg-red-50 border border-red-200 text-red-800'
             }`}>
               <div className="flex items-center">
                 {notification.type === 'success' ? (
                   <CheckCircle className="h-5 w-5 mr-2" />
+                ) : notification.type === 'info' ? (
+                  <Info className="h-5 w-5 mr-2" />
                 ) : (
                   <AlertCircle className="h-5 w-5 mr-2" />
                 )}
@@ -542,7 +724,6 @@ const ProfilePage: React.FC = () => {
                       variant="outline"
                       className="w-full justify-start"
                       onClick={handleNewsletterToggle}
-                      disabled={isLoadingNewsletter}
                     >
                       <Mail className="h-4 w-4 mr-2" />
                       {isNewsletterSubscribed ? 'Cancelar Suscripción' : 'Suscribirse a Newsletter'}
@@ -601,7 +782,8 @@ const ProfilePage: React.FC = () => {
                   <div className="text-center py-8">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#CC9F53] mx-auto mb-4"></div>
                     <p className="text-gray-500">Cargando pedidos...</p>
-                  </div>                ) : !pedidos || pedidos.length === 0 ? (
+                  </div>
+                ) : !pedidos || pedidos.length === 0 ? (
                   <div className="text-center py-8">
                     <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                     <h3 className="text-lg font-medium text-gray-900 mb-2">
@@ -619,7 +801,8 @@ const ProfilePage: React.FC = () => {
                           <div className="flex items-center space-x-3">
                             <Package className="h-5 w-5 text-primary-600" />
                             <div>
-                              <h3 className="font-medium text-gray-900">Pedido #{pedido.numero}</h3>                              <p className="text-sm text-gray-500">
+                              <h3 className="font-medium text-gray-900">Pedido #{pedido.numero}</h3>
+                              <p className="text-sm text-gray-500">
                                 {new Date(pedido.creadoEn).toLocaleDateString('es-PE', {
                                   year: 'numeric',
                                   month: 'long',
@@ -629,23 +812,22 @@ const ProfilePage: React.FC = () => {
                             </div>
                           </div>
                           <div className="text-right">
-                            <p className="font-semibold text-gray-900">S/ {pedido.total.toFixed(2)}</p>                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${EstadoPedidoColors[pedido.estado as keyof typeof EstadoPedidoColors]}`}>
+                            <p className="font-semibold text-gray-900">S/ {(Number(pedido.total) || 0).toFixed(2)}</p>
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${EstadoPedidoColors[pedido.estado as keyof typeof EstadoPedidoColors]}`}>
                               {EstadoPedidoLabels[pedido.estado as keyof typeof EstadoPedidoLabels]}
                             </span>
                           </div>
                         </div>
                         
                         <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-                          <div className="flex items-center space-x-4 text-sm text-gray-600">                            <span>Pago: {MetodoPagoLabels[pedido.metodoPago as keyof typeof MetodoPagoLabels]}</span>
+                          <div className="flex items-center space-x-4 text-sm text-gray-600">
+                            <span>Pago: {MetodoPagoLabels[pedido.metodoPago as keyof typeof MetodoPagoLabels]}</span>
                             <span>Envío: {MetodoEnvioLabels[pedido.metodoEnvio as keyof typeof MetodoEnvioLabels]}</span>
                           </div>
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => {
-                              // TODO: Implementar ver detalles del pedido
-                              console.log('Ver detalles pedido:', pedido.id);
-                            }}
+                            onClick={() => handleViewPedidoDetails(pedido)}
                           >
                             <Eye className="h-4 w-4 mr-1" />
                             Ver detalles
@@ -660,76 +842,147 @@ const ProfilePage: React.FC = () => {
 
             {/* Claims Tab */}
             {activeTab === 'claims' && (
-              <div className="bg-white rounded-xl shadow-lg p-6">
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-xl font-bold text-neutral-900 flex items-center">
-                    <MessageSquare className="h-5 w-5 mr-2 text-primary-600" />
-                    Mis Reclamos
-                  </h2>
-                  <Button
-                    onClick={() => {
-                      // TODO: Implementar crear nuevo reclamo
-                      console.log('Crear nuevo reclamo');
-                    }}
-                    className="flex items-center gap-2"
-                  >
-                    <Plus className="h-4 w-4" />
-                    Nuevo Reclamo
-                  </Button>
-                </div>
-                
-                {isLoadingReclamos ? (
-                  <div className="text-center py-8">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#CC9F53] mx-auto mb-4"></div>
-                    <p className="text-gray-500">Cargando reclamos...</p>
-                  </div>                ) : !reclamos || reclamos.length === 0 ? (
-                  <div className="text-center py-8">
-                    <MessageSquare className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">
-                      No tienes reclamos
-                    </h3>
-                    <p className="text-gray-500">
-                      Si tienes algún problema con tu pedido, puedes crear un reclamo aquí
-                    </p>
+              <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+                <div className="p-6 border-b border-gray-100">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 bg-[#CC9F53]/10 rounded-full flex items-center justify-center">
+                        <MessageSquare className="h-5 w-5 text-[#CC9F53]" />
+                      </div>
+                      <div>
+                        <h2 className="text-xl font-bold text-gray-900">Mis Reclamos</h2>
+                        <p className="text-gray-600 text-sm">
+                          Gestiona tus consultas y reclamos
+                        </p>
+                      </div>
+                    </div>
                   </div>
-                ) : (
-                  <div className="space-y-4">
-                    {reclamos.map((reclamo) => (
-                      <div key={reclamo.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-                        <div className="flex items-start justify-between mb-3">
-                          <div className="flex items-start space-x-3">
-                            <MessageSquare className="h-5 w-5 text-primary-600 mt-0.5" />
-                            <div>
-                              <h3 className="font-medium text-gray-900">{reclamo.asunto}</h3>
-                              <p className="text-sm text-gray-600 mt-1">{reclamo.descripcion}</p>                              <p className="text-sm text-gray-500 mt-1">
-                                {new Date(reclamo.creadoEn).toLocaleDateString('es-PE', {
-                                  year: 'numeric',
-                                  month: 'long',
-                                  day: 'numeric'
-                                })}
-                              </p>
+                </div>
+
+                <div className="p-6">
+                  {isLoadingReclamos ? (
+                    <div className="text-center py-12">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#CC9F53] mx-auto mb-4"></div>
+                      <p className="text-gray-500">Cargando reclamos...</p>
+                    </div>
+                  ) : !reclamos || reclamos.length === 0 ? (
+                    <div className="text-center py-12">
+                      <div className="w-20 h-20 bg-[#CC9F53]/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <MessageSquare className="h-10 w-10 text-[#CC9F53]" />
+                      </div>
+                      <h3 className="text-lg font-medium text-gray-900 mb-2">
+                        No tienes reclamos aún
+                      </h3>
+                      <p className="text-gray-500 mb-6 max-w-md mx-auto">
+                        ¿Tienes alguna pregunta o problema? Puedes crear un nuevo reclamo y te ayudaremos a resolverlo.
+                      </p>
+                      <Button
+                        onClick={() => {
+                          setClaimData(null);
+                          setIsCreateClaimModalOpen(true);
+                        }}
+                        className="bg-[#CC9F53] hover:bg-[#B8903D] text-white"
+                      >
+                        <MessageSquare className="h-4 w-4 mr-2" />
+                        Crear Reclamo
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {reclamos.map((reclamo) => (
+                        <div 
+                          key={reclamo.id} 
+                          className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-all duration-200 hover:border-[#CC9F53]/30"
+                        >
+                          {/* Header con título y badges */}
+                          <div className="flex items-start justify-between mb-4">
+                            <div className="flex-1">
+                              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                                {reclamo.asunto}
+                              </h3>
+                              <div className="flex items-center gap-2 mb-3">
+                                <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
+                                  reclamo.estado === 'ABIERTO' ? 'bg-blue-50 text-blue-700 border border-blue-200' :
+                                  reclamo.estado === 'EN_PROCESO' ? 'bg-yellow-50 text-yellow-700 border border-yellow-200' :
+                                  reclamo.estado === 'RESUELTO' ? 'bg-green-50 text-green-700 border border-green-200' :
+                                  'bg-red-50 text-red-700 border border-red-200'
+                                }`}>
+                                  {EstadoReclamoLabels[reclamo.estado as keyof typeof EstadoReclamoLabels]}
+                                </span>
+                                <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
+                                  reclamo.prioridad === 'ALTA' ? 'bg-red-50 text-red-700 border border-red-200' :
+                                  reclamo.prioridad === 'MEDIA' ? 'bg-yellow-50 text-yellow-700 border border-yellow-200' :
+                                  'bg-gray-50 text-gray-700 border border-gray-200'
+                                }`}>
+                                  {PrioridadReclamoLabels[reclamo.prioridad as keyof typeof PrioridadReclamoLabels]}
+                                </span>
+                              </div>
                             </div>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleOpenClaimDetails(reclamo)}
+                              className="border-[#CC9F53] text-[#CC9F53] hover:bg-[#CC9F53] hover:text-white ml-4"
+                            >
+                              <Eye className="h-4 w-4 mr-1" />
+                              Ver Detalles
+                            </Button>
                           </div>
-                          <div className="flex flex-col items-end space-y-2">                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${EstadoReclamoColors[reclamo.estado as keyof typeof EstadoReclamoColors]}`}>
-                              {EstadoReclamoLabels[reclamo.estado as keyof typeof EstadoReclamoLabels]}
-                            </span>
-                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${PrioridadReclamoColors[reclamo.prioridad as keyof typeof PrioridadReclamoColors]}`}>
-                              {PrioridadReclamoLabels[reclamo.prioridad as keyof typeof PrioridadReclamoLabels]}
-                            </span>
-                          </div>
-                        </div>
-                        
-                        {reclamo.pedidoId && (
-                          <div className="pt-3 border-t border-gray-100">
-                            <p className="text-sm text-gray-600">
-                              Relacionado con pedido #{reclamo.pedido?.numero || reclamo.pedidoId}
+
+                          {/* Descripción */}
+                          <div className="mb-4">
+                            <p className="text-gray-600 text-sm leading-relaxed line-clamp-2">
+                              {reclamo.descripcion}
                             </p>
                           </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
+
+                          {/* Metadatos */}
+                          <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+                            <div className="flex items-center gap-6 text-sm text-gray-500">
+                              <div className="flex items-center gap-1">
+                                <AlertCircle className="h-4 w-4" />
+                                <span>Reclamo #{reclamo.id}</span>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <span>📅</span>
+                                <span>
+                                  {new Date(reclamo.creadoEn).toLocaleDateString('es-PE', {
+                                    day: '2-digit',
+                                    month: '2-digit',
+                                    year: 'numeric'
+                                  })} a las {new Date(reclamo.creadoEn).toLocaleTimeString('es-PE', {
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                  })}
+                                </span>
+                              </div>
+                              {reclamo.pedidoId && (
+                                <div className="flex items-center gap-1">
+                                  <Package className="h-4 w-4" />
+                                  <span>Pedido #{reclamo.pedidoId}</span>
+                                </div>
+                              )}
+                              {reclamo.comentarios && reclamo.comentarios.length > 0 && (
+                                <div className="flex items-center gap-1">
+                                  <MessageSquare className="h-4 w-4" />
+                                  <span>{reclamo.comentarios.length} comentario{reclamo.comentarios.length > 1 ? 's' : ''}</span>
+                                </div>
+                              )}
+                            </div>
+                            
+                            <div className="text-xs text-gray-400">
+                              {reclamo.actualizadoEn && reclamo.actualizadoEn !== reclamo.creadoEn && (
+                                <span>
+                                  Actualizado: {new Date(reclamo.actualizadoEn).toLocaleDateString('es-PE')}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 
@@ -781,9 +1034,7 @@ const ProfilePage: React.FC = () => {
                                   {resena.calificacion}/5
                                 </span>
                               </div>
-                              {resena.comentario && (
-                                <p className="text-sm text-gray-600 mt-2">{resena.comentario}</p>
-                              )}                              <p className="text-sm text-gray-500 mt-1">
+                              <p className="text-sm text-gray-500 mt-1">
                                 {new Date(resena.creadoEn).toLocaleDateString('es-PE', {
                                   year: 'numeric',
                                   month: 'long',
@@ -803,10 +1054,8 @@ const ProfilePage: React.FC = () => {
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => {
-                                // TODO: Implementar editar reseña
-                                console.log('Editar reseña:', resena.id);
-                              }}
+                              onClick={() => handleOpenReviewDetails(resena)}
+                              className=" text-[#CC9F53] hover:bg-[#CC9F53] hover:text-white"
                             >
                               <Eye className="h-4 w-4" />
                             </Button>
@@ -841,6 +1090,89 @@ const ProfilePage: React.FC = () => {
             }}
             onSave={handleSaveAddress}
             isEdit={!!selectedAddress}
+          />
+
+          {/* Modal de detalles del pedido */}
+          <PedidoDetailModal
+            isOpen={isPedidoDetailModalOpen}
+            onClose={() => {
+              setIsPedidoDetailModalOpen(false);
+              setSelectedPedido(null);
+            }}
+            pedido={selectedPedido}
+            onCreateReview={handleCreateReview}
+            onCreateClaim={handleCreateClaim}
+          />
+
+          {/* Modal de crear reseña */}
+          {reviewData && (
+            <CreateReviewModal
+              isOpen={isCreateReviewModalOpen}
+              onClose={() => {
+                setIsCreateReviewModalOpen(false);
+                setReviewData(null);
+              }}
+              onSubmit={handleSubmitReview}
+              productoId={reviewData.productoId}
+              productoNombre={reviewData.productoNombre}
+            />
+          )}
+
+          {/* Modal de crear reclamo */}
+          {claimData && (
+            <CreateClaimModal
+              isOpen={isCreateClaimModalOpen}
+              onClose={() => {
+                setIsCreateClaimModalOpen(false);
+                setClaimData(null);
+              }}
+              onSubmit={handleSubmitClaim}
+              pedidoId={claimData?.pedidoId}
+              pedidoNumero={claimData?.pedidoNumero}
+            />
+          )}
+
+          {/* Modal de detalle de reclamo */}
+          <ClaimDetailModal
+            isOpen={isClaimDetailModalOpen}
+            onClose={() => {
+              setIsClaimDetailModalOpen(false);
+              setSelectedReclamo(null);
+            }}
+            reclamo={selectedReclamo}
+            onReclamoUpdate={() => {
+              // Recargar la lista de reclamos cuando se agregue un comentario
+              if (activeTab === 'claims') {
+                reloadReclamos();
+              }
+            }}
+          />
+
+          {/* Modal de detalle de reseña */}
+          <ReviewDetailModal
+            isOpen={isReviewDetailModalOpen}
+            onClose={() => {
+              setIsReviewDetailModalOpen(false);
+              setSelectedResena(null);
+            }}
+            resena={selectedResena}
+          />
+
+          {/* Modal de confirmación de newsletter */}
+          <NewsletterModal
+            isOpen={isNewsletterModalOpen}
+            onClose={() => setIsNewsletterModalOpen(false)}
+            onConfirm={confirmNewsletterAction}
+            type={newsletterModalType}
+            isLoading={isLoadingNewsletter}
+          />
+
+          {/* Modal de confirmación de desactivación de cuenta */}
+          <DeactivateAccountModal
+            isOpen={isDeactivateModalOpen}
+            onClose={() => setIsDeactivateModalOpen(false)}
+            onConfirm={confirmDeactivateAccount}
+            isLoading={isDeactivating}
           />
         </div>
       </div>

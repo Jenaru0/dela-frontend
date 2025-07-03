@@ -1,8 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { categoriasService } from '@/services/categorias.service';
-import { productosService } from '@/services/productos.service';
+import { estadisticasService } from '@/services/estadisticas.service';
 
 interface Stats {
   totalProductos: number;
@@ -24,18 +23,11 @@ export const useStats = () => {
       try {
         setStats(prev => ({ ...prev, loading: true, error: null }));
 
-        // Obtener categorías activas
-        const categoriasResponse = await categoriasService.obtenerActivas();
-        const categorias = categoriasResponse.data;        // Obtener productos públicos para conocer el total
-        const productosResponse = await productosService.obtenerPublicos(
-          undefined, // filters
-          1, // page
-          1  // limit - Solo necesitamos el total, no los productos
-        );
+        const estadisticas = await estadisticasService.obtener();
 
         setStats({
-          totalProductos: productosResponse.meta.total,
-          totalCategorias: categorias.length,
+          totalProductos: estadisticas.totalProductos,
+          totalCategorias: estadisticas.totalCategorias,
           loading: false,
           error: null,
         });

@@ -53,6 +53,7 @@ const Footer: React.FC = () => {
     { name: 'Política de Cookies', href: '/cookies' },
     { name: 'Devoluciones', href: '/devoluciones' },
   ];
+
   return (
     <footer className="bg-[#3A3A3A] text-white">
       {/* Main Footer */}
@@ -62,7 +63,8 @@ const Footer: React.FC = () => {
             {/* Company Info */}
             <div className="lg:col-span-1">
               <Link href="/" className="flex items-center space-x-3 mb-6">
-                <div className="relative h-12 w-12">                  <Image
+                <div className="relative h-12 w-12">
+                  <Image
                     src="/images/logo-white.svg"
                     alt="DELA Logo"
                     fill
@@ -74,7 +76,7 @@ const Footer: React.FC = () => {
                   />
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold">
+                  <h2 className="text-xl font-bold !text-white">
                     <span className="text-[#CC9F53]">DELA</span>
                   </h2>
                   <p className="text-sm text-gray-400">Deleites del Valle</p>
@@ -118,10 +120,14 @@ const Footer: React.FC = () => {
                   </span>
                 </div>
               </div>
-            </div>            {/* Product Categories */}
-            <div>              <h3 className="text-lg font-semibold mb-6 !text-white">
+            </div>
+
+            {/* Product Categories */}
+            <div>
+              <h3 className="text-lg font-semibold !text-white mb-6">
                 Nuestros Productos
-              </h3>              <ul className="space-y-3">
+              </h3>
+              <ul className="space-y-3">
                 {productCategories.map((category) => (
                   <li key={category.name}>
                     <Link
@@ -133,8 +139,11 @@ const Footer: React.FC = () => {
                   </li>
                 ))}
               </ul>
-            </div>            {/* Quick Links */}
-            <div>              <h3 className="text-lg font-semibold mb-6 !text-white">
+            </div>
+
+            {/* Quick Links */}
+            <div>
+              <h3 className="text-lg font-semibold !text-white mb-6">
                 Enlaces Rápidos
               </h3>
               <ul className="space-y-3">
@@ -149,8 +158,11 @@ const Footer: React.FC = () => {
                   </li>
                 ))}
               </ul>
-            </div>            {/* Social & Legal */}
-            <div>              <h3 className="text-lg font-semibold mb-6 !text-white">
+            </div>
+
+            {/* Social & Legal */}
+            <div>
+              <h3 className="text-lg font-semibold !text-white mb-6">
                 Síguenos
               </h3>
 
@@ -163,11 +175,15 @@ const Footer: React.FC = () => {
                     className="bg-gray-700 hover:bg-[#CC9F53] p-2 rounded-full transition-colors duration-200"
                     aria-label={social.label}
                   >
-                    <social.icon className="h-5 w-5" />
+                    <social.icon className="h-5 w-5 text-white" />
                   </Link>
                 ))}
-              </div>              {/* Legal Links */}
-              <h4 className="text-sm font-semibold mb-4 !text-white">Legal</h4>
+              </div>
+
+              {/* Legal Links */}
+              <h4 className="text-sm font-semibold !text-white mb-4">
+                Información Legal
+              </h4>
               <ul className="space-y-2">
                 {legalLinks.map((link) => (
                   <li key={link.name}>
@@ -190,13 +206,13 @@ const Footer: React.FC = () => {
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
             <div className="text-sm text-gray-400">
-              © 2025 DELA Corp SAC. Todos los derechos reservados. RUC:
-              20000000001
+              © 2025 DELA Corp SAC. Todos los derechos reservados. RUC: 20000000001
             </div>
 
             {/* Payment Methods */}
             <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-400">Métodos de pago:</span>              <div className="flex space-x-2">
+              <span className="text-sm text-gray-400">Métodos de pago:</span>
+              <div className="flex space-x-2">
                 <div className="bg-white rounded p-1 w-10 h-7 flex items-center justify-center">
                   <div 
                     className="w-8 h-5 bg-contain bg-center bg-no-repeat"

@@ -6,6 +6,8 @@ export interface UsuarioResponse {
   apellidos?: string;
   celular?: string;
   tipoUsuario: 'CLIENTE' | 'ADMIN';
+  activo?: boolean;
+  suscrito_newsletter?: boolean;
   creadoEn?: string;
   actualizadoEn?: string;
 }
@@ -18,7 +20,18 @@ export interface RespuestaRegistro {
 export interface RespuestaInicioSesion {
   mensaje: string;
   token_acceso: string;
+  refresh_token: string;
   usuario: UsuarioResponse;
+}
+
+export interface RespuestaRefreshToken {
+  mensaje: string;
+  token_acceso: string;
+  refresh_token: string;
+}
+
+export interface RefreshTokenDto {
+  refresh_token: string;
 }
 
 // DTOs para las requests

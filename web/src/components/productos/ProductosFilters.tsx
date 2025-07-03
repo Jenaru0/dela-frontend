@@ -1,5 +1,5 @@
-import React from 'react';
-import { X } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { X, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/input';
 import { FilterState, Categoria } from '@/types/productos';
@@ -18,7 +18,87 @@ const ProductosFilters: React.FC<ProductosFiltersProps> = ({
   activeFiltersCount,
   onFilterChange,
   onClearFilters,
-}) => {  return (
+}) => {
+  const [priceError, setPriceError] = useState<string>('');
+
+  // Validación del rango de precios
+  const validatePriceRange = (minValue: string, maxValue: string) => {
+    const min = parseFloat(minValue);
+    const max = parseFloat(maxValue);
+
+    // Si ambos están vacíos, no hay error
+    if (!minValue && !maxValue) {
+      setPriceError('');
+      return true;
+    }
+
+    // Validar valores negativos
+    if (minValue && min < 0) {
+      setPriceError('El precio mínimo no puede ser negativo');
+      return false;
+    }
+
+    if (maxValue && max < 0) {
+      setPriceError('El precio máximo no puede ser negativo');
+      return false;
+    }
+
+    // Validar que el mínimo no sea mayor que el máximo
+    if (minValue && maxValue && min > max) {
+      setPriceError('El precio mínimo no puede ser mayor que el máximo');
+      return false;
+    }
+
+    setPriceError('');
+    return true;
+  };
+
+  // Manejar cambios en el precio mínimo
+  const handlePriceMinChange = (value: string) => {
+    // Solo permitir números y punto decimal
+    const numericValue = value.replace(/[^0-9.]/g, '');
+    
+    // Evitar múltiples puntos decimales
+    const parts = numericValue.split('.');
+    const validValue = parts.length > 2 ? parts[0] + '.' + parts.slice(1).join('') : numericValue;
+    
+    // Si el valor es válido, actualizar
+    if (validatePriceRange(validValue, filters.priceMax)) {
+      onFilterChange('priceMin', validValue);
+    } else {
+      // Actualizar solo si no es negativo
+      const numValue = parseFloat(validValue);
+      if (!validValue || numValue >= 0) {
+        onFilterChange('priceMin', validValue);
+      }
+    }
+  };
+
+  // Manejar cambios en el precio máximo
+  const handlePriceMaxChange = (value: string) => {
+    // Solo permitir números y punto decimal
+    const numericValue = value.replace(/[^0-9.]/g, '');
+    
+    // Evitar múltiples puntos decimales
+    const parts = numericValue.split('.');
+    const validValue = parts.length > 2 ? parts[0] + '.' + parts.slice(1).join('') : numericValue;
+    
+    // Si el valor es válido, actualizar
+    if (validatePriceRange(filters.priceMin, validValue)) {
+      onFilterChange('priceMax', validValue);
+    } else {
+      // Actualizar solo si no es negativo
+      const numValue = parseFloat(validValue);
+      if (!validValue || numValue >= 0) {
+        onFilterChange('priceMax', validValue);
+      }
+    }
+  };
+
+  // Validar cuando cambien los filtros externos
+  useEffect(() => {
+    validatePriceRange(filters.priceMin, filters.priceMax);
+  }, [filters.priceMin, filters.priceMax]);  return (
     <div className="w-full lg:w-80">
       <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6 sticky top-4">
         <div className="flex items-center justify-between mb-6">
@@ -85,24 +165,34 @@ const ProductosFilters: React.FC<ProductosFiltersProps> = ({
               <div className="relative">
                 <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm">S/</span>
                 <Input
-                  type="number"
+                  type="text"
                   placeholder="Mín"
                   value={filters.priceMin}
-                  onChange={(e) => onFilterChange('priceMin', e.target.value)}
-                  className="pl-8 h-10 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                  onChange={(e) => handlePriceMinChange(e.target.value)}
+                  className={`pl-8 h-10 border-gray-300 focus:border-blue-500 focus:ring-blue-500 ${
+                    priceError ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : ''
+                  }`}
                 />
               </div>
               <div className="relative">
                 <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm">S/</span>
                 <Input
-                  type="number"
+                  type="text"
                   placeholder="Máx"
                   value={filters.priceMax}
-                  onChange={(e) => onFilterChange('priceMax', e.target.value)}
-                  className="pl-8 h-10 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                  onChange={(e) => handlePriceMaxChange(e.target.value)}
+                  className={`pl-8 h-10 border-gray-300 focus:border-blue-500 focus:ring-blue-500 ${
+                    priceError ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : ''
+                  }`}
                 />
               </div>
             </div>
+            {priceError && (
+              <div className="mt-2 flex items-center text-red-600 text-xs">
+                <AlertCircle className="h-3 w-3 mr-1 flex-shrink-0" />
+                <span>{priceError}</span>
+              </div>
+            )}
           </div>
 
           {/* Opciones adicionales */}

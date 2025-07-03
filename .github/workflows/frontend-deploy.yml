@@ -6,10 +6,10 @@ name: 🚀 Frontend CI/CD - Dokploy
 on:
   push:
     branches:
-      - frontend/production
+      - main
   pull_request:
     branches:
-      - frontend/production
+      - main
   workflow_dispatch: # Permite ejecutar manualmente
 
 env:
@@ -54,7 +54,7 @@ jobs:
     name: 🏗️ Build & Deploy
     runs-on: ubuntu-latest
     needs: validate
-    if: github.ref == 'refs/heads/frontend/production' && github.event_name == 'push'
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
 
     steps:
       - name: 📂 Checkout Code

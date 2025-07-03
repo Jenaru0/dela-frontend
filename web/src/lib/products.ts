@@ -13,6 +13,7 @@
     isNew?: boolean;
     isFeatured?: boolean;
     stock?: number;
+    stockMinimo?: number;
   }
 
   export const products: Product[] = [

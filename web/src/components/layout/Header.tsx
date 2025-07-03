@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
+import { useUserDataRefresh } from '@/hooks/useUserDataRefresh';
 import AuthModal from '@/components/auth/AuthModal';
 import { useCart } from '@/contexts/CarContext';
 import { useFavorites } from '@/contexts/FavoritoContext';
@@ -31,13 +32,42 @@ const Header: React.FC = () => {
     'login'
   );
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   const { isAuthenticated, usuario, cerrarSesion, isLoading } = useAuth();
-  const { cart } = useCart();
+  const { cart, loadCartIfNeeded } = useCart();
   const { favorites } = useFavorites();
   const router = useRouter();
 
-  const cartItemsCount = cart.reduce((acc, item) => acc + item.quantity, 0);  useEffect(() => {
+  // Auto-refresh de datos del usuario (solo si está autenticado, sin refresh automático periódico)
+  useUserDataRefresh({ 
+    enabled: isAuthenticated && !!usuario,
+    onMount: false, // No refrescar al montar en header para evitar doble request
+    interval: 0 // Sin auto-refresh periódico
+  });
+
+  const cartItemsCount = cart.reduce((acc, item) => acc + item.quantity, 0);
+
+  const navigation = [
+    { name: 'Inicio', href: '/' },
+    { name: 'Productos', href: '/productos' },
+    { name: 'Categorías', href: '/#categorias', isScroll: true },
+    { name: 'Nosotros', href: '/nosotros' },
+    { name: 'Contacto', href: '/contacto' },
+  ];
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Cargar carrito cuando el usuario esté autenticado y el componente esté montado
+  useEffect(() => {
+    if (mounted && isAuthenticated && usuario) {
+      loadCartIfNeeded();
+    }
+  }, [mounted, isAuthenticated, usuario, loadCartIfNeeded]);
+
+  useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 10);
     };
@@ -86,14 +116,6 @@ const Header: React.FC = () => {
     };
   }, []);
 
-  const navigation = [
-    { name: 'Inicio', href: '/' },
-    { name: 'Productos', href: '/productos' },
-    { name: 'Categorías', href: '/#categorias', isScroll: true },
-    { name: 'Nosotros', href: '/nosotros' },
-    { name: 'Contacto', href: '/contacto' },
-  ];
-
   const handleNavClick = (
     e: React.MouseEvent<HTMLAnchorElement>,
     item: { name: string; href: string; isScroll?: boolean }
@@ -128,12 +150,143 @@ const Header: React.FC = () => {
     } catch (error) {
       console.error('Error al cerrar sesión:', error);
     }
-  };  const userMenuItems = [
+  };
+
+  const userMenuItems = [
     { icon: User, label: 'Mi Perfil', href: '/perfil' },
     ...(usuario?.tipoUsuario === 'ADMIN'
       ? [{ icon: Users, label: 'Panel Administrativo', href: '/admin' }]
       : []),
   ];
+
+  // Evitar hidratación si no está montado
+  if (!mounted) {
+    return (
+      <>
+        {/* Top Bar */}
+        <div className="bg-[#3A3A3A] text-white text-sm py-2">
+          <div className="container mx-auto px-4 flex justify-between items-center">
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2">
+                <Phone className="h-4 w-4" />
+                <span>+51 912 949 652</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Mail className="h-4 w-4" />
+                <span>comercial@dela.com.pe</span>
+              </div>
+            </div>
+            <div className="hidden md:block">
+              <span>🚚 Envíos a todo Perú</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Main Header */}
+        <header className="sticky top-0 z-50 w-full bg-white border-b border-[#E6D5A8]">
+          <div className="container mx-auto px-4">
+            <div className="flex items-center justify-between h-16 md:h-20">
+              {/* Logo */}
+              <Link href="/" className="flex items-center space-x-3">
+                <div className="relative h-10 w-10 md:h-12 md:w-12">
+                  <Image
+                    src="https://dela.com.pe/img/lodo-dela-header.png"
+                    alt="DELA Logo"
+                    fill
+                    sizes="(max-width: 768px) 40px, 48px"
+                    className="object-contain"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src =
+                        '/images/logo-fallback.png';
+                    }}
+                  />
+                </div>
+                <div className="hidden sm:block">
+                  <h1 className="text-xl md:text-2xl font-bold text-[#3A3A3A]">
+                    <span className="text-[#CC9F53]">DELA</span>
+                    <span className="text-sm md:text-base font-normal text-gray-600 block leading-none">
+                      Deleites del Valle
+                    </span>
+                  </h1>
+                </div>
+              </Link>
+
+              {/* Desktop Navigation */}
+              <nav className="hidden lg:flex items-center space-x-8 lg:ml-8">
+                {navigation.map((item) => (
+                  <Link
+                    key={item.name}
+                    href={item.href}
+                    className="text-gray-700 hover:text-[#CC9F53] font-medium transition-colors duration-200 relative group"
+                  >
+                    {item.name}
+                    <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#CC9F53] transition-all duration-300 group-hover:w-full"></span>
+                  </Link>
+                ))}
+              </nav>
+
+              {/* Search Bar (Desktop) */}
+              <div className="hidden md:flex items-center flex-1 max-w-md mx-4 lg:mx-8">
+                <SmartSearchBar className="w-full" />
+              </div>
+              
+              {/* Action Buttons */}
+              <div className="flex items-center space-x-2 md:space-x-3">
+                {/* Favoritos */}
+                <div className="w-10 h-10">
+                  <Link href="/favoritos">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="relative cursor-pointer w-10 h-10"
+                    >
+                      <Heart className="h-5 w-5" />
+                    </Button>
+                  </Link>
+                </div>
+
+                {/* Carrito */}
+                <div className="w-10 h-10">
+                  <Link href="/carrito">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="relative cursor-pointer w-10 h-10"
+                    >
+                      <ShoppingCart className="h-5 w-5" />
+                    </Button>
+                  </Link>
+                </div>
+
+                {/* Usuario / Autenticación */}
+                <div className="w-10 h-10">
+                  <div className="flex items-center justify-center w-10 h-10">
+                    <div className="w-6 h-6 bg-gray-200 rounded-full animate-pulse"></div>
+                  </div>
+                </div>
+
+                {/* Botón menú móvil */}
+                <div className="lg:hidden w-10 h-10">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="w-10 h-10"
+                  >
+                    <Menu className="h-6 w-6" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            {/* Búsqueda móvil */}
+            <div className="md:hidden pb-4">
+              <SmartSearchBar className="w-full" />
+            </div>
+          </div>
+        </header>
+      </>
+    );
+  }
 
   return (
     <>
@@ -151,7 +304,7 @@ const Header: React.FC = () => {
             </div>
           </div>
           <div className="hidden md:block">
-            <span>🚚 Envío gratis en pedidos superiores a S/100</span>
+            <span>🚚 Envíos a todo Perú</span>
           </div>
         </div>
       </div>
@@ -216,7 +369,7 @@ const Header: React.FC = () => {
                     className="relative cursor-pointer w-10 h-10"
                   >
                     <Heart className="h-5 w-5" />
-                    {favorites.length > 0 && (
+                    {mounted && favorites.length > 0 && (
                       <Badge
                         variant="default"
                         className="absolute -top-2 -right-2 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs bg-[#CC9F53] hover:bg-[#B88D42]"
@@ -237,7 +390,7 @@ const Header: React.FC = () => {
                     className="relative cursor-pointer w-10 h-10"
                   >
                     <ShoppingCart className="h-5 w-5" />
-                    {cartItemsCount > 0 && (
+                    {mounted && cartItemsCount > 0 && (
                       <Badge
                         variant="default"
                         className="absolute -top-2 -right-2 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs bg-[#CC9F53] hover:bg-[#B88D42]"
@@ -249,7 +402,7 @@ const Header: React.FC = () => {
                 </Link>
               </div>              {/* Usuario / Autenticación */}
               <div className="w-10 h-10">
-                {isLoading ? (
+                {!mounted || isLoading ? (
                   <div className="flex items-center justify-center w-10 h-10">
                     <div className="w-6 h-6 bg-gray-200 rounded-full animate-pulse"></div>
                   </div>
@@ -372,7 +525,7 @@ const Header: React.FC = () => {
                   </Link>
                 ))}
 
-                {!isLoading && isAuthenticated && usuario && (
+                {!mounted ? null : !isLoading && isAuthenticated && usuario && (
                   <div className="pt-4 border-t border-gray-100">
                     <div className="flex items-center space-x-3 p-3 bg-[#F5EFD7]/60 rounded-lg mb-3">                      <div className="flex items-center justify-center w-10 h-10 bg-[#CC9F53] text-white rounded-full text-sm font-medium backdrop-blur-sm border border-white/20 shadow-sm">
                         {usuario.nombres?.charAt(0)?.toUpperCase() || 'U'}

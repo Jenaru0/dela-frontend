@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import CatalogoCard from './CatalogoCard';
 import { Producto } from '@/types/productos';
+import { getProductMainImage } from '@/lib/productImageUtils';
 
 interface CatalogoGridProps {
   productos: Producto[];
@@ -16,6 +17,8 @@ type CatalogoCardProduct = {
   priceFormatted?: string;
   shortDescription?: string;
   destacado?: boolean;
+  stock?: number;
+  stockMinimo?: number;
 };
 
 const mapProductoToCatalogoCard = (
@@ -23,10 +26,7 @@ const mapProductoToCatalogoCard = (
 ): CatalogoCardProduct => ({
   id: producto.id,
   name: producto.nombre,
-  image:
-    producto.imagenes.find((img) => img.principal)?.url ||
-    producto.imagenes[0]?.url ||
-    '/images/product-placeholder.png',
+  image: getProductMainImage(producto),
   category: producto.categoria?.nombre || '',
   price: producto.precioUnitario ? Number(producto.precioUnitario) : undefined,
   priceFormatted: producto.precioUnitario
@@ -34,6 +34,8 @@ const mapProductoToCatalogoCard = (
     : 'Precio no disponible',
   shortDescription: producto.descripcion,
   destacado: producto.destacado,
+  stock: producto.stock,
+  stockMinimo: (producto as { stockMinimo?: number }).stockMinimo,
 });
 
 const PAGE_SIZE = 12;

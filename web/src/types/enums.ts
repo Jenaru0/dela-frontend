@@ -1,7 +1,7 @@
 // Enums para Estados y Tipos
 export enum TipoUsuario {
   CLIENTE = 'CLIENTE',
-  ADMIN = 'ADMIN'
+  ADMIN = 'ADMIN',
 }
 
 export enum EstadoPedido {
@@ -10,36 +10,32 @@ export enum EstadoPedido {
   PROCESANDO = 'PROCESANDO',
   ENVIADO = 'ENVIADO',
   ENTREGADO = 'ENTREGADO',
-  CANCELADO = 'CANCELADO'
+  CANCELADO = 'CANCELADO',
 }
 
 export enum MetodoPago {
-  EFECTIVO = 'EFECTIVO',
-  TARJETA_CREDITO = 'TARJETA_CREDITO',
-  TARJETA_DEBITO = 'TARJETA_DEBITO',
-  TRANSFERENCIA = 'TRANSFERENCIA',
-  YAPE = 'YAPE',
-  PLIN = 'PLIN'
+  visa = 'visa',
+  master = 'master',
+  amex = 'amex',
 }
 
 export enum MetodoEnvio {
   RECOJO_TIENDA = 'RECOJO_TIENDA',
   DELIVERY = 'DELIVERY',
-  ENVIO_NACIONAL = 'ENVIO_NACIONAL'
 }
 
 export enum EstadoPago {
   PENDIENTE = 'PENDIENTE',
   COMPLETADO = 'COMPLETADO',
   RECHAZADO = 'RECHAZADO',
-  REEMBOLSADO = 'REEMBOLSADO'
+  REEMBOLSADO = 'REEMBOLSADO',
 }
 
 export enum EstadoReclamo {
   ABIERTO = 'ABIERTO',
   EN_PROCESO = 'EN_PROCESO',
   RESUELTO = 'RESUELTO',
-  RECHAZADO = 'RECHAZADO'
+  RECHAZADO = 'RECHAZADO',
 }
 
 export enum TipoReclamo {
@@ -49,7 +45,7 @@ export enum TipoReclamo {
   COBRO_INCORRECTO = 'COBRO_INCORRECTO',
   SOLICITUD_CANCELACION = 'SOLICITUD_CANCELACION',
   SERVICIO_CLIENTE = 'SERVICIO_CLIENTE',
-  OTRO = 'OTRO'
+  OTRO = 'OTRO',
 }
 
 export const TipoReclamoLabels = {
@@ -59,33 +55,33 @@ export const TipoReclamoLabels = {
   [TipoReclamo.COBRO_INCORRECTO]: 'Cobro Incorrecto',
   [TipoReclamo.SOLICITUD_CANCELACION]: 'Solicitud de Cancelación',
   [TipoReclamo.SERVICIO_CLIENTE]: 'Servicio al Cliente',
-  [TipoReclamo.OTRO]: 'Otro'
+  [TipoReclamo.OTRO]: 'Otro',
 };
 
 export enum PrioridadReclamo {
   BAJA = 'BAJA',
   MEDIA = 'MEDIA',
   ALTA = 'ALTA',
-  CRITICA = 'CRITICA'
+  CRITICA = 'CRITICA',
 }
 
 export enum EstadoResena {
   PENDIENTE = 'PENDIENTE',
   APROBADO = 'APROBADO',
-  RECHAZADO = 'RECHAZADO'
+  RECHAZADO = 'RECHAZADO',
 }
 
 export enum TipoPromocion {
   PORCENTAJE = 'PORCENTAJE',
   MONTO_FIJO = 'MONTO_FIJO',
   ENVIO_GRATIS = 'ENVIO_GRATIS',
-  PRODUCTO_GRATIS = 'PRODUCTO_GRATIS'
+  PRODUCTO_GRATIS = 'PRODUCTO_GRATIS',
 }
 
 export enum EstadoPromocion {
   ACTIVO = 'ACTIVO',
   INACTIVO = 'INACTIVO',
-  EXPIRADO = 'EXPIRADO'
+  EXPIRADO = 'EXPIRADO',
 }
 
 // Interfaces para los datos
@@ -170,49 +166,45 @@ export const EstadoPedidoLabels = {
   [EstadoPedido.PROCESANDO]: 'Procesando',
   [EstadoPedido.ENVIADO]: 'Enviado',
   [EstadoPedido.ENTREGADO]: 'Entregado',
-  [EstadoPedido.CANCELADO]: 'Cancelado'
+  [EstadoPedido.CANCELADO]: 'Cancelado',
 };
 
 export const MetodoPagoLabels = {
-  [MetodoPago.EFECTIVO]: 'Efectivo',
-  [MetodoPago.TARJETA_CREDITO]: 'Tarjeta de Crédito',
-  [MetodoPago.TARJETA_DEBITO]: 'Tarjeta de Débito',
-  [MetodoPago.TRANSFERENCIA]: 'Transferencia Bancaria',
-  [MetodoPago.YAPE]: 'Yape',
-  [MetodoPago.PLIN]: 'Plin'
+  [MetodoPago.visa]: 'Visa',
+  [MetodoPago.master]: 'MasterCard',
+  [MetodoPago.amex]: 'American Express',
 };
 
 export const MetodoEnvioLabels = {
   [MetodoEnvio.RECOJO_TIENDA]: 'Recojo en tienda',
   [MetodoEnvio.DELIVERY]: 'Delivery',
-  [MetodoEnvio.ENVIO_NACIONAL]: 'Envío nacional'
 };
 
 export const EstadoPagoLabels = {
   [EstadoPago.PENDIENTE]: 'Pendiente',
   [EstadoPago.COMPLETADO]: 'Completado',
   [EstadoPago.RECHAZADO]: 'Rechazado',
-  [EstadoPago.REEMBOLSADO]: 'Reembolsado'
+  [EstadoPago.REEMBOLSADO]: 'Reembolsado',
 };
 
 export const EstadoReclamoLabels = {
   [EstadoReclamo.ABIERTO]: 'Abierto',
   [EstadoReclamo.EN_PROCESO]: 'En proceso',
   [EstadoReclamo.RESUELTO]: 'Resuelto',
-  [EstadoReclamo.RECHAZADO]: 'Rechazado'
+  [EstadoReclamo.RECHAZADO]: 'Rechazado',
 };
 
 export const PrioridadReclamoLabels = {
   [PrioridadReclamo.BAJA]: 'Baja',
   [PrioridadReclamo.MEDIA]: 'Media',
   [PrioridadReclamo.ALTA]: 'Alta',
-  [PrioridadReclamo.CRITICA]: 'Crítica'
+  [PrioridadReclamo.CRITICA]: 'Crítica',
 };
 
 export const EstadoResenaLabels = {
   [EstadoResena.PENDIENTE]: 'Pendiente',
   [EstadoResena.APROBADO]: 'Aprobado',
-  [EstadoResena.RECHAZADO]: 'Rechazado'
+  [EstadoResena.RECHAZADO]: 'Rechazado',
 };
 
 // Colores para los estados
@@ -222,26 +214,26 @@ export const EstadoPedidoColors = {
   [EstadoPedido.PROCESANDO]: 'bg-orange-100 text-orange-800',
   [EstadoPedido.ENVIADO]: 'bg-purple-100 text-purple-800',
   [EstadoPedido.ENTREGADO]: 'bg-green-100 text-green-800',
-  [EstadoPedido.CANCELADO]: 'bg-red-100 text-red-800'
+  [EstadoPedido.CANCELADO]: 'bg-red-100 text-red-800',
 };
 
 export const EstadoPagoColors = {
   [EstadoPago.PENDIENTE]: 'bg-yellow-100 text-yellow-800',
   [EstadoPago.COMPLETADO]: 'bg-green-100 text-green-800',
   [EstadoPago.RECHAZADO]: 'bg-red-100 text-red-800',
-  [EstadoPago.REEMBOLSADO]: 'bg-gray-100 text-gray-800'
+  [EstadoPago.REEMBOLSADO]: 'bg-gray-100 text-gray-800',
 };
 
 export const EstadoReclamoColors = {
   [EstadoReclamo.ABIERTO]: 'bg-red-100 text-red-800',
   [EstadoReclamo.EN_PROCESO]: 'bg-yellow-100 text-yellow-800',
   [EstadoReclamo.RESUELTO]: 'bg-green-100 text-green-800',
-  [EstadoReclamo.RECHAZADO]: 'bg-gray-100 text-gray-800'
+  [EstadoReclamo.RECHAZADO]: 'bg-gray-100 text-gray-800',
 };
 
 export const PrioridadReclamoColors = {
   [PrioridadReclamo.BAJA]: 'bg-green-100 text-green-800',
   [PrioridadReclamo.MEDIA]: 'bg-yellow-100 text-yellow-800',
   [PrioridadReclamo.ALTA]: 'bg-orange-100 text-orange-800',
-  [PrioridadReclamo.CRITICA]: 'bg-red-100 text-red-800'
+  [PrioridadReclamo.CRITICA]: 'bg-red-100 text-red-800',
 };

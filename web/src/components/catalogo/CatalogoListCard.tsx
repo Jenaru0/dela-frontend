@@ -7,6 +7,7 @@ import { Star, Heart, ShoppingBag } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useFavorites } from '@/contexts/FavoritoContext';
 import { useAuthModalGlobal } from '@/contexts/AuthModalContext';
+import { useStockAlertGlobal } from '@/contexts/StockAlertContext';
 
 interface CatalogoListCardProps {
   product: {
@@ -18,6 +19,8 @@ interface CatalogoListCardProps {
     priceFormatted?: string;
     shortDescription?: string;
     destacado?: boolean;
+    stock?: number;
+    stockMinimo?: number;
   };
   showFavorite?: boolean;
   showStar?: boolean;
@@ -37,6 +40,7 @@ const CatalogoListCard: React.FC<CatalogoListCardProps> = ({
   const { isAuthenticated } = useAuth();
   const { addFavorite, removeFavorite, isFavorite } = useFavorites();
   const { open: openAuthModal } = useAuthModalGlobal();
+  const { showError } = useStockAlertGlobal();
   const fav = isFavorite(product.id.toString());
   const [isAddingToCart, setIsAddingToCart] = useState(false);
 
@@ -68,6 +72,12 @@ const CatalogoListCard: React.FC<CatalogoListCardProps> = ({
         await onAddToCart(product);
       } catch (error) {
         console.error('Error adding to cart:', error);
+        // El error ya se maneja en el componente padre que define onAddToCart
+        // Solo mostramos el modal si hay un error inesperado aquí
+        showError(
+          'Error al agregar al carrito',
+          'Error inesperado. Por favor, intenta nuevamente.'
+        );
       } finally {
         setIsAddingToCart(false);
       }
@@ -84,9 +94,7 @@ const CatalogoListCard: React.FC<CatalogoListCardProps> = ({
           <div className="absolute left-1.5 top-1.5 z-10">
             <div className="flex items-center gap-1">
               {showStar && product.destacado && (
-                <span className="rounded-full p-0.5 bg-[#CC9F53] shadow-sm">
-                  <Star className="w-2.5 h-2.5 text-white fill-current" />
-                </span>
+                <Star className="w-3 h-3 text-[#CC9F53] fill-[#CC9F53] drop-shadow-sm" />
               )}
               <div className="text-[8px] leading-tight bg-white/90 rounded px-1 py-0.5">
                 <span className="font-bold text-[#CC9F53] block">DELA</span>
@@ -116,9 +124,37 @@ const CatalogoListCard: React.FC<CatalogoListCardProps> = ({
                 {product.name}
               </h3>
               {product.shortDescription && (
-                <p className="text-sm text-gray-600 line-clamp-1">
+                <p className="text-sm text-gray-600 line-clamp-1 mb-2">
                   {product.shortDescription}
                 </p>
+              )}
+              
+              {/* Información de stock */}
+              {product.stock !== undefined && (
+                <div className="flex items-center gap-1.5 mb-2">
+                  {product.stock > 0 ? (
+                    <>
+                      <div className={`w-2 h-2 rounded-full ${
+                        product.stock <= 5 ? 'bg-yellow-500' : 'bg-green-500'
+                      }`}></div>
+                      <span className={`text-xs font-medium ${
+                        product.stock <= 5 ? 'text-yellow-600' : 'text-green-600'
+                      }`}>
+                        {product.stock <= 5 
+                          ? `¡Solo quedan ${product.stock}!` 
+                          : `${product.stock} en stock`
+                        }
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                      <span className="text-xs text-red-600 font-medium">
+                        Sin stock
+                      </span>
+                    </>
+                  )}
+                </div>
               )}
             </div>
             
@@ -133,11 +169,13 @@ const CatalogoListCard: React.FC<CatalogoListCardProps> = ({
               {/* Botón añadir al carrito */}
               <Button
                 size="sm"
-                className="h-9 px-4 text-sm bg-[#CC9F53] hover:bg-[#b08a3c] text-white font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="h-9 px-4 text-sm bg-[#CC9F53] hover:bg-[#b08a3c] text-white font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-400"
                 onClick={handleAddToCart}
-                disabled={isAddingToCart}
+                disabled={isAddingToCart || (product.stock !== undefined && product.stock <= 0)}
                 title={
-                  isAuthenticated
+                  product.stock !== undefined && product.stock <= 0
+                    ? 'Sin stock disponible'
+                    : isAuthenticated
                     ? isAddingToCart
                       ? 'Añadiendo al carrito...'
                       : 'Añadir al carrito'
@@ -146,10 +184,18 @@ const CatalogoListCard: React.FC<CatalogoListCardProps> = ({
               >
                 <ShoppingBag className={`w-4 h-4 mr-1.5 ${isAddingToCart ? 'animate-pulse' : ''}`} />
                 <span className="hidden sm:inline">
-                  {isAddingToCart ? 'Añadiendo...' : 'Añadir al carrito'}
+                  {product.stock !== undefined && product.stock <= 0
+                    ? 'Sin stock'
+                    : isAddingToCart
+                    ? 'Añadiendo...'
+                    : 'Añadir al carrito'}
                 </span>
                 <span className="sm:hidden">
-                  {isAddingToCart ? 'Añadiendo...' : 'Añadir'}
+                  {product.stock !== undefined && product.stock <= 0
+                    ? 'Sin stock'
+                    : isAddingToCart
+                    ? 'Añadiendo...'
+                    : 'Añadir'}
                 </span>
               </Button>
             </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useReducer, useEffect, ReactNode, useState } from 'react';
+import React, { createContext, useContext, useReducer, useEffect, ReactNode, useState, useCallback } from 'react';
 import { AuthState, UsuarioResponse, InicioSesionDto, RegistroDto } from '@/types/auth';
 import { authService } from '@/services/auth.service';
 
@@ -87,6 +87,8 @@ interface AuthContextType extends AuthState {
   registrar: (datos: RegistroDto) => Promise<void>;
   cerrarSesion: () => Promise<void>;
   actualizarUsuario: (usuario: UsuarioResponse) => void;
+  renovarToken: () => Promise<void>;
+  refrescarDatosUsuario: (force?: boolean) => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -109,16 +111,65 @@ export function AuthProvider({ children }: AuthProviderProps) {
   useEffect(() => {
     if (!isHydrated) return;
 
-    const initializeAuth = () => {
+    const initializeAuth = async () => {
       try {
         const token = authService.getToken();
         const usuario = authService.getCurrentUser();
         
         if (token && usuario) {
-          dispatch({
-            type: 'SET_USER',
-            payload: { usuario, token }
-          });
+          // Intentar verificar si el token es válido, pero ser tolerante a errores de red
+          try {
+            const isValidToken = await authService.verifyToken();
+            if (isValidToken) {
+              // Token válido, establecer sesión
+              dispatch({
+                type: 'SET_USER',
+                payload: { usuario, token }
+              });
+            } else {
+              // Token definitivamente inválido (401 del backend)
+              try {
+                await authService.renovarToken();
+                const updatedToken = authService.getToken();
+                dispatch({
+                  type: 'SET_USER',
+                  payload: { usuario, token: updatedToken || token }
+                });
+              } catch {
+                // Si no se puede renovar, limpiar sesión completamente
+                authService.clearAuth();
+                dispatch({ type: 'LOGIN_FAILURE' });
+              }
+            }
+          } catch (verifyError) {
+            // Error de red u otro error del servidor
+            const errorMessage = verifyError instanceof Error ? verifyError.message : String(verifyError);
+            
+            // Si es un error específico que indica token inválido, limpiar sesión
+            if (errorMessage.includes('401') || errorMessage.includes('Unauthorized')) {
+              authService.clearAuth();
+              dispatch({ type: 'LOGIN_FAILURE' });
+            } else {
+              // Para otros errores (red, servidor caído), mantener sesión temporal
+              dispatch({
+                type: 'SET_USER',
+                payload: { usuario, token }
+              });
+              
+              // Programar un reintento después de un tiempo
+              setTimeout(async () => {
+                try {
+                  const isValidToken = await authService.verifyToken();
+                  if (!isValidToken) {
+                    authService.clearAuth();
+                    dispatch({ type: 'LOGOUT' });
+                  }
+                } catch {
+                  // Mantener sesión temporal en caso de error
+                }
+              }, 5000); // Reintentar después de 5 segundos
+            }
+          }
         } else {
           // No hay sesión guardada, terminar carga
           dispatch({ type: 'LOGIN_FAILURE' });
@@ -150,11 +201,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
     };
 
+    // Escuchar eventos de sesión expirada
+    const handleSessionExpired = () => {
+      authService.clearAuth();
+      dispatch({ type: 'LOGOUT' });
+    };
+
     initializeAuth();
     window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('auth:session-expired', handleSessionExpired);
 
     return () => {
       window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('auth:session-expired', handleSessionExpired);
     };
   }, [isHydrated]);
 
@@ -204,12 +263,76 @@ export function AuthProvider({ children }: AuthProviderProps) {
       throw error;
     }
   };
-  const actualizarUsuario = (usuario: UsuarioResponse) => {
+  const actualizarUsuario = useCallback((usuario: UsuarioResponse) => {
     // Actualizar en localStorage también
     if (typeof window !== 'undefined') {
       localStorage.setItem('usuario', JSON.stringify(usuario));
     }
     dispatch({ type: 'UPDATE_USER', payload: { usuario } });
+  }, []);
+
+  // Función para obtener datos actualizados del usuario desde el servidor
+  const refrescarDatosUsuario = useCallback(async (force: boolean = false) => {
+    if (!state.isAuthenticated || !state.usuario) return false;
+    
+    try {
+      // Llamar al endpoint /usuarios/me para obtener datos frescos
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/usuarios/me`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${authService.getToken()}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.data) {
+          const nuevosDatos = data.data;
+          const datosActuales = state.usuario;
+          
+          // Comparar datos relevantes para determinar si realmente hay cambios
+          const hayDiferencias = force || 
+            nuevosDatos.id !== datosActuales.id ||
+            nuevosDatos.email !== datosActuales.email ||
+            nuevosDatos.nombres !== datosActuales.nombres ||
+            nuevosDatos.apellidos !== datosActuales.apellidos ||
+            nuevosDatos.celular !== datosActuales.celular ||
+            nuevosDatos.activo !== datosActuales.activo ||
+            nuevosDatos.suscrito_newsletter !== datosActuales.suscrito_newsletter;
+          
+          if (hayDiferencias) {
+            // Solo actualizar si hay diferencias reales en campos relevantes
+            actualizarUsuario(nuevosDatos);
+            return true; // Indica que se actualizó
+          }
+          return false; // No hubo cambios
+        }
+      }
+      return false;
+    } catch (error) {
+      console.error('Error al refrescar datos del usuario:', error);
+      // No hacer nada si falla, mantener datos existentes
+      return false;
+    }
+  }, [state.isAuthenticated, state.usuario, actualizarUsuario]);
+
+  const renovarToken = async () => {
+    try {
+      const respuesta = await authService.renovarToken();
+      
+      dispatch({
+        type: 'SET_USER',
+        payload: {
+          usuario: state.usuario!,
+          token: respuesta.token_acceso
+        }
+      });
+    } catch (error) {
+      // Si no se puede renovar, cerrar sesión
+      dispatch({ type: 'LOGOUT' });
+      throw error;
+    }
   };
 
   const value: AuthContextType = {
@@ -218,6 +341,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     registrar,
     cerrarSesion,
     actualizarUsuario,
+    renovarToken,
+    refrescarDatosUsuario,
   };
 
   return (

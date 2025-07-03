@@ -20,6 +20,8 @@ export type CatalogoCardProduct = {
   priceFormatted?: string;
   shortDescription?: string;
   destacado?: boolean;
+  stock?: number;
+  stockMinimo?: number;
 };
 
 const CatalogoDestacadosGrid: React.FC<CatalogoDestacadosGridProps> = ({
@@ -55,14 +57,14 @@ const CatalogoDestacadosGrid: React.FC<CatalogoDestacadosGridProps> = ({
           className="!pb-16"
         >
           {productos.map((producto) => (
-            <SwiperSlide key={producto.id}>
-              <div className="h-full flex items-center justify-center">
+            <SwiperSlide key={producto.id} className="!h-auto">
+              <div className="h-full flex items-stretch">
                 <CatalogoCard
                   product={producto}
                   showStar
                   onAddToCart={onAddToCart}
                   onQuickView={() => window.location.assign(`/productos/${producto.id}`)}
-                  className="shadow-lg rounded-2xl bg-white"
+                  className="shadow-lg rounded-2xl bg-white w-full min-h-[450px] flex flex-col"
                 />
               </div>
             </SwiperSlide>

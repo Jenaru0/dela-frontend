@@ -1,4 +1,5 @@
 import { EstadoPedido, MetodoPago, MetodoEnvio } from '@/types/enums';
+import { authService } from './auth.service';
 
 export interface PaginatedResponse<T> {
   data: T[];
@@ -11,7 +12,7 @@ export interface DetallePedido {
   id: number;
   productoId: number;
   cantidad: number;
-  precio: number; // Este viene como precioUnitario del backend, mapeado a precio
+  precioUnitario: number;
   subtotal: number;
   producto: {
     id: number;
@@ -31,8 +32,8 @@ export interface Pedido {
   metodoEnvio: MetodoEnvio;
   subtotal: number;
   impuestos: number;
-  costoEnvio: number;
-  descuento: number;
+  envioMonto: number; // Cambié de costoEnvio a envioMonto para coincidir con Prisma
+  descuentoMonto: number; // Cambié de descuento a descuentoMonto
   total: number;
   promocionCodigo?: string;
   notasCliente?: string;
@@ -41,8 +42,7 @@ export interface Pedido {
   fechaEntrega?: string;
   creadoEn: string;
   actualizadoEn: string;
-  detalles: DetallePedido[];
-  detallePedidos?: DetallePedido[]; // Alias for backwards compatibility
+  detallePedidos: DetallePedido[]; // Cambié de detalles a detallePedidos
   direccion: {
     id: number;
     alias: string;
@@ -62,12 +62,14 @@ export interface Pedido {
     estado: string;
     metodoPago: string;
     referencia: string;
+    ultimosCuatroDigitos?: string;
     creadoEn: string;
   }>;
 }
 
 export interface CreatePedidoDto {
-  direccionId: number;
+  usuarioId: number;
+  direccionId: number | null; // null para recojo en tienda
   detalles: {
     productoId: number;
     cantidad: number;
@@ -147,9 +149,8 @@ class PedidosService {
   // Obtener pedido por ID
   async obtenerPorId(id: number): Promise<ApiResponse<Pedido>> {
     try {
-      const response = await fetch(`${API_BASE_URL}/pedidos/${id}`, {
+      const response = await authService.authenticatedFetch(`${API_BASE_URL}/pedidos/${id}`, {
         method: 'GET',
-        headers: this.getAuthHeaders(),
       });
 
       if (!response.ok) {
@@ -157,9 +158,9 @@ class PedidosService {
         throw new Error(errorData.message || 'Error al obtener pedido');
       }
 
-      return await response.json();
+      const data = await response.json();
+      return data;
     } catch (error) {
-      console.error('Error al obtener pedido:', error);
       throw error;
     }
   }
@@ -171,14 +172,14 @@ class PedidosService {
     search?: string,
     estado?: EstadoPedido,
     fechaInicio?: string,
-    fechaFin?: string,
+    fechaFin?: string
   ): Promise<PaginatedResponse<Pedido>> {
     try {
       const params = new URLSearchParams({
         page: page.toString(),
         limit: limit.toString(),
       });
-      
+
       if (search) params.append('search', search);
       if (estado) params.append('estado', estado);
       if (fechaInicio) params.append('fechaInicio', fechaInicio);
@@ -202,9 +203,7 @@ class PedidosService {
       console.error('Error al obtener pedidos con paginación:', error);
       throw error;
     }
-  }
-
-  // Obtener todos los pedidos para admin (sin paginación)
+  }  // Obtener todos los pedidos para admin (sin paginación)
   async obtenerTodosAdmin(): Promise<ApiResponse<Pedido[]>> {
     try {
       const response = await fetch(`${API_BASE_URL}/pedidos/admin/todos`, {
@@ -213,32 +212,56 @@ class PedidosService {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
+        let errorData;
+        try {
+          errorData = await response.json();
+        } catch {
+          throw new Error(`Error HTTP ${response.status}: ${response.statusText}`);
+        }
         throw new Error(errorData.message || 'Error al obtener pedidos');
-      }      const result = await response.json();
-      return {
-        mensaje: 'Pedidos obtenidos correctamente',
-        data: result.data || result
-      };
+      }
+      
+      let result;
+      try {
+        result = await response.json();
+      } catch {
+        throw new Error('Error al procesar la respuesta del servidor');
+      }
+      
+      // El backend ya devuelve el formato correcto {mensaje, data}
+      return result;
     } catch (error) {
       console.error('Error al obtener pedidos:', error);
       throw error;
     }
-  }
-
-  // Obtener todos los pedidos (admin)
-  async obtenerTodos(filtros?: FiltrosPedidosDto): Promise<ApiResponse<Pedido[]>> {
+  }// Obtener todos los pedidos (admin)
+  async obtenerTodos(
+    filtros?: FiltrosPedidosDto
+  ): Promise<ApiResponse<Pedido[]>> {
     try {
-      const params = new URLSearchParams();
+      // Construir URL base
+      let url = `${API_BASE_URL}/pedidos`;
+
+      // Solo agregar parámetros si hay filtros válidos
       if (filtros) {
-        Object.entries(filtros).forEach(([key, value]) => {
-          if (value !== undefined && value !== null) {
-            params.append(key, value.toString());
-          }
-        });
+        const params = new URLSearchParams();
+
+        // Manejar cada filtro de forma segura
+        if (filtros.estado) params.append('estado', filtros.estado);
+        if (filtros.fechaDesde) params.append('fechaDesde', filtros.fechaDesde);
+        if (filtros.fechaHasta) params.append('fechaHasta', filtros.fechaHasta);
+        if (filtros.metodoPago) params.append('metodoPago', filtros.metodoPago);
+        if (filtros.page) params.append('page', filtros.page.toString());
+        if (filtros.limit) params.append('limit', filtros.limit.toString());
+
+        // Solo agregar query string si hay parámetros
+        const queryString = params.toString();
+        if (queryString) {
+          url += `?${queryString}`;
+        }
       }
 
-      const response = await fetch(`${API_BASE_URL}/pedidos?${params.toString()}`, {
+      const response = await fetch(url, {
         method: 'GET',
         headers: this.getAuthHeaders(),
       });
@@ -253,16 +276,22 @@ class PedidosService {
       console.error('Error al obtener pedidos:', error);
       throw error;
     }
-  }  // Cambiar estado del pedido (admin)
-  async cambiarEstado(id: number, estado: EstadoPedido, notasInternas?: string): Promise<ApiResponse<Pedido>> {
+  }
+
+  // Cambiar estado del pedido (admin)
+  async cambiarEstado(
+    id: number,
+    estado: EstadoPedido,
+    notasInternas?: string
+  ): Promise<ApiResponse<Pedido>> {
     try {
       const body: { estado: EstadoPedido; notasInternas?: string } = { estado };
-      
+
       // Si se proporcionan notas internas, incluirlas en el cuerpo
       if (notasInternas !== undefined) {
         body.notasInternas = notasInternas;
       }
-      
+
       const response = await fetch(`${API_BASE_URL}/pedidos/${id}/estado`, {
         method: 'PATCH',
         headers: this.getAuthHeaders(),
@@ -271,7 +300,9 @@ class PedidosService {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Error al cambiar estado del pedido');
+        throw new Error(
+          errorData.message || 'Error al cambiar estado del pedido'
+        );
       }
 
       return await response.json();

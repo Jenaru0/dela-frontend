@@ -8,11 +8,11 @@ export default function ContactoInfoSection() {
       icon: MapPin,
       title: "Dirección",
       details: [
-        "Av. Principales 123",
-        "Lima, Perú 15001"
+        "DELA Corp SAC",
+        "Cerro Azul, Cañete - Lima, Perú"
       ],
       action: "Ver en Google Maps",
-      link: "#"
+      link: "https://www.google.com/maps/search/DELA+Corp+SAC+Cerro+Azul+Cañete+Lima+Perú"
     },
     {
       icon: Phone,
@@ -86,6 +86,8 @@ export default function ContactoInfoSection() {
               {/* Action Link */}
               <a 
                 href={info.link}
+                target={info.link.includes('google.com/maps') ? '_blank' : '_self'}
+                rel={info.link.includes('google.com/maps') ? 'noopener noreferrer' : ''}
                 className="inline-flex items-center text-[#CC9F53] font-semibold hover:text-[#B8934A] transition-colors duration-200 group-hover:underline"
               >
                 {info.action}

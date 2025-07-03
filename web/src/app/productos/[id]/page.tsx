@@ -2,6 +2,8 @@
 import { useParams, useRouter } from 'next/navigation';
 import { useCart } from '@/contexts/CarContext';
 import { useCartDrawer } from '@/contexts/CartDrawerContext';
+import { useStockAlertGlobal } from '@/contexts/StockAlertContext';
+import { getProductMainImage } from '@/lib/productImageUtils';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAuthModalGlobal } from '@/contexts/AuthModalContext';
 import { Button } from '@/components/ui/Button';
@@ -12,13 +14,17 @@ import { fetchCatalogoProductoById } from '@/services/catalogo.service';
 import type { Producto } from '@/types/productos';
 import { ProductoGallery } from '@/components/producto/ProductoGallery';
 import { ProductoInfo } from '@/components/producto/ProductoInfo';
+import { ProductReviews } from '@/components/producto/ProductReviews';
 import ProductosRelacionados from '@/components/producto/ProductosRelacionados';
+import { obtenerResenasAprobadas } from '@/services/resenas.service';
+import type { Resena } from '@/services/resenas.service';
 
 export default function ProductDetailPage() {
   const params = useParams();
   const router = useRouter();
   const { addToCart } = useCart();
   const { openDrawer } = useCartDrawer();
+  const { showError } = useStockAlertGlobal();
   const { isAuthenticated } = useAuth();
   const { open: openAuthModal } = useAuthModalGlobal();
   const [added, setAdded] = useState(false);
@@ -26,6 +32,8 @@ export default function ProductDetailPage() {
   const [product, setProduct] = useState<Producto | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [resenas, setResenas] = useState<Resena[]>([]);
+  const [resenasLoading, setResenasLoading] = useState(false);
 
   // Busca producto desde API
   const id = typeof params.id === 'string' ? params.id : params.id?.[0];
@@ -36,6 +44,8 @@ export default function ProductDetailPage() {
       .then((data) => {
         setProduct(data);
         setError('');
+        // Cargar reseñas del producto
+        loadProductReviews(data.id);
       })
       .catch(() => {
         setProduct(null as Producto | null);
@@ -43,6 +53,20 @@ export default function ProductDetailPage() {
       })
       .finally(() => setLoading(false));
   }, [id]);
+
+  // Cargar reseñas del producto
+  const loadProductReviews = async (productoId: number) => {
+    try {
+      setResenasLoading(true);
+      const response = await obtenerResenasAprobadas(productoId, 3);
+      setResenas(response.data || []);
+    } catch (error) {
+      console.error('Error al cargar reseñas:', error);
+      setResenas([]);
+    } finally {
+      setResenasLoading(false);
+    }
+  };
   if (loading) {
     return (
       <Layout>
@@ -107,21 +131,33 @@ export default function ProductDetailPage() {
     try {
       setIsAddingToCart(true);
       // Si tu carrito espera Product, aquí deberías mapear Producto a Product
-      await addToCart({
+      const result = await addToCart({
         id: String(product.id),
         name: product.nombre,
         price: typeof product.precioUnitario === 'string' ? parseFloat(product.precioUnitario) : product.precioUnitario,
         oldPrice: typeof product.precioAnterior === 'string' ? parseFloat(product.precioAnterior) : product.precioAnterior,
-        image: product.imagenes?.[0]?.url || '/images/product-placeholder.png',
+        image: getProductMainImage(product),
         category: product.categoria?.nombre || 'Sin categoría',
         description: product.descripcion,
         stock: product.stock,
       });
-      openDrawer();
-      setAdded(true);
-      setTimeout(() => setAdded(false), 1200);
+      
+      if (result.success) {
+        openDrawer();
+        setAdded(true);
+        setTimeout(() => setAdded(false), 1200);
+      } else {
+        showError(
+          'Error al agregar al carrito',
+          result.error || 'No se pudo agregar el producto al carrito. Por favor, intenta nuevamente.'
+        );
+      }
     } catch (error) {
       console.error('Error adding to cart:', error);
+      showError(
+        'Error al agregar al carrito',
+        'Error inesperado al agregar el producto al carrito.'
+      );
     } finally {
       setIsAddingToCart(false);
     }
@@ -227,7 +263,19 @@ export default function ProductDetailPage() {
             </div>
           </div>
         </div>
-      </section>        {/* Productos relacionados */}
+      </section>
+
+      {/* Sección de Reseñas */}
+      <section className="bg-gradient-to-br from-gray-50 via-white to-[#FFF9EC]/30">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <ProductReviews 
+            resenas={resenas} 
+            loading={resenasLoading} 
+          />
+        </div>
+      </section>
+        
+      {/* Productos relacionados */}
       {product && (
         <section className="bg-gray-50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">

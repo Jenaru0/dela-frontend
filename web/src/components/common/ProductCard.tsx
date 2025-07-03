@@ -15,6 +15,7 @@ import type { Product } from '@/lib/products';
 import { useFavorites } from '@/contexts/FavoritoContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAuthModalGlobal } from '@/contexts/AuthModalContext';
+import { useStockAlertGlobal } from '@/contexts/StockAlertContext';
 
 interface ProductCardProps {
   product: Product;
@@ -30,6 +31,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
   const { addFavorite, removeFavorite, isFavorite } = useFavorites();
   const { isAuthenticated } = useAuth();
   const { open: openAuthModal } = useAuthModalGlobal();
+  const { showError } = useStockAlertGlobal();
 
   const fav = isFavorite(product.id);
 
@@ -53,7 +55,9 @@ const ProductCard: React.FC<ProductCardProps> = ({
     : 0;
   const { addToCart, isLoading } = useCart();
   const { openDrawer } = useCartDrawer();
-  const [isAddingToCart, setIsAddingToCart] = useState(false);  const handleAddToCart = async () => {
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
+
+  const handleAddToCart = async () => {
     console.log('🔄 HandleAddToCart called', { 
       isAuthenticated, 
       product: { id: product.id, name: product.name },
@@ -69,12 +73,19 @@ const ProductCard: React.FC<ProductCardProps> = ({
     try {
       setIsAddingToCart(true);
       console.log('⏳ Adding product to cart...', { productId: product.id, productName: product.name });
-      await addToCart(product);
-      console.log('✅ Product added successfully, opening drawer');
-      openDrawer();
+      
+      const result = await addToCart(product);
+      
+      if (result.success) {
+        console.log('✅ Product added successfully, opening drawer');
+        openDrawer();
+      } else {
+        console.log('❌ Failed to add product:', result.error);
+        showError(product.name, result.error || 'Error desconocido al añadir al carrito');
+      }
     } catch (error) {
-      console.error('❌ Error adding to cart:', error);
-      alert(`Error añadiendo al carrito: ${error instanceof Error ? error.message : 'Error desconocido'}`);
+      console.error('❌ Unexpected error adding to cart:', error);
+      showError(product.name, 'Error inesperado al añadir al carrito');
     } finally {
       setIsAddingToCart(false);
     }
@@ -101,7 +112,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
 
         {hasDiscount && (
           <Badge className="absolute left-3 top-3 z-10 bg-gradient-to-r from-red-500 to-red-600 text-white font-bold shadow-lg animate-pulse">
-            -{discountPercentage}% OFF
+            -{discountPercentage}% DE DESCUENTO
           </Badge>
         )}
 
@@ -167,34 +178,41 @@ const ProductCard: React.FC<ProductCardProps> = ({
           )}
         </div>
       </CardContent>      <CardFooter className="p-6 pt-0 space-y-3">
-        {/* Debug info */}
-        <div className="text-xs text-gray-500">
-          {isAuthenticated ? '✅ Autenticado' : '❌ No autenticado'}
+        {/* Stock information */}
+        <div className="flex items-center justify-between text-sm">
+          {product.stock !== undefined && (
+            <div className={`flex items-center gap-1 ${
+              product.stock > 0 ? 'text-green-600' : 'text-red-600'
+            }`}>
+              <div className={`w-2 h-2 rounded-full ${
+                product.stock > 0 ? 'bg-green-500' : 'bg-red-500'
+              }`} />
+              {product.stock > 0 ? (
+                product.stock <= 5 ? (
+                  <span>¡Solo quedan {product.stock}!</span>
+                ) : (
+                  <span>En stock ({product.stock} disponibles)</span>
+                )
+              ) : (
+                <span>Sin stock</span>
+              )}
+            </div>
+          )}
         </div>
-        
-        {/* Simple test button */}
-        <button 
-          className="w-full bg-red-500 text-white p-2 rounded"
-          onClick={() => {
-            console.log('🔥 SIMPLE BUTTON CLICKED!');
-            alert('Simple button works!');
-          }}
-        >
-          TEST SIMPLE BUTTON
-        </button>
         
         <Button
           className="w-full bg-[#CC9F53] hover:bg-[#CC9F53]/90 text-white font-semibold py-3 px-6 rounded-lg shadow-lg hover:shadow-xl hover:shadow-[#CC9F53]/20 transition-all duration-300 transform hover:scale-[1.02] group/btn disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
           size="default"
-          onClick={() => {
-            console.log('🔥 BUTTON CLICKED! Simple test');
-            alert('Button clicked!');
-            handleAddToCart();
-          }}
+          onClick={handleAddToCart}
           disabled={isAddingToCart || isLoading}
         >
           <ShoppingBag className={`mr-2 h-5 w-5 transition-transform group-hover/btn:scale-110 ${isAddingToCart ? 'animate-pulse' : ''}`} />
-          {isAddingToCart ? 'Añadiendo...' : 'Añadir al carrito'}
+          {isAddingToCart 
+            ? 'Añadiendo...' 
+            : (product.stock !== undefined && product.stock <= 0)
+              ? 'Sin stock - Ver detalles'
+              : 'Añadir al carrito'
+          }
         </Button>
       </CardFooter>
     </Card>

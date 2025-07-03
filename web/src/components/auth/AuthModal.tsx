@@ -3,9 +3,10 @@
 import React, { useState, useEffect } from 'react';
 import { useAuthModal } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/Button';
-import { X, Eye, EyeOff, Mail, Lock, User } from 'lucide-react';
+import { X, Eye, EyeOff, Mail, Lock, User, Phone } from 'lucide-react';
 import Image from 'next/image';
 import { InicioSesionDto, RegistroForm } from '@/types/auth';
+import ForgotPasswordModal from './ForgotPasswordModal';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -20,6 +21,8 @@ const AuthModal: React.FC<AuthModalProps> = ({
 }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
+  const [localError, setLocalError] = useState<string | null>(null);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
 
   const { 
     mode, 
@@ -83,6 +86,7 @@ const AuthModal: React.FC<AuthModalProps> = ({
       tipoUsuario: 'CLIENTE',
     });
     setSuccess(null);
+    setLocalError(null);
     setShowPassword(false);
   };
 
@@ -94,6 +98,7 @@ const AuthModal: React.FC<AuthModalProps> = ({
   const handleModeChange = (newMode: 'login' | 'register') => {
     setMode(newMode);
     setSuccess(null);
+    setLocalError(null);
   };
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
@@ -110,6 +115,13 @@ const AuthModal: React.FC<AuthModalProps> = ({
 
   const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLocalError(null); // Limpiar error anterior
+    
+    // Validar celular antes de enviar
+    if (!registerData.celular || registerData.celular.length !== 9 || !registerData.celular.startsWith('9')) {
+      setLocalError('El celular debe tener exactamente 9 dígitos y empezar con 9');
+      return;
+    }
     
     const success = await handleRegister(registerData);
     if (success) {
@@ -120,7 +132,10 @@ const AuthModal: React.FC<AuthModalProps> = ({
     }
   };
 
-  if (!isOpen) return null;  return (
+  if (!isOpen) return null;
+  
+  return (
+    <>
     <div className="fixed inset-0 z-[9999] overflow-y-auto">
       {/* Enhanced Overlay */}
       <div 
@@ -198,9 +213,9 @@ const AuthModal: React.FC<AuthModalProps> = ({
             {/* Content section */}
             <div className="p-8">
               {/* Error/Success Messages */}
-              {error && (
+              {(error || localError) && (
                 <div className="mb-6 p-4 bg-gradient-to-r from-red-50 to-red-100 border border-red-200 rounded-xl shadow-sm">
-                  <p className="text-red-700 text-sm font-medium">{error}</p>
+                  <p className="text-red-700 text-sm font-medium">{error || localError}</p>
                 </div>
               )}
               
@@ -265,6 +280,17 @@ const AuthModal: React.FC<AuthModalProps> = ({
                   >
                     {isLoading ? 'Iniciando Sesión...' : 'Iniciar Sesión'}
                   </Button>
+
+                  {/* Forgot password link */}
+                  <div className="text-center">
+                    <button
+                      type="button"
+                      onClick={() => setShowForgotPassword(true)}
+                      className="text-sm text-[#CC9F53] hover:text-[#B88D42] font-medium transition-colors underline"
+                    >
+                      ¿Olvidaste tu contraseña?
+                    </button>
+                  </div>
 
                   {/* Switch to register */}
                   <p className="text-center text-sm text-gray-600">
@@ -334,6 +360,38 @@ const AuthModal: React.FC<AuthModalProps> = ({
                         placeholder="tu@correo.com"
                       />
                     </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="block text-sm font-semibold text-[#3A3A3A]">
+                      Celular
+                    </label>
+                    <div className="relative group">
+                      <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-[#CC9F53] transition-colors" />
+                      <input
+                        type="tel"
+                        required
+                        value={registerData.celular}
+                        onChange={(e) => {
+                          // Solo permitir números y máximo 9 dígitos, empezando con 9
+                          const numericValue = e.target.value.replace(/\D/g, '').slice(0, 9);
+                          let finalValue = numericValue;
+                          
+                          // Si hay algún valor y no empieza con 9, forzar que empiece con 9
+                          if (numericValue.length > 0 && !numericValue.startsWith('9')) {
+                            finalValue = '9' + numericValue.slice(1, 8);
+                          }
+                          
+                          setRegisterData({ ...registerData, celular: finalValue });
+                        }}
+                        className="w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#CC9F53]/20 focus:border-[#CC9F53] transition-all duration-200 hover:border-gray-300"
+                        placeholder="999999999"
+                        maxLength={9}
+                      />
+                    </div>
+                    {registerData.celular && registerData.celular.length < 9 && (
+                      <p className="text-xs text-red-600">El celular debe tener exactamente 9 dígitos y empezar con 9</p>
+                    )}
                   </div>
 
                   <div className="space-y-2">
@@ -420,6 +478,17 @@ const AuthModal: React.FC<AuthModalProps> = ({
         </div>
       </div>
     </div>
+
+    {/* Forgot Password Modal */}
+    <ForgotPasswordModal
+      isOpen={showForgotPassword}
+      onClose={() => setShowForgotPassword(false)}
+      onSuccess={() => {
+        setShowForgotPassword(false);
+        setSuccess('Contraseña restablecida exitosamente. Ahora puedes iniciar sesión.');
+      }}
+    />
+    </>
   );
 };
 

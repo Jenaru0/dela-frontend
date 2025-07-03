@@ -7,6 +7,7 @@ import { Star, Heart, ShoppingBag } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useFavorites } from '@/contexts/FavoritoContext';
 import { useAuthModalGlobal } from '@/contexts/AuthModalContext';
+import { useStockAlertGlobal } from '@/contexts/StockAlertContext';
 
 interface CatalogoCardProps {
   product: {
@@ -18,6 +19,8 @@ interface CatalogoCardProps {
     priceFormatted?: string;
     shortDescription?: string;
     destacado?: boolean;
+    stock?: number;
+    stockMinimo?: number;
   };
   showFavorite?: boolean;
   showStar?: boolean;
@@ -36,7 +39,8 @@ const CatalogoCard: React.FC<CatalogoCardProps> = ({
 }) => {
   const { isAuthenticated } = useAuth();
   const { addFavorite, removeFavorite, isFavorite } = useFavorites();
-  const { open: openAuthModal } = useAuthModalGlobal(); // <-- Obtiene el método para abrir el modal
+  const { open: openAuthModal } = useAuthModalGlobal();
+  const { showError } = useStockAlertGlobal();
   const fav = isFavorite(product.id.toString());
 
   // Handler para añadir a favoritos con auth
@@ -58,7 +62,7 @@ const CatalogoCard: React.FC<CatalogoCardProps> = ({
     e.stopPropagation(); // Prevenir que se active el click de la tarjeta
     
     if (!isAuthenticated) {
-      openAuthModal('login'); // <-- Abre el modal de login/registro
+      openAuthModal('login');
       return;
     }
 
@@ -68,6 +72,12 @@ const CatalogoCard: React.FC<CatalogoCardProps> = ({
         await onAddToCart(product);
       } catch (error) {
         console.error('Error adding to cart:', error);
+        // El error ya se maneja en el componente padre que define onAddToCart
+        // Solo mostramos el modal si hay un error inesperado aquí
+        showError(
+          'Error al agregar al carrito',
+          'Error inesperado. Por favor, intenta nuevamente.'
+        );
       } finally {
         setIsAddingToCart(false);
       }
@@ -77,13 +87,11 @@ const CatalogoCard: React.FC<CatalogoCardProps> = ({
       className={`group relative rounded-2xl bg-white shadow-md border border-[#F5EFD7] overflow-hidden transition-all duration-500 hover:scale-[1.03] hover:shadow-xl hover:shadow-[#CC9F53]/10 w-full cursor-pointer ${className}`}
       onClick={() => onQuickView?.(product)}
     >
-      <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-[#F5EFD7]/80 via-white to-[#F5EFD7]/40">
+      <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-[#F5EFD7]/80 via-white to-[#F5EFD7]/40 flex-shrink-0">
         {/* Marca y Estrella */}
         <div className="absolute flex gap-1 sm:gap-2 left-2 sm:left-3 top-2 sm:top-3 z-10 items-center">
           {showStar && product.destacado && (
-            <span className="rounded-full p-0.5 sm:p-1 bg-[#CC9F53] shadow">
-              <Star className="w-3 h-3 sm:w-5 sm:h-5 text-white" />
-            </span>
+            <Star className="w-4 h-4 sm:w-6 sm:h-6 text-[#CC9F53] fill-[#CC9F53] drop-shadow-md" />
           )}
           <div>
             <span className="text-sm sm:text-lg font-extrabold text-[#cc9f53] leading-none block">
@@ -128,42 +136,87 @@ const CatalogoCard: React.FC<CatalogoCardProps> = ({
         </span>
       </div>
 
-      <div className="px-3 sm:px-5 pt-2 pb-2 flex flex-col gap-1">        <h3 className="font-bold text-sm sm:text-base text-[#2d2418] line-clamp-2">
-          {product.name}
-        </h3>
-        {product.shortDescription && (
-          <span className="text-[11px] sm:text-[13px] text-[#7B7261] mb-1 line-clamp-2">
-            {product.shortDescription}
+      {/* Contenido del producto con flex-grow para llenar el espacio disponible */}
+      <div className="flex flex-col justify-between flex-grow">
+        <div className="px-3 sm:px-5 pt-2 pb-2 flex flex-col gap-1 flex-grow">        <h3 className="font-bold text-sm sm:text-base text-[#2d2418] line-clamp-2">
+            {product.name}
+          </h3>
+          {product.shortDescription && (
+            <span className="text-[11px] sm:text-[13px] text-[#7B7261] mb-1 line-clamp-2">
+              {product.shortDescription}
+            </span>
+          )}
+          
+          {/* Información de stock */}
+          {product.stock !== undefined && (
+            <div className="flex items-center gap-1 mb-1">
+              {product.stock > 0 ? (
+                <>
+                  <div className={`w-2 h-2 rounded-full ${
+                    product.stock <= 5 ? 'bg-yellow-500' : 'bg-green-500'
+                  }`}></div>
+                  <span className={`text-xs font-medium ${
+                    product.stock <= 5 ? 'text-yellow-600' : 'text-green-600'
+                  }`}>
+                    {product.stock <= 5 
+                      ? `¡Solo quedan ${product.stock}!` 
+                      : `${product.stock} en stock`
+                    }
+                  </span>
+                </>
+              ) : (
+                <>
+                  <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                  <span className="text-xs text-red-600 font-medium">
+                    Sin stock
+                  </span>
+                </>
+              )}
+            </div>
+          )}
+          
+          {/* Spacer para empujar el precio hacia abajo */}
+          <div className="flex-grow"></div>
+          
+          <span className="text-lg sm:text-xl font-bold text-[#CC9F53] mb-1 sm:mb-2 mt-auto">
+            {product.priceFormatted ?? 'Precio no disponible'}
           </span>
-        )}
-        <span className="text-lg sm:text-xl font-bold text-[#CC9F53] mb-1 sm:mb-2">
-          {product.priceFormatted ?? 'Precio no disponible'}
-        </span>
-      </div>
-      
-      <div className="px-3 sm:px-5 pb-3 sm:pb-5">
-        <Button
-          className="w-full bg-[#CC9F53] hover:bg-[#b08a3c] text-white font-semibold rounded-lg transition-all duration-300 py-2 sm:py-3 shadow flex items-center justify-center gap-1 sm:gap-2 disabled:opacity-50 disabled:cursor-not-allowed text-xs sm:text-sm"
-          onClick={handleAddToCart}
-          disabled={isAddingToCart}
-          title={
-            isAuthenticated
-              ? isAddingToCart
-                ? 'Añadiendo al carrito...'
-                : 'Añadir al carrito'
-              : 'Inicia sesión para añadir al carrito'
-          }
-        >
-          <ShoppingBag
-            className={`h-3 w-3 sm:h-5 sm:w-5 ${isAddingToCart ? 'animate-pulse' : ''}`}
-          />
-          <span className="hidden sm:inline">
-            {isAddingToCart ? 'Añadiendo...' : 'Añadir al carrito'}
-          </span>
-          <span className="sm:hidden">
-            {isAddingToCart ? 'Añadiendo...' : 'Añadir'}
-          </span>
-        </Button>
+        </div>
+        
+        <div className="px-3 sm:px-5 pb-3 sm:pb-5">
+          <Button
+            className="w-full bg-[#CC9F53] hover:bg-[#b08a3c] text-white font-semibold rounded-lg transition-all duration-300 py-2 sm:py-3 shadow flex items-center justify-center gap-1 sm:gap-2 disabled:opacity-50 disabled:cursor-not-allowed text-xs sm:text-sm disabled:bg-gray-400"
+            onClick={handleAddToCart}
+            disabled={isAddingToCart || (product.stock !== undefined && product.stock <= 0)}
+            title={
+              product.stock !== undefined && product.stock <= 0
+                ? 'Sin stock disponible'
+                : isAuthenticated
+                ? isAddingToCart
+                  ? 'Añadiendo al carrito...'
+                  : 'Añadir al carrito'
+                : 'Inicia sesión para añadir al carrito'
+            }
+          >
+            <ShoppingBag
+              className={`h-3 w-3 sm:h-5 sm:w-5 ${isAddingToCart ? 'animate-pulse' : ''}`}
+            />
+            <span className="hidden sm:inline">
+              {product.stock !== undefined && product.stock <= 0
+                ? 'Sin stock'
+                : isAddingToCart
+                ? 'Añadiendo...'
+                : 'Añadir al carrito'}
+            </span>
+            <span className="sm:hidden">
+              {product.stock !== undefined && product.stock <= 0
+                ? 'Sin stock'
+                : isAddingToCart
+                ? 'Añadiendo...'
+                : 'Añadir'}
+            </span>
+          </Button>
+        </div>
       </div>
       
       <style jsx>{`

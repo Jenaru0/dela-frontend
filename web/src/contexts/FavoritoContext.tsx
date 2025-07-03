@@ -62,26 +62,62 @@ export const FavoritoProvider = ({ children }: { children: ReactNode }) => {
 
   const addFavorite = async (productoId: string | number) => {
     if (!token) return;
+    
+    // Actualización optimista: añadir inmediatamente a la UI
+    const tempFavorito: Favorito = {
+      id: Date.now(), // ID temporal usando timestamp
+      usuarioId: 0, // Se llenará desde el backend
+      productoId: typeof productoId === 'string' ? parseInt(productoId) : productoId,
+      producto: {
+        id: typeof productoId === 'string' ? parseInt(productoId) : productoId,
+        nombre: 'Cargando...',
+        slug: '',
+        descripcion: '',
+        precioUnitario: 0,
+        stock: 0,
+        destacado: false,
+        categoria: { id: 0, nombre: '' },
+        imagenes: []
+      }
+    };
+    
+    setFavorites(prev => [...prev, tempFavorito]);
+    
     try {
       await addFavorito(token, productoId);
+      // Actualizar con los datos reales del servidor
       await fetchFavoritos();
-    } catch {
-      // Error silenciado
+    } catch (error) {
+      // Rollback en caso de error: remover el favorito temporal
+      setFavorites(prev => prev.filter(fav => fav.id !== tempFavorito.id));
+      console.error('Error adding favorite:', error);
     }
   };
 
   const removeFavorite = async (productoId: string | number) => {
     if (!token) return;
+    
+    // Encontrar el favorito a eliminar
+    const productoIdNum = typeof productoId === 'string' ? parseInt(productoId) : productoId;
+    const favoritoToRemove = favorites.find(fav => fav.productoId === productoIdNum);
+    if (!favoritoToRemove) return;
+    
+    // Actualización optimista: remover inmediatamente de la UI
+    setFavorites(prev => prev.filter(fav => fav.productoId !== productoIdNum));
+    
     try {
       await removeFavorito(token, productoId);
-      await fetchFavoritos();
-    } catch {
-      // Error silenciado
+      // No necesitamos refetch aquí ya que la actualización optimista es suficiente
+    } catch (error) {
+      // Rollback en caso de error: restaurar el favorito
+      setFavorites(prev => [...prev, favoritoToRemove]);
+      console.error('Error removing favorite:', error);
     }
   };
 
   const isFavorite = (productoId: string | number) => {
-    return favorites.some((fav) => fav.productoId.toString() === productoId.toString());
+    const productoIdNum = typeof productoId === 'string' ? parseInt(productoId) : productoId;
+    return favorites.some((fav) => fav.productoId === productoIdNum);
   };
 
   return (

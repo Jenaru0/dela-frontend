@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
+import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from '@/contexts/AuthContext';
 import './globals.css';
 import '../styles/admin-sidebar.css';
@@ -8,8 +9,12 @@ import { CartDrawerProvider } from '@/contexts/CartDrawerContext';
 import ShoppingCartDrawer from '@/components/carrito/ShoppingCartDrawer';
 import { FavoritoProvider } from '@/contexts/FavoritoContext';
 import { AuthModalProvider } from '@/contexts/AuthModalContext';
+import { StockAlertProvider } from '@/contexts/StockAlertContext';
 import AuthModalMount from '@/components/auth/AuthModalMount';
+import TokenInterceptor from '@/components/auth/TokenInterceptor';
 import ScrollToTopWrapper from '@/components/common/ScrollToTopWrapper';
+import { SessionExpiredNotification } from '@/components/common/SessionExpiredNotification';
+import { ScrollToTopOnRouteChange } from '@/components/common/ScrollToTopOnRouteChange';
 
 const geistSans = Geist({ variable: '--font-geist-sans', subsets: ['latin'] });
 const geistMono = Geist_Mono({
@@ -34,20 +39,49 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         suppressHydrationWarning={true}
       >        <AuthProvider>
+          <TokenInterceptor />
           <AuthModalProvider>
-            <CartProvider>
-              <FavoritoProvider>
-                <CartDrawerProvider>
-                  <ScrollToTopWrapper>
-                    <ShoppingCartDrawer />
-                    <main id="main-content">{children}</main>
-                    <AuthModalMount/>
+            <StockAlertProvider>
+              <CartProvider>
+                <FavoritoProvider>
+                  <CartDrawerProvider>
+                    <ScrollToTopWrapper>
+                      <ShoppingCartDrawer />
+                      <main id="main-content">{children}</main>
+                      <AuthModalMount/>
+                      <SessionExpiredNotification />
+                      <ScrollToTopOnRouteChange />
+                    <Toaster 
+                      position="top-right"
+                      toastOptions={{
+                        duration: 4000,
+                        style: {
+                          background: '#363636',
+                          color: '#fff',
+                        },
+                        success: {
+                          duration: 3000,
+                          iconTheme: {
+                            primary: '#4ade80',
+                            secondary: '#fff',
+                          },
+                        },
+                        error: {
+                          duration: 4000,
+                          iconTheme: {
+                            primary: '#ef4444',
+                            secondary: '#fff',
+                          },
+                        },
+                      }}
+                    />
                   </ScrollToTopWrapper>
                 </CartDrawerProvider>
               </FavoritoProvider>
             </CartProvider>
-          </AuthModalProvider>
-        </AuthProvider>
+          </StockAlertProvider>
+        </AuthModalProvider>
+      </AuthProvider>
       </body>
     </html>
   );

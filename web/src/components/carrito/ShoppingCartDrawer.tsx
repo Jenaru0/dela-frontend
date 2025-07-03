@@ -1,12 +1,14 @@
 "use client";
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useCart } from "@/contexts/CarContext";
 import { useCartDrawer } from "@/contexts/CartDrawerContext";
+import { useStockAlertGlobal } from "@/contexts/StockAlertContext";
 import { X, ShoppingBag, Trash2, Plus, Minus, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/input";
 import Image from "next/image";
-import Link from "next/link";
-import { useState } from "react";
+import { scrollToTopInstant } from "@/lib/scroll";
 
 // Componente para el header del drawer
 const DrawerHeader: React.FC<{ onClose: () => void; itemCount: number }> = ({ onClose, itemCount }) => (
@@ -54,96 +56,194 @@ const CartItem: React.FC<{
     price: number;
     quantity: number;
     category: string;
+    stock?: number;
+    stockMinimo?: number;
   };
   onIncrease: () => void;
   onDecrease: () => void;
+  onSetQty: (qty: number) => void;
   onRemove: () => void;
   isUpdating: boolean;
-}> = ({ item, onIncrease, onDecrease, onRemove, isUpdating }) => (
-  <div
-    className="group relative bg-white/80 backdrop-blur-sm rounded-3xl shadow-lg border border-[#ecd8ab]/50 p-5 transition-all duration-300 hover:shadow-xl hover:border-[#CC9F53] hover:bg-white/90 hover:scale-[1.02]"
-  >
-    {/* Glow effect on hover */}
-    <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-[#CC9F53]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-    
-    <div className="relative flex items-start gap-4">
-      {/* Product image with enhanced styling */}
-      <div className="relative w-20 h-20 rounded-2xl bg-gradient-to-br from-[#F5E6C6] to-[#FAF3E7] flex items-center justify-center border-2 border-[#CC9F53]/30 overflow-hidden shadow-inner group-hover:border-[#CC9F53] transition-colors">
-        <Image
-          src={item.image}
-          alt={item.name}
-          className="w-14 h-14 object-contain transition-transform group-hover:scale-110"
-          width={56}
-          height={56}
-        />
-        {isUpdating && (
-          <div className="absolute inset-0 bg-white/70 flex items-center justify-center">
-            <div className="w-5 h-5 border-2 border-[#CC9F53] border-t-transparent rounded-full animate-spin"></div>
-          </div>
-        )}
-      </div>
+}> = ({ item, onIncrease, onDecrease, onSetQty, onRemove, isUpdating }) => {
+  const [showQuantityInput, setShowQuantityInput] = useState(false);
+  const [quantityInput, setQuantityInput] = useState(item.quantity.toString());
+  
+  // Usar el contexto global del modal de stock
+  const { showWarning, showError } = useStockAlertGlobal();
 
-      <div className="flex-1 min-w-0">
-        {/* Product info */}
-        <div className="mb-3">
-          <h3 className="font-bold text-base text-[#3A3A3A] truncate group-hover:text-[#CC9F53] transition-colors">
-            {item.name}
-          </h3>
-          <div className="flex items-center gap-2 mt-1">
-            <span className="inline-block font-semibold bg-gradient-to-r from-[#FAF3E7] to-[#F5E6C6] text-[#C59D5F] px-3 py-1 rounded-full text-xs border border-[#ECD8AB]/50">
-              {item.category}
-            </span>
-            <span className="text-lg font-extrabold text-[#CC9F53]">
-              S/ {(item.price * item.quantity).toFixed(2)}
-            </span>
-          </div>
+  const availableStock = item.stock || 0;
+  const stockMinimo = item.stockMinimo || 0;
+  const stockDisponibleParaVenta = Math.max(0, availableStock - stockMinimo);
+
+  const handleQuantityInputChange = (value: string) => {
+    const numericValue = value.replace(/[^0-9]/g, '');
+    setQuantityInput(numericValue);
+  };
+
+  const handleQuantitySubmit = () => {
+    const newQty = parseInt(quantityInput);
+    
+    if (isNaN(newQty) || newQty < 0) {
+      showError(item.name, 'Por favor ingresa una cantidad válida');
+      setQuantityInput(item.quantity.toString());
+      setShowQuantityInput(false);
+      return;
+    }
+
+    if (newQty > stockDisponibleParaVenta) {
+      if (stockDisponibleParaVenta === 0) {
+        showError(item.name, `${item.name} está temporalmente agotado. Repondremos stock pronto.`);
+      } else {
+        showWarning(item.name, stockDisponibleParaVenta, newQty);
+      }
+      setQuantityInput(item.quantity.toString());
+      return;
+    }
+
+    onSetQty(newQty);
+    setShowQuantityInput(false);
+  };
+
+  const handleQuantityInputKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleQuantitySubmit();
+    } else if (e.key === 'Escape') {
+      setQuantityInput(item.quantity.toString());
+      setShowQuantityInput(false);
+    }
+  };
+
+  const handleIncreaseClick = () => {
+    if (item.quantity >= stockDisponibleParaVenta) {
+      if (stockDisponibleParaVenta === 0) {
+        showError(item.name, `${item.name} está temporalmente agotado. Repondremos stock pronto.`);
+      } else {
+        showWarning(item.name, stockDisponibleParaVenta, item.quantity + 1);
+      }
+      return;
+    }
+    onIncrease();
+  };
+
+  return (
+    <div
+      className="group relative bg-white/80 backdrop-blur-sm rounded-3xl shadow-lg border border-[#ecd8ab]/50 p-5 transition-all duration-300 hover:shadow-xl hover:border-[#CC9F53] hover:bg-white/90 hover:scale-[1.02]"
+    >
+      {/* Glow effect on hover */}
+      <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-[#CC9F53]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+      
+      <div className="relative flex items-start gap-4">
+        {/* Product image with enhanced styling */}
+        <div className="relative w-20 h-20 rounded-2xl bg-gradient-to-br from-[#F5E6C6] to-[#FAF3E7] flex items-center justify-center border-2 border-[#CC9F53]/30 overflow-hidden shadow-inner group-hover:border-[#CC9F53] transition-colors">
+          <Image
+            src={item.image}
+            alt={item.name}
+            className="w-14 h-14 object-contain transition-transform group-hover:scale-110"
+            width={56}
+            height={56}
+          />
+          {isUpdating && (
+            <div className="absolute inset-0 bg-white/70 flex items-center justify-center">
+              <div className="w-5 h-5 border-2 border-[#CC9F53] border-t-transparent rounded-full animate-spin"></div>
+            </div>
+          )}
         </div>
 
-        {/* Controls */}
-        <div className="flex items-center justify-between">
-          {/* Quantity controls */}
-          <div className="flex items-center bg-white/70 rounded-full shadow-md border border-[#ecd8ab]/50 backdrop-blur-sm">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-9 w-9 text-[#B88D42] hover:bg-[#FFF8E1] hover:scale-110 rounded-full disabled:opacity-50 transition-all"
-              title="Disminuir cantidad"
-              onClick={onDecrease}
-              disabled={isUpdating}
-            >
-              <Minus className="w-4 h-4" />
-            </Button>
-            <span className="px-4 font-bold text-base text-[#3A3A3A] min-w-[32px] text-center select-none">
-              {item.quantity}
-            </span>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-9 w-9 text-[#B88D42] hover:bg-[#FFF8E1] hover:scale-110 rounded-full disabled:opacity-50 transition-all"
-              title="Aumentar cantidad"
-              onClick={onIncrease}
-              disabled={isUpdating}
-            >
-              <Plus className="w-4 h-4" />
-            </Button>
+        <div className="flex-1 min-w-0">
+          {/* Product info */}
+          <div className="mb-3">
+            <h3 className="font-bold text-base text-[#3A3A3A] truncate group-hover:text-[#CC9F53] transition-colors">
+              {item.name}
+            </h3>
+            <div className="flex items-center gap-2 mt-1">
+              <span className="inline-block font-semibold bg-gradient-to-r from-[#FAF3E7] to-[#F5E6C6] text-[#C59D5F] px-3 py-1 rounded-full text-xs border border-[#ECD8AB]/50">
+                {item.category}
+              </span>
+              <span className="text-lg font-extrabold text-[#CC9F53]">
+                S/ {(item.price * item.quantity).toFixed(2)}
+              </span>
+            </div>
           </div>
 
-          {/* Remove button */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-9 w-9 hover:bg-red-50 hover:scale-110 transition-all disabled:opacity-50 rounded-full border border-transparent hover:border-red-200"
-            title="Eliminar producto"
-            onClick={onRemove}
-            disabled={isUpdating}
-          >
-            <Trash2 className={`h-5 w-5 text-red-400 group-hover:text-red-600 transition-all ${isUpdating ? 'animate-pulse' : ''}`} />
-          </Button>
+          {/* Controls */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              {/* Stock warning */}
+              {stockDisponibleParaVenta <= 5 && stockDisponibleParaVenta > 0 && (
+                <div className="text-xs text-orange-600 bg-orange-50 px-2 py-1 rounded-full">
+                  ¡Solo quedan {stockDisponibleParaVenta} disponibles!
+                </div>
+              )}
+              
+              {stockDisponibleParaVenta === 0 && (
+                <div className="text-xs text-red-600 bg-red-50 px-2 py-1 rounded-full">
+                  Temporalmente agotado
+                </div>
+              )}
+              
+              {/* Quantity controls */}
+              <div className="flex items-center bg-white/70 rounded-full shadow-md border border-[#ecd8ab]/50 backdrop-blur-sm">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-9 w-9 text-[#B88D42] hover:bg-[#FFF8E1] hover:scale-110 rounded-full disabled:opacity-50 transition-all"
+                  title="Disminuir cantidad"
+                  onClick={onDecrease}
+                  disabled={isUpdating}
+                >
+                  <Minus className="w-4 h-4" />
+                </Button>
+                
+                {showQuantityInput ? (
+                  <Input
+                    type="text"
+                    value={quantityInput}
+                    onChange={(e) => handleQuantityInputChange(e.target.value)}
+                    onKeyDown={handleQuantityInputKeyDown}
+                    onBlur={handleQuantitySubmit}
+                    className="w-12 text-center border-none bg-transparent focus:ring-0 px-1 text-base font-bold text-[#3A3A3A]"
+                    autoFocus
+                  />
+                ) : (
+                  <button
+                    className="px-4 font-bold text-base text-[#3A3A3A] min-w-[32px] text-center select-none hover:bg-[#FFF8E1] rounded transition-colors"
+                    onClick={() => setShowQuantityInput(true)}
+                    title="Click para editar cantidad"
+                  >
+                    {item.quantity}
+                  </button>
+                )}
+                
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-9 w-9 text-[#B88D42] hover:bg-[#FFF8E1] hover:scale-110 rounded-full disabled:opacity-50 transition-all"
+                  title="Aumentar cantidad"
+                  onClick={handleIncreaseClick}
+                  disabled={isUpdating || item.quantity >= stockDisponibleParaVenta}
+                >
+                  <Plus className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+
+            {/* Remove button */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9 hover:bg-red-50 hover:scale-110 transition-all disabled:opacity-50 rounded-full border border-transparent hover:border-red-200"
+              title="Eliminar producto"
+              onClick={onRemove}
+              disabled={isUpdating}
+            >
+              <Trash2 className={`h-5 w-5 text-red-400 group-hover:text-red-600 transition-all ${isUpdating ? 'animate-pulse' : ''}`} />
+            </Button>
+          </div>
         </div>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 // Componente para carrito vacío
 const EmptyCart: React.FC = () => (
@@ -163,9 +263,9 @@ const EmptyCart: React.FC = () => (
 const DrawerFooter: React.FC<{
   subtotal: number;
   onClearCart: () => void;
-  onClose: () => void;
   isClearingCart: boolean;
-}> = ({ subtotal, onClearCart, onClose, isClearingCart }) => (
+  onNavigateToCart: () => void;
+}> = ({ subtotal, onClearCart, isClearingCart, onNavigateToCart }) => (
   <div className="relative border-t border-[#ECD8AB]/30 bg-gradient-to-r from-white to-[#FAF3E7]/80 backdrop-blur-sm p-6">
     {/* Decorative background */}
     <div className="absolute inset-0 bg-gradient-to-t from-[#CC9F53]/5 to-transparent opacity-50"></div>
@@ -183,13 +283,14 @@ const DrawerFooter: React.FC<{
 
       {/* Enhanced action buttons */}
       <div className="space-y-3">
-        <Link href="/carrito" onClick={onClose}>
-          <Button className="w-full bg-gradient-to-r from-[#CC9F53] via-[#D4A859] to-[#b08a3c] hover:from-[#b08a3c] hover:via-[#CC9F53] hover:to-[#9a7635] text-white font-bold py-4 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 flex items-center justify-center gap-3 text-base hover:scale-[1.02]">
-            Ver carrito completo
-            <ArrowRight className="w-5 h-5" />
-          </Button>
-        </Link>
-          <div className="flex gap-3">
+        <Button 
+          onClick={onNavigateToCart}
+          className="w-full bg-gradient-to-r from-[#CC9F53] via-[#D4A859] to-[#b08a3c] hover:from-[#b08a3c] hover:via-[#CC9F53] hover:to-[#9a7635] text-white font-bold py-4 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 flex items-center justify-center gap-3 text-base hover:scale-[1.02]"
+        >
+          Ver carrito completo
+          <ArrowRight className="w-5 h-5" />
+        </Button>
+        <div className="flex gap-3">
           <Button
             variant="outline"
             onClick={onClearCart}
@@ -198,41 +299,23 @@ const DrawerFooter: React.FC<{
           >
             {/* Background gradient effect */}
             <div className="absolute inset-0 bg-gradient-to-r from-red-500 via-red-600 to-red-700 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left rounded-2xl"></div>
+            <span className="relative z-10 flex items-center justify-center gap-2">
+              {isClearingCart ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
+                  Vaciando...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="w-4 h-4" />
+                  Vaciar carrito
+                </>
+              )}
+            </span>
             
-            {/* Content */}
-            <div className="relative flex items-center justify-center gap-2 z-10">
-              <Trash2 className={`w-4 h-4 transition-all duration-200 ${isClearingCart ? 'animate-pulse' : 'group-hover:rotate-12'}`} />
-              <span className="text-sm font-bold">
-                {isClearingCart ? 'Vaciando...' : 'Vaciar carrito'}
-              </span>
-            </div>
-            
-            {/* Loading spinner overlay */}
-            {isClearingCart && (
-              <div className="absolute inset-0 bg-white/10 backdrop-blur-sm flex items-center justify-center rounded-2xl">
-                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-              </div>
-            )}
+            {/* Shine effect */}
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-out"></div>
           </Button>
-          
-          <Link href="/productos" onClick={onClose} className="flex-1">
-            <Button
-              variant="outline"
-              className="w-full group relative overflow-hidden border-2 border-[#CC9F53]/60 text-[#C59D5F] hover:text-white hover:border-[#CC9F53] transition-all duration-300 rounded-2xl py-4 font-bold shadow-lg hover:shadow-xl"
-            >
-              {/* Background gradient effect */}
-              <div className="absolute inset-0 bg-gradient-to-r from-[#CC9F53] via-[#D4A859] to-[#b08a3c] transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left rounded-2xl"></div>
-              
-              {/* Content */}
-              <div className="relative flex items-center justify-center gap-2 z-10">
-                <ShoppingBag className="w-4 h-4 transition-all duration-200 group-hover:scale-110" />
-                <span className="text-sm font-bold">Seguir comprando</span>
-              </div>
-              
-              {/* Shine effect */}
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-out"></div>
-            </Button>
-          </Link>
         </div>
       </div>
     </div>
@@ -241,14 +324,35 @@ const DrawerFooter: React.FC<{
 
 // Componente principal del drawer
 const ShoppingCartDrawer: React.FC = () => {
-  const { cart, increaseQty, decreaseQty, removeFromCart, clearCart } = useCart();
+  const router = useRouter();
+  const { cart, increaseQty, decreaseQty, setQty, removeFromCart, clearCart } = useCart();
   const { open, closeDrawer } = useCartDrawer();
+  const { showError } = useStockAlertGlobal();
   const [isClearingCart, setIsClearingCart] = useState(false);
   const [updatingItems, setUpdatingItems] = useState<Set<string>>(new Set());
   const drawerRef = useRef<HTMLDivElement>(null);
 
   // Calcular subtotal
   const subtotal = cart.reduce((acc, item) => acc + item.price * item.quantity, 0);
+
+  // Función para navegar al carrito con scroll
+  const handleNavigateToCart = () => {
+    // Cerrar el drawer inmediatamente
+    handleClose();
+    
+    // Scroll al top antes de navegar
+    scrollToTopInstant();
+    
+    // Navegar con un pequeño delay
+    setTimeout(() => {
+      router.push('/carrito');
+      
+      // Scroll adicional después de la navegación
+      setTimeout(() => {
+        scrollToTopInstant();
+      }, 100);
+    }, 150);
+  };
 
   // Manejar click en overlay
   const handleOverlayClick = (e: React.MouseEvent) => {
@@ -273,6 +377,12 @@ const ShoppingCartDrawer: React.FC = () => {
     setUpdatingItems(prev => new Set(prev).add(id));
     try {
       await increaseQty(id);
+    } catch (error) {
+      console.error('Error increasing quantity:', error);
+      showError(
+        'Error del Sistema',
+        error instanceof Error ? error.message : 'Error al aumentar cantidad'
+      );
     } finally {
       setUpdatingItems(prev => {
         const newSet = new Set(prev);
@@ -286,6 +396,12 @@ const ShoppingCartDrawer: React.FC = () => {
     setUpdatingItems(prev => new Set(prev).add(id));
     try {
       await decreaseQty(id);
+    } catch (error) {
+      console.error('Error decreasing quantity:', error);
+      showError(
+        'Error del Sistema',
+        error instanceof Error ? error.message : 'Error al disminuir cantidad'
+      );
     } finally {
       setUpdatingItems(prev => {
         const newSet = new Set(prev);
@@ -299,6 +415,31 @@ const ShoppingCartDrawer: React.FC = () => {
     setUpdatingItems(prev => new Set(prev).add(id));
     try {
       await removeFromCart(id);
+    } catch (error) {
+      console.error('Error removing from cart:', error);
+      showError(
+        'Error del Sistema',
+        error instanceof Error ? error.message : 'Error al eliminar del carrito'
+      );
+    } finally {
+      setUpdatingItems(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(id);
+        return newSet;
+      });
+    }
+  };
+
+  const handleSetQty = async (id: string, qty: number) => {
+    setUpdatingItems(prev => new Set(prev).add(id));
+    try {
+      await setQty(id, qty);
+    } catch (error) {
+      console.error('Error setting quantity:', error);
+      showError(
+        'Error del Sistema',
+        error instanceof Error ? error.message : 'Error al actualizar cantidad'
+      );
     } finally {
       setUpdatingItems(prev => {
         const newSet = new Set(prev);
@@ -312,10 +453,18 @@ const ShoppingCartDrawer: React.FC = () => {
     try {
       setIsClearingCart(true);
       await clearCart();
+    } catch (error) {
+      console.error('Error clearing cart:', error);
+      showError(
+        'Error del Sistema',
+        error instanceof Error ? error.message : 'Error al vaciar carrito'
+      );
     } finally {
       setIsClearingCart(false);
     }
-  };  // Prevenir scroll de fondo cuando el drawer está abierto
+  };
+
+  // Prevenir scroll de fondo cuando el drawer está abierto
   useEffect(() => {
     if (open) {
       // Guardar el scroll actual
@@ -374,7 +523,7 @@ const ShoppingCartDrawer: React.FC = () => {
           to { opacity: 0; }
         }
         .animate-slide-in {
-          animation: slide-in 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+          animation: slide-in 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .animate-slide-out {
           animation: slide-out 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -396,6 +545,7 @@ const ShoppingCartDrawer: React.FC = () => {
   }, [open]);
 
   if (!open) return null;
+
   return (
     <div 
       className="fixed inset-0 z-[9999] bg-gradient-to-br from-black/50 via-black/40 to-black/30 backdrop-blur-md flex justify-end animate-fade-in"
@@ -435,6 +585,7 @@ const ShoppingCartDrawer: React.FC = () => {
                     item={item}
                     onIncrease={() => handleIncreaseQty(item.id)}
                     onDecrease={() => handleDecreaseQty(item.id)}
+                    onSetQty={(qty) => handleSetQty(item.id, qty)}
                     onRemove={() => handleRemoveFromCart(item.id)}
                     isUpdating={updatingItems.has(item.id)}
                   />
@@ -448,8 +599,8 @@ const ShoppingCartDrawer: React.FC = () => {
           <DrawerFooter
             subtotal={subtotal}
             onClearCart={handleClearCart}
-            onClose={handleClose}
             isClearingCart={isClearingCart}
+            onNavigateToCart={handleNavigateToCart}
           />
         )}
       </div>
