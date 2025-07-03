@@ -70,3 +70,4 @@ USER nextjs
 
 # Comando de inicio optimizado para standalone
 CMD ["node", "server.js"]
+# Comando de inicio optimizado para standalone
