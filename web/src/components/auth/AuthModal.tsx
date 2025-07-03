@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button';
 import { X, Eye, EyeOff, Mail, Lock, User, Phone } from 'lucide-react';
 import Image from 'next/image';
 import { InicioSesionDto, RegistroForm } from '@/types/auth';
+import ForgotPasswordModal from './ForgotPasswordModal';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -21,6 +22,7 @@ const AuthModal: React.FC<AuthModalProps> = ({
   const [showPassword, setShowPassword] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
   const [localError, setLocalError] = useState<string | null>(null);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
 
   const { 
     mode, 
@@ -130,7 +132,10 @@ const AuthModal: React.FC<AuthModalProps> = ({
     }
   };
 
-  if (!isOpen) return null;  return (
+  if (!isOpen) return null;
+  
+  return (
+    <>
     <div className="fixed inset-0 z-[9999] overflow-y-auto">
       {/* Enhanced Overlay */}
       <div 
@@ -275,6 +280,17 @@ const AuthModal: React.FC<AuthModalProps> = ({
                   >
                     {isLoading ? 'Iniciando Sesión...' : 'Iniciar Sesión'}
                   </Button>
+
+                  {/* Forgot password link */}
+                  <div className="text-center">
+                    <button
+                      type="button"
+                      onClick={() => setShowForgotPassword(true)}
+                      className="text-sm text-[#CC9F53] hover:text-[#B88D42] font-medium transition-colors underline"
+                    >
+                      ¿Olvidaste tu contraseña?
+                    </button>
+                  </div>
 
                   {/* Switch to register */}
                   <p className="text-center text-sm text-gray-600">
@@ -462,6 +478,17 @@ const AuthModal: React.FC<AuthModalProps> = ({
         </div>
       </div>
     </div>
+
+    {/* Forgot Password Modal */}
+    <ForgotPasswordModal
+      isOpen={showForgotPassword}
+      onClose={() => setShowForgotPassword(false)}
+      onSuccess={() => {
+        setShowForgotPassword(false);
+        setSuccess('Contraseña restablecida exitosamente. Ahora puedes iniciar sesión.');
+      }}
+    />
+    </>
   );
 };
 
