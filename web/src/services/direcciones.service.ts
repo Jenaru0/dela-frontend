@@ -1,5 +1,11 @@
 import { API_BASE_URL } from '@/lib/api';
-import { DireccionCliente, DireccionClienteConUsuario, CreateDireccionDto, UpdateDireccionDto, ApiResponse } from '@/types/direcciones';
+import {
+  DireccionCliente,
+  DireccionClienteConUsuario,
+  CreateDireccionDto,
+  UpdateDireccionDto,
+  ApiResponse,
+} from '@/types/direcciones';
 
 class DireccionesService {
   private getAuthHeaders() {
@@ -11,38 +17,44 @@ class DireccionesService {
   }
 
   // Validar que un número sea válido o devolver undefined
-  private validarNumero(valor: number | string | null | undefined): number | undefined {
+  private validarNumero(
+    valor: number | string | null | undefined
+  ): number | undefined {
     if (valor === null || valor === undefined || valor === '') {
       return undefined;
     }
-    
-    const numero = typeof valor === 'string' ? parseFloat(valor) : Number(valor);
-    
+
+    const numero =
+      typeof valor === 'string' ? parseFloat(valor) : Number(valor);
+
     if (isNaN(numero) || !isFinite(numero)) {
       return undefined;
     }
-    
+
     return numero;
   }
 
   // Validar coordenadas geográficas
-  private validarCoordenadas(latitud?: number, longitud?: number): { latitud?: number; longitud?: number } {
+  private validarCoordenadas(
+    latitud?: number,
+    longitud?: number
+  ): { latitud?: number; longitud?: number } {
     const result: { latitud?: number; longitud?: number } = {};
-    
+
     if (latitud !== undefined) {
       const lat = this.validarNumero(latitud);
       if (lat !== undefined && lat >= -90 && lat <= 90) {
         result.latitud = lat;
       }
     }
-    
+
     if (longitud !== undefined) {
       const lng = this.validarNumero(longitud);
       if (lng !== undefined && lng >= -180 && lng <= 180) {
         result.longitud = lng;
       }
     }
-    
+
     return result;
   }
 
@@ -66,44 +78,65 @@ class DireccionesService {
     }
   }
 
-  // Crear nueva dirección
-  async crearDireccion(datos: CreateDireccionDto): Promise<ApiResponse<DireccionCliente>> {
+  // Crear nueva dirección - VERSIÓN SIMPLIFICADA
+  async crearDireccion(
+    datos: CreateDireccionDto
+  ): Promise<ApiResponse<DireccionCliente>> {
     try {
-      // Validar y limpiar las coordenadas
-      const coordenadasValidadas = this.validarCoordenadas(datos.latitud, datos.longitud);
-      
-      // Construir datos limpios
-      const datosLimpios = {
-        ...datos,
-        ...coordenadasValidadas,
+      console.log('🔧 Enviando datos originales:', datos);
+
+      // SOLUCIÓN RÁPIDA: Solo enviar campos obligatorios
+      const datosMinimos = {
+        direccion: datos.direccion,
+        departamento: datos.departamento || 'Lima',
+        provincia: datos.provincia || 'Lima',
+        distrito: datos.distrito || 'Lima',
+        alias: datos.alias || '',
+        predeterminada: datos.predeterminada || false,
+        // Sin coordenadas ni campos opcionales que puedan causar problemas
       };
 
-      // Debug: Verificar los datos que van al backend
-      console.log('Datos originales:', datos);
-      console.log('Coordenadas validadas:', coordenadasValidadas);
-      console.log('Datos limpios finales:', datosLimpios);
-      console.log('JSON que se enviará:', JSON.stringify(datosLimpios, null, 2));
+      console.log('🔧 Enviando solo datos mínimos:', datosMinimos);
 
       const response = await fetch(`${API_BASE_URL}/direcciones`, {
         method: 'POST',
         headers: this.getAuthHeaders(),
-        body: JSON.stringify(datosLimpios),
+        body: JSON.stringify(datosMinimos),
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Error al crear dirección');
+        const errorText = await response.text();
+        console.error('🔧 Error del servidor (texto):', errorText);
+
+        let errorData;
+        try {
+          errorData = JSON.parse(errorText);
+        } catch {
+          errorData = {
+            message: 'Error del servidor',
+            status: response.status,
+          };
+        }
+
+        throw new Error(
+          errorData.message || `Error ${response.status}: ${errorText}`
+        );
       }
 
-      return await response.json();
+      const result = await response.json();
+      console.log('🔧 ¡Dirección creada exitosamente!', result);
+      return result;
     } catch (error) {
-      console.error('Error al crear dirección:', error);
+      console.error('🔧 Error al crear dirección:', error);
       throw error;
     }
   }
 
   // Actualizar dirección
-  async actualizarDireccion(id: number, datos: UpdateDireccionDto): Promise<ApiResponse<DireccionCliente>> {
+  async actualizarDireccion(
+    id: number,
+    datos: UpdateDireccionDto
+  ): Promise<ApiResponse<DireccionCliente>> {
     try {
       const response = await fetch(`${API_BASE_URL}/direcciones/${id}`, {
         method: 'PATCH',
@@ -144,16 +177,23 @@ class DireccionesService {
   }
 
   // Establecer dirección como predeterminada
-  async establecerPredeterminada(id: number): Promise<ApiResponse<DireccionCliente>> {
+  async establecerPredeterminada(
+    id: number
+  ): Promise<ApiResponse<DireccionCliente>> {
     try {
-      const response = await fetch(`${API_BASE_URL}/direcciones/${id}/predeterminada`, {
-        method: 'PATCH',
-        headers: this.getAuthHeaders(),
-      });
+      const response = await fetch(
+        `${API_BASE_URL}/direcciones/${id}/predeterminada`,
+        {
+          method: 'PATCH',
+          headers: this.getAuthHeaders(),
+        }
+      );
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Error al establecer dirección predeterminada');
+        throw new Error(
+          errorData.message || 'Error al establecer dirección predeterminada'
+        );
       }
 
       return await response.json();
@@ -161,8 +201,10 @@ class DireccionesService {
       console.error('Error al establecer dirección predeterminada:', error);
       throw error;
     }
-  }  // Admin: Obtener todas las direcciones de todos los usuarios
-  async obtenerTodasAdmin(): Promise<ApiResponse<DireccionClienteConUsuario[]>> {
+  } // Admin: Obtener todas las direcciones de todos los usuarios
+  async obtenerTodasAdmin(): Promise<
+    ApiResponse<DireccionClienteConUsuario[]>
+  > {
     try {
       const response = await fetch(`${API_BASE_URL}/direcciones/admin/todas`, {
         method: 'GET',
@@ -202,10 +244,13 @@ class DireccionesService {
         searchParams.append('search', filters.search);
       }
 
-      const response = await fetch(`${API_BASE_URL}/direcciones/admin/paginacion?${searchParams}`, {
-        method: 'GET',
-        headers: this.getAuthHeaders(),
-      });
+      const response = await fetch(
+        `${API_BASE_URL}/direcciones/admin/paginacion?${searchParams}`,
+        {
+          method: 'GET',
+          headers: this.getAuthHeaders(),
+        }
+      );
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -219,18 +264,23 @@ class DireccionesService {
     }
   }
   // Admin: Obtener estadísticas de direcciones
-  async obtenerEstadisticas(): Promise<ApiResponse<{
-    total: number;
-    activas: number;
-    inactivas: number;
-    predeterminadas: number;
-    porDepartamento: { [key: string]: number };
-  }>>{
+  async obtenerEstadisticas(): Promise<
+    ApiResponse<{
+      total: number;
+      activas: number;
+      inactivas: number;
+      predeterminadas: number;
+      porDepartamento: { [key: string]: number };
+    }>
+  > {
     try {
-      const response = await fetch(`${API_BASE_URL}/direcciones/admin/estadisticas`, {
-        method: 'GET',
-        headers: this.getAuthHeaders(),
-      });
+      const response = await fetch(
+        `${API_BASE_URL}/direcciones/admin/estadisticas`,
+        {
+          method: 'GET',
+          headers: this.getAuthHeaders(),
+        }
+      );
 
       if (!response.ok) {
         const errorData = await response.json();
