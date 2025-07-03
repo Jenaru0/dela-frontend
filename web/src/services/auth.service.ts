@@ -59,7 +59,21 @@ class AuthService {  private getAuthHeaders() {
       if (data.token_acceso && typeof window !== 'undefined') {
         localStorage.setItem('token', data.token_acceso);
         localStorage.setItem('refresh_token', data.refresh_token);
-        localStorage.setItem('usuario', JSON.stringify(data.usuario));
+        
+        // Extraer datos actualizados del JWT (por si el backend tiene datos más recientes)
+        try {
+          const userData = this.extractUserFromToken(data.token_acceso);
+          if (userData) {
+            localStorage.setItem('usuario', JSON.stringify(userData));
+          } else {
+            // Fallback a los datos que vienen en la respuesta
+            localStorage.setItem('usuario', JSON.stringify(data.usuario));
+          }
+        } catch (error) {
+          console.error('Error al extraer datos del usuario del token:', error);
+          // Fallback a los datos que vienen en la respuesta
+          localStorage.setItem('usuario', JSON.stringify(data.usuario));
+        }
       }
 
       return data;
@@ -253,6 +267,16 @@ class AuthService {  private getAuthHeaders() {
       if (data.token_acceso && typeof window !== 'undefined') {
         localStorage.setItem('token', data.token_acceso);
         localStorage.setItem('refresh_token', data.refresh_token);
+        
+        // Extraer datos del usuario del nuevo JWT y guardarlos
+        try {
+          const userData = this.extractUserFromToken(data.token_acceso);
+          if (userData) {
+            localStorage.setItem('usuario', JSON.stringify(userData));
+          }
+        } catch (error) {
+          console.error('Error al extraer datos del usuario del token:', error);
+        }
       }
 
       return data;
@@ -346,6 +370,34 @@ class AuthService {  private getAuthHeaders() {
       return response.status === 200 || response.status === 401;
     } catch {
       return false;
+    }
+  }
+
+  // Extraer datos del usuario del JWT
+  private extractUserFromToken(token: string): { id: number; email: string; nombres: string; apellidos: string; celular: string; tipoUsuario: string; activo: boolean } | null {
+    try {
+      // Decodificar el JWT (solo la parte payload, sin verificar la firma)
+      const base64Url = token.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+      }).join(''));
+      
+      const payload = JSON.parse(jsonPayload);
+      
+      // Convertir el payload a formato de usuario
+      return {
+        id: payload.sub,
+        email: payload.email,
+        nombres: payload.nombres || '',
+        apellidos: payload.apellidos || '',
+        celular: payload.celular || '',
+        tipoUsuario: payload.tipoUsuario,
+        activo: payload.activo,
+      };
+    } catch (error) {
+      console.error('Error al decodificar JWT:', error);
+      return null;
     }
   }
 }

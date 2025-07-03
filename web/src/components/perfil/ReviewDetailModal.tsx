@@ -17,7 +17,6 @@ const ReviewDetailModal: React.FC<ReviewDetailModalProps> = ({
   onClose,
   resena
 }) => {
-  console.log('🔍 ReviewDetailModal - isOpen:', isOpen, 'resena:', resena);
   
   // Manejar el bloqueo del scroll del body
   useEffect(() => {

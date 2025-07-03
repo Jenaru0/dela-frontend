@@ -6,15 +6,12 @@ import { Input } from '@/components/ui/input';
 import { 
   Mail, 
   Search,
-  Download,
-  Send,
   UserCheck,
   UserX,
   Calendar,
   TrendingUp,
   AlertCircle,
   CheckCircle,
-  Trash2,
   Users,
   Power
 } from 'lucide-react';
@@ -109,40 +106,6 @@ const NewsletterAdminPage: React.FC = () => {
     }
   };
 
-  // Eliminar suscriptor
-  const handleDeleteSuscriptor = async (id: number) => {
-    const confirmed = window.confirm('¿Estás seguro de que quieres eliminar este suscriptor?');
-    if (!confirmed) return;    try {
-      await newsletterService.eliminar(id);
-      await loadSuscriptores();
-      showNotification('success', 'Suscriptor eliminado correctamente');
-    } catch (error) {
-      console.error('Error al eliminar suscriptor:', error);
-      showNotification('error', 'Error al eliminar suscriptor');
-    }
-  };
-
-  // Exportar suscriptores
-  const handleExportSuscriptores = () => {
-    const csvContent = [
-      ['Email', 'Estado', 'Fecha de Suscripción'],
-      ...filteredSuscriptores.map(s => [
-        s.email,
-        s.activo ? 'Activo' : 'Inactivo',
-        new Date(s.creadoEn).toLocaleDateString('es-PE')
-      ])
-    ].map(row => row.join(',')).join('\n');
-
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `suscriptores-newsletter-${new Date().toISOString().split('T')[0]}.csv`;
-    a.click();
-    window.URL.revokeObjectURL(url);
-    showNotification('success', 'Archivo CSV descargado correctamente');
-  };
-
   return (
     <div className="space-y-6">
       {/* Notification */}
@@ -170,26 +133,6 @@ const NewsletterAdminPage: React.FC = () => {
           <p className="text-[#9A8C61] mt-1">
             Administra los suscriptores y campañas del newsletter de Dela
           </p>
-        </div>
-        <div className="flex gap-2">
-          <Button
-            onClick={handleExportSuscriptores}
-            variant="outline"
-            className="flex items-center gap-2"
-          >
-            <Download className="w-4 h-4" />
-            Exportar CSV
-          </Button>
-          <Button
-            onClick={() => {
-              // TODO: Implementar envío de campaña
-              showNotification('success', 'Envío de campañas próximamente disponible');
-            }}
-            className="bg-gradient-to-r from-[#CC9F53] to-[#b08a3c] hover:from-[#b08a3c] hover:to-[#9a7635] text-white font-semibold px-6 py-2.5 rounded-lg transition-all duration-300 flex items-center gap-2 shadow-lg"
-          >
-            <Send className="w-4 h-4" />
-            Nueva Campaña
-          </Button>
         </div>
       </div>
 
@@ -336,7 +279,7 @@ const NewsletterAdminPage: React.FC = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end space-x-2">
+                      <div className="flex items-center justify-end">
                         <Button
                           variant="ghost"
                           size="sm"
@@ -346,16 +289,9 @@ const NewsletterAdminPage: React.FC = () => {
                               ? 'text-orange-600 hover:bg-orange-50' 
                               : 'text-green-600 hover:bg-green-50'
                           }`}
+                          title={suscriptor.activo ? 'Desactivar suscriptor' : 'Activar suscriptor'}
                         >
                           <Power className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDeleteSuscriptor(suscriptor.id)}
-                          className="text-red-600 hover:bg-red-50"
-                        >
-                          <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
                     </td>

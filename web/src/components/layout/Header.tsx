@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
+import { useUserDataRefresh } from '@/hooks/useUserDataRefresh';
 import AuthModal from '@/components/auth/AuthModal';
 import { useCart } from '@/contexts/CarContext';
 import { useFavorites } from '@/contexts/FavoritoContext';
@@ -37,6 +38,13 @@ const Header: React.FC = () => {
   const { cart, loadCartIfNeeded } = useCart();
   const { favorites } = useFavorites();
   const router = useRouter();
+
+  // Auto-refresh de datos del usuario (solo si está autenticado, sin refresh automático periódico)
+  useUserDataRefresh({ 
+    enabled: isAuthenticated && !!usuario,
+    onMount: false, // No refrescar al montar en header para evitar doble request
+    interval: 0 // Sin auto-refresh periódico
+  });
 
   const cartItemsCount = cart.reduce((acc, item) => acc + item.quantity, 0);
 

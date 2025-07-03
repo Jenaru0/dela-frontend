@@ -8,7 +8,6 @@ import Layout from '@/components/layout/Layout';
 import { CheckoutSummary } from '@/components/checkout/CheckoutSummary';
 import { AddressSelection } from '@/components/checkout/AddressSelection';
 import { PaymentForm } from '@/components/checkout/PaymentForm';
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { Button } from '@/components/ui/Button';
 import { ArrowLeft } from 'lucide-react';
 import { DireccionCliente } from '@/types/direcciones';
@@ -276,7 +275,7 @@ export default function CheckoutPage() {
     return (
       <Layout>
         <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#fffbe6] via-[#fffaf1] to-[#fff]">
-          <LoadingSpinner size="lg" />
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-[#CC9F53] mx-auto"></div>
         </div>
       </Layout>
     );
@@ -362,7 +361,7 @@ export default function CheckoutPage() {
 
               {step === 'processing' && (
                 <div className="bg-white rounded-lg shadow-sm p-8 text-center">
-                  <LoadingSpinner size="lg" className="mx-auto mb-4" />
+                  <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-[#CC9F53] mx-auto mb-4"></div>
                   <h3 className="text-lg font-medium text-gray-900 mb-2">
                     Procesando tu pago...
                   </h3>

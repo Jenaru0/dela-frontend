@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/Button';
 import { User, Shield, Mail, Phone, AlertCircle, CheckCircle, MapPin, Plus, Package, MessageSquare, Star, UserX, Eye, Info } from 'lucide-react';
@@ -13,6 +13,8 @@ import CreateReviewModal from '@/components/perfil/CreateReviewModal';
 import CreateClaimModal from '@/components/perfil/CreateClaimModal';
 import ClaimDetailModal from '@/components/perfil/ClaimDetailModal';
 import ReviewDetailModal from '@/components/perfil/ReviewDetailModal';
+import { NewsletterModal } from '@/components/modals/NewsletterModal';
+import { DeactivateAccountModal } from '@/components/modals/DeactivateAccountModal';
 import { usuariosService } from '@/services/usuarios.service';
 import { authService } from '@/services/auth.service';
 import { direccionesService } from '@/services/direcciones.service';
@@ -23,12 +25,28 @@ import { resenasService, Resena } from '@/services/resenas.service';
 import { UpdateUsuarioDto } from '@/types/usuarios';
 import { DireccionCliente, CreateDireccionDto, UpdateDireccionDto } from '@/types/direcciones';
 import { useReclamos } from '@/hooks/useReclamos';
+import { useUserDataRefresh } from '@/hooks/useUserDataRefresh';
+import { useSelectiveDataRefresh, dataRefreshConfigs } from '@/hooks/useSelectiveDataRefresh';
 import { EstadoPedidoLabels, EstadoPedidoColors, EstadoReclamoLabels, PrioridadReclamoLabels, EstadoResenaLabels, MetodoPagoLabels, MetodoEnvioLabels } from '@/types/enums';
 import Layout from '@/components/layout/Layout';
 
 const ProfilePage: React.FC = () => {
   const { usuario, isAuthenticated, actualizarUsuario, isLoading, cerrarSesion } = useAuth();
   const { crearReclamo} = useReclamos();
+  
+  // Auto-refresh de datos del usuario al entrar al perfil
+  // Auto-refresh de datos del usuario para esta página crítica
+  const { refrescarDatosUsuario } = useUserDataRefresh({
+    enabled: isAuthenticated && !!usuario,
+    onMount: true, // Refrescar al montar en perfil
+    interval: 0 // Sin auto-refresh periódico, solo manual
+  });
+
+  // Hook para manejo selectivo de datos secundarios
+  const { loadData: loadSelectiveData } = useSelectiveDataRefresh();
+
+  // Memoizar ID del usuario para optimizar dependencias
+  const usuarioId = useMemo(() => usuario?.id, [usuario?.id]);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
@@ -49,6 +67,9 @@ const ProfilePage: React.FC = () => {
   const [selectedResena, setSelectedResena] = useState<Resena | null>(null);  const [activeTab, setActiveTab] = useState<'personal' | 'addresses' | 'orders' | 'claims' | 'reviews'>('personal');
   const [isNewsletterSubscribed, setIsNewsletterSubscribed] = useState(false);
   const [isLoadingNewsletter, setIsLoadingNewsletter] = useState(false);
+  const [isNewsletterModalOpen, setIsNewsletterModalOpen] = useState(false);
+  const [newsletterModalType, setNewsletterModalType] = useState<'subscribe' | 'unsubscribe'>('subscribe');
+  const [isDeactivateModalOpen, setIsDeactivateModalOpen] = useState(false);
   const [isDeactivating, setIsDeactivating] = useState(false);
   
   // Estados para pedidos, reclamos y reseñas
@@ -85,8 +106,14 @@ const ProfilePage: React.FC = () => {
     }
   }, [usuario?.email]);
 
-  // Manejar suscripción/desuscripción al newsletter
-  const handleNewsletterToggle = async () => {
+  // Manejar apertura del modal de newsletter
+  const handleNewsletterToggle = () => {
+    setNewsletterModalType(isNewsletterSubscribed ? 'unsubscribe' : 'subscribe');
+    setIsNewsletterModalOpen(true);
+  };
+
+  // Confirmar suscripción/desuscripción al newsletter
+  const confirmNewsletterAction = async () => {
     if (!usuario?.email) return;
     
     try {
@@ -101,6 +128,11 @@ const ProfilePage: React.FC = () => {
         setIsNewsletterSubscribed(true);
         showNotification('success', 'Te has suscrito al newsletter');
       }
+      
+      // Refrescar datos del usuario para sincronizar el estado
+      await refrescarDatosUsuario(true);
+      
+      setIsNewsletterModalOpen(false);
     } catch (error) {
       console.error('Error al manejar newsletter:', error);
       showNotification('error', 'Error al procesar la suscripción');
@@ -108,18 +140,20 @@ const ProfilePage: React.FC = () => {
       setIsLoadingNewsletter(false);
     }
   };
-  // Manejar desactivación de cuenta
-  const handleDeactivateAccount = async () => {
-    const confirmed = window.confirm(
-      '¿Estás seguro de que quieres desactivar tu cuenta? Esta acción no se puede deshacer y perderás acceso a tu perfil, pedidos y datos guardados.'
-    );
-    
-    if (!confirmed) return;
-    
+  // Manejar apertura del modal de desactivación
+  const handleDeactivateAccount = () => {
+    setIsDeactivateModalOpen(true);
+  };
+
+  // Confirmar desactivación de cuenta desde el modal
+  const confirmDeactivateAccount = async () => {
     try {
       setIsDeactivating(true);
       await usuariosService.desactivarCuenta();
       showNotification('success', 'Cuenta desactivada correctamente. Serás redirigido al inicio...');
+      
+      // Cerrar el modal
+      setIsDeactivateModalOpen(false);
       
       // Cerrar sesión inmediatamente después de desactivar
       setTimeout(async () => {
@@ -133,7 +167,8 @@ const ProfilePage: React.FC = () => {
           localStorage.removeItem('usuario');
           window.location.href = '/';
         }
-      }, 1500);    } catch (error: unknown) {
+      }, 1500);
+    } catch (error: unknown) {
       console.error('Error al desactivar cuenta:', error);
       const errorMessage = error instanceof Error ? error.message : 'Error al desactivar la cuenta. Por favor, inténtalo de nuevo.';
       showNotification('error', errorMessage);
@@ -141,25 +176,45 @@ const ProfilePage: React.FC = () => {
       setIsDeactivating(false);
     }
   };
+  // Función optimizada para recargar direcciones (evita recargas innecesarias)
+  const loadAddresses = useCallback(async (force = false) => {
+    try {
+      setIsLoadingAddresses(true);
+      
+      // Usar el hook selectivo para evitar recargas innecesarias
+      const direccionesData = await loadSelectiveData<DireccionCliente[]>(
+        'direcciones', 
+        {
+          loader: async () => {
+            const response = await direccionesService.obtenerDirecciones();
+            return response?.data || [];
+          },
+          shouldReload: force ? () => true : dataRefreshConfigs.direcciones.shouldReload,
+          throttleMs: force ? 0 : dataRefreshConfigs.direcciones.throttleMs
+        },
+        usuario
+      );
+      
+      if (direccionesData) {
+        setDirecciones(direccionesData);
+      }
+    } catch (error) {
+      console.error('Error al cargar direcciones:', error);
+      showNotification('error', 'Error al cargar direcciones');
+      setDirecciones([]); // Set empty array on error
+    } finally {
+      setIsLoadingAddresses(false);
+    }
+  }, [loadSelectiveData, usuario]);
+
   // Cargar direcciones cuando el usuario esté autenticado
   useEffect(() => {
-    const loadAddresses = async () => {
-      try {
-        setIsLoadingAddresses(true);
-        const response = await direccionesService.obtenerDirecciones();
-        setDirecciones(response?.data || []);
-      } catch (error) {
-        console.error('Error al cargar direcciones:', error);
-        showNotification('error', 'Error al cargar direcciones');
-        setDirecciones([]); // Set empty array on error
-      } finally {
-        setIsLoadingAddresses(false);
-      }
-    };    if (isAuthenticated && usuario) {
+    if (isAuthenticated && usuarioId) {
+      // Llamar a loadAddresses sin forzar (usa cache inteligente)
       loadAddresses();
       checkNewsletterSubscription(); // Verificar suscripción al cargar perfil
     }
-  }, [isAuthenticated, usuario, checkNewsletterSubscription]);
+  }, [isAuthenticated, usuarioId, checkNewsletterSubscription, loadAddresses]); // Incluir loadAddresses
   // Verificar suscripción al newsletter cuando cargue el usuario
   useEffect(() => {
     if (usuario?.email) {
@@ -227,19 +282,6 @@ const ProfilePage: React.FC = () => {
     loadData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, isAuthenticated, usuario]);
-  const loadAddresses = async () => {
-    try {
-      setIsLoadingAddresses(true);
-      const response = await direccionesService.obtenerDirecciones();
-      setDirecciones(response?.data || []);
-    } catch (error) {
-      console.error('Error al cargar direcciones:', error);
-      showNotification('error', 'Error al cargar direcciones');
-      setDirecciones([]); // Set empty array on error
-    } finally {
-      setIsLoadingAddresses(false);
-    }
-  };
 
   // Manejar actualización de perfil
   const handleUpdateProfile = async (datos: UpdateUsuarioDto) => {
@@ -283,7 +325,7 @@ const ProfilePage: React.FC = () => {
         await direccionesService.crearDireccion(datos as CreateDireccionDto);
         showNotification('success', 'Dirección creada correctamente');
       }
-      await loadAddresses();
+      await loadAddresses(true); // Forzar recarga después de modificar
       setIsAddressModalOpen(false);
       setSelectedAddress(null);
     } catch (error) {
@@ -297,7 +339,7 @@ const ProfilePage: React.FC = () => {
     try {
       await direccionesService.eliminarDireccion(id);
       showNotification('success', 'Dirección eliminada correctamente');
-      await loadAddresses();
+      await loadAddresses(true); // Forzar recarga después de eliminar
     } catch (error) {
       console.error('Error al eliminar dirección:', error);
       showNotification('error', 'Error al eliminar la dirección');
@@ -309,7 +351,7 @@ const ProfilePage: React.FC = () => {
     try {
       await direccionesService.establecerPredeterminada(id);
       showNotification('success', 'Dirección predeterminada actualizada');
-      await loadAddresses();
+      await loadAddresses(true); // Forzar recarga después de cambiar predeterminada
     } catch (error) {
       console.error('Error al establecer dirección predeterminada:', error);
       showNotification('error', 'Error al establecer dirección predeterminada');
@@ -682,7 +724,6 @@ const ProfilePage: React.FC = () => {
                       variant="outline"
                       className="w-full justify-start"
                       onClick={handleNewsletterToggle}
-                      disabled={isLoadingNewsletter}
                     >
                       <Mail className="h-4 w-4 mr-2" />
                       {isNewsletterSubscribed ? 'Cancelar Suscripción' : 'Suscribirse a Newsletter'}
@@ -1115,6 +1156,23 @@ const ProfilePage: React.FC = () => {
               setSelectedResena(null);
             }}
             resena={selectedResena}
+          />
+
+          {/* Modal de confirmación de newsletter */}
+          <NewsletterModal
+            isOpen={isNewsletterModalOpen}
+            onClose={() => setIsNewsletterModalOpen(false)}
+            onConfirm={confirmNewsletterAction}
+            type={newsletterModalType}
+            isLoading={isLoadingNewsletter}
+          />
+
+          {/* Modal de confirmación de desactivación de cuenta */}
+          <DeactivateAccountModal
+            isOpen={isDeactivateModalOpen}
+            onClose={() => setIsDeactivateModalOpen(false)}
+            onConfirm={confirmDeactivateAccount}
+            isLoading={isDeactivating}
           />
         </div>
       </div>

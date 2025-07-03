@@ -98,16 +98,6 @@ export function CheckoutSummary({
                 📍 {direccionSeleccionada.referencia}
               </p>
             )}
-            
-            {/* Información de estado en una línea */}
-            <div className="flex items-center space-x-2 text-xs text-gray-500">
-              {direccionSeleccionada.codigoPostal && (
-                <span>CP: {direccionSeleccionada.codigoPostal}</span>
-              )}
-              {direccionSeleccionada.validadaGps && (
-                <span className="text-green-600">✓ Validada</span>
-              )}
-            </div>
           </div>
         </div>
       )}

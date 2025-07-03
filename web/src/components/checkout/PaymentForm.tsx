@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { MetodoPago } from '@/types/enums';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/input';
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { CardTypeIndicator } from '@/components/ui/CardIcon';
 import { pagosService, TipoIdentificacion, DatosTarjeta } from '@/services/pagos.service';
 import { CreditCard, Lock, AlertCircle } from 'lucide-react';
@@ -330,7 +329,7 @@ export function PaymentForm({ total, userEmail, onProcesarPago, loading }: Payme
   if (loadingMetodos) {
     return (
       <div className="bg-white rounded-lg shadow-sm p-8 text-center">
-        <LoadingSpinner size="lg" className="mx-auto mb-4" />
+        <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-[#CC9F53] mx-auto mb-4"></div>
         <p className="text-gray-600">Cargando métodos de pago...</p>
       </div>
     );
@@ -535,7 +534,7 @@ export function PaymentForm({ total, userEmail, onProcesarPago, loading }: Payme
         >
           {loading ? (
             <>
-              <LoadingSpinner size="sm" className="mr-2" />
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
               Procesando Pago...
             </>
           ) : (

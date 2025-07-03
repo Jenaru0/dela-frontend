@@ -57,6 +57,11 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
         newErrors.email = 'El email no es válido';
       }
 
+      // Validación de celular - debe ser exactamente 9 dígitos o estar vacío
+      if (formData.celular && (formData.celular.length !== 9 || !formData.celular.startsWith('9'))) {
+        newErrors.celular = 'El celular debe tener exactamente 9 dígitos y empezar con 9';
+      }
+
       if (Object.keys(newErrors).length > 0) {
         setErrors(newErrors);
         return;
@@ -73,7 +78,23 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
   };
 
   const handleChange = (field: keyof UpdateUsuarioDto, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    // Validación especial para celular
+    if (field === 'celular') {
+      // Solo permitir números y máximo 9 dígitos
+      const numericValue = value.replace(/\D/g, '').slice(0, 9);
+      
+      // Si hay algún valor y no empieza con 9, agregar 9 al inicio
+      if (numericValue.length > 0 && !numericValue.startsWith('9')) {
+        // Si el primer dígito no es 9, reemplazarlo con 9 o agregarlo
+        const correctedValue = '9' + numericValue.slice(1);
+        setFormData(prev => ({ ...prev, [field]: correctedValue.slice(0, 9) }));
+      } else {
+        setFormData(prev => ({ ...prev, [field]: numericValue }));
+      }
+    } else {
+      setFormData(prev => ({ ...prev, [field]: value }));
+    }
+    
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: '' }));
     }
@@ -163,8 +184,16 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
               type="tel"
               value={formData.celular || ''}
               onChange={(e) => handleChange('celular', e.target.value)}
-              placeholder="+51 999 999 999"
+              placeholder="9XXXXXXXX"
+              maxLength={9}
+              className={errors.celular ? 'border-red-500' : ''}
             />
+            {formData.celular && formData.celular.length < 9 && (
+              <p className="text-sm text-red-600">El celular debe tener exactamente 9 dígitos</p>
+            )}
+            {errors.celular && (
+              <p className="text-sm text-red-600">{errors.celular}</p>
+            )}
           </div>
 
           {/* Actions */}

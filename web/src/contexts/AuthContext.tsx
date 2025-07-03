@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useReducer, useEffect, ReactNode, useState } from 'react';
+import React, { createContext, useContext, useReducer, useEffect, ReactNode, useState, useCallback } from 'react';
 import { AuthState, UsuarioResponse, InicioSesionDto, RegistroDto } from '@/types/auth';
 import { authService } from '@/services/auth.service';
 
@@ -88,6 +88,7 @@ interface AuthContextType extends AuthState {
   cerrarSesion: () => Promise<void>;
   actualizarUsuario: (usuario: UsuarioResponse) => void;
   renovarToken: () => Promise<void>;
+  refrescarDatosUsuario: (force?: boolean) => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -262,13 +263,59 @@ export function AuthProvider({ children }: AuthProviderProps) {
       throw error;
     }
   };
-  const actualizarUsuario = (usuario: UsuarioResponse) => {
+  const actualizarUsuario = useCallback((usuario: UsuarioResponse) => {
     // Actualizar en localStorage también
     if (typeof window !== 'undefined') {
       localStorage.setItem('usuario', JSON.stringify(usuario));
     }
     dispatch({ type: 'UPDATE_USER', payload: { usuario } });
-  };
+  }, []);
+
+  // Función para obtener datos actualizados del usuario desde el servidor
+  const refrescarDatosUsuario = useCallback(async (force: boolean = false) => {
+    if (!state.isAuthenticated || !state.usuario) return false;
+    
+    try {
+      // Llamar al endpoint /usuarios/me para obtener datos frescos
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/usuarios/me`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${authService.getToken()}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.data) {
+          const nuevosDatos = data.data;
+          const datosActuales = state.usuario;
+          
+          // Comparar datos relevantes para determinar si realmente hay cambios
+          const hayDiferencias = force || 
+            nuevosDatos.id !== datosActuales.id ||
+            nuevosDatos.email !== datosActuales.email ||
+            nuevosDatos.nombres !== datosActuales.nombres ||
+            nuevosDatos.apellidos !== datosActuales.apellidos ||
+            nuevosDatos.celular !== datosActuales.celular ||
+            nuevosDatos.activo !== datosActuales.activo ||
+            nuevosDatos.suscrito_newsletter !== datosActuales.suscrito_newsletter;
+          
+          if (hayDiferencias) {
+            // Solo actualizar si hay diferencias reales en campos relevantes
+            actualizarUsuario(nuevosDatos);
+            return true; // Indica que se actualizó
+          }
+          return false; // No hubo cambios
+        }
+      }
+      return false;
+    } catch (error) {
+      console.error('Error al refrescar datos del usuario:', error);
+      // No hacer nada si falla, mantener datos existentes
+      return false;
+    }
+  }, [state.isAuthenticated, state.usuario, actualizarUsuario]);
 
   const renovarToken = async () => {
     try {
@@ -295,6 +342,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     cerrarSesion,
     actualizarUsuario,
     renovarToken,
+    refrescarDatosUsuario,
   };
 
   return (

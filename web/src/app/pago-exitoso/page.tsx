@@ -4,7 +4,6 @@ import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import Layout from '@/components/layout/Layout';
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { Button } from '@/components/ui/Button';
 import { CheckCircle, ShoppingBag, Home, CreditCard, MapPin, Package } from 'lucide-react';
 import { pedidosService, Pedido } from '@/services/pedidos.service';
@@ -118,7 +117,7 @@ function PagoExitosoContent() {
     return (
       <Layout>
         <div className="flex justify-center items-center min-h-[400px]">
-          <LoadingSpinner size="lg" />
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-[#CC9F53] mx-auto"></div>
         </div>
       </Layout>
     );
@@ -132,7 +131,7 @@ function PagoExitosoContent() {
     return (
       <Layout>
         <div className="flex justify-center items-center min-h-[400px]">
-          <LoadingSpinner size="lg" />
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-[#CC9F53] mx-auto"></div>
         </div>
       </Layout>
     );
@@ -398,7 +397,7 @@ export default function PagoExitosoPage() {
     <Suspense fallback={
       <Layout>
         <div className="flex justify-center items-center min-h-[400px]">
-          <LoadingSpinner size="lg" />
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-[#CC9F53] mx-auto"></div>
         </div>
       </Layout>
     }>

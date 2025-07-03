@@ -319,7 +319,7 @@ export default function CatalogoProductosPage() {
             <div className="flex-1 min-w-0">
               {loading && (
                 <div className="text-center py-16 sm:py-20">
-                  <div className="animate-spin rounded-full h-12 w-12 sm:h-16 sm:w-16 border-b-2 border-[#CC9F53] mx-auto mb-4"></div>
+                  <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-[#CC9F53] mx-auto mb-4"></div>
                   <h2 className="text-xl sm:text-2xl font-bold text-[#3A3A3A] mb-2">
                     Cargando productos...
                   </h2>

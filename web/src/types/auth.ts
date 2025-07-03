@@ -6,6 +6,8 @@ export interface UsuarioResponse {
   apellidos?: string;
   celular?: string;
   tipoUsuario: 'CLIENTE' | 'ADMIN';
+  activo?: boolean;
+  suscrito_newsletter?: boolean;
   creadoEn?: string;
   actualizadoEn?: string;
 }
