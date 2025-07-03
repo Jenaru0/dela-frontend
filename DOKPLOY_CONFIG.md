@@ -64,21 +64,25 @@ Las variables que empiezan con `NEXT_PUBLIC_` deben estar disponibles durante el
 ## Solución de Problemas
 
 ### Problema: Mapas no cargan (Error 403)
+
 **Síntoma**: `GET https://api.maptiler.com/maps/streets-v2/style.json?key= 403 (Forbidden)`
 **Causa**: `NEXT_PUBLIC_MAPTILER_API_KEY` no configurada o vacía
 **Solución**: Verificar que la variable esté configurada en Dokploy y hacer rebuild
 
 ### Problema: Cloudinary no está configurado
+
 **Síntoma**: "Cloudinary no está configurado. Verifica las variables de entorno."
 **Causa**: `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME` o `NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET` no configuradas
 **Solución**: Verificar que ambas variables estén configuradas en Dokploy y hacer rebuild
 
 ### Problema: Frontend no conecta con Backend
+
 **Síntoma**: Errores de red al cargar datos
 **Causa**: `NEXT_PUBLIC_API_URL` no configurada
 **Solución**: Verificar que apunte a `https://delabackend.episundc.pe`
 
 ### Problema: Pagos no funcionan
+
 **Síntoma**: Errores en el proceso de pago con MercadoPago
 **Causa**: `NEXT_PUBLIC_MP_PUBLIC_KEY` no configurada
 **Solución**: Verificar que la variable esté configurada en Dokploy

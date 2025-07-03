@@ -64,6 +64,7 @@ PORT=3000
 ```
 
 **⚠️ IMPORTANTE**: Todas las variables `NEXT_PUBLIC_*` deben estar configuradas en Dokploy para que el frontend funcione correctamente:
+
 - `NEXT_PUBLIC_API_URL`: Comunicación con el backend
 - `NEXT_PUBLIC_MAPTILER_API_KEY`: Mapas interactivos
 - `NEXT_PUBLIC_CLOUDINARY_*`: Subida y gestión de imágenes
