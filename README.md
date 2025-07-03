@@ -55,11 +55,12 @@ npm run start
 NODE_ENV=production
 NEXT_TELEMETRY_DISABLED=1
 NEXT_PUBLIC_API_URL=https://delabackend.episundc.pe
+NEXT_PUBLIC_MAPTILER_API_KEY=BcxILUtDMU5yrvpfcXrB
 HOSTNAME=0.0.0.0
 PORT=3000
 ```
 
-**⚠️ IMPORTANTE**: La variable `NEXT_PUBLIC_API_URL` debe estar configurada en Dokploy para que el frontend funcione correctamente. Ver [DOKPLOY_CONFIG.md](./DOKPLOY_CONFIG.md) para instrucciones detalladas.
+**⚠️ IMPORTANTE**: Las variables `NEXT_PUBLIC_API_URL` y `NEXT_PUBLIC_MAPTILER_API_KEY` deben estar configuradas en Dokploy para que el frontend funcione correctamente. Sin `NEXT_PUBLIC_MAPTILER_API_KEY`, los mapas no funcionarán en producción. Ver [DOKPLOY_CONFIG.md](./DOKPLOY_CONFIG.md) para instrucciones detalladas.
 
 ### Proceso de Deploy
 

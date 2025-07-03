@@ -26,8 +26,13 @@ ENV BUILD_STANDALONE=true
 
 # Variables para build-time (Dokploy las pasa como --build-arg)
 ARG NEXT_PUBLIC_API_URL=https://delabackend.episundc.pe
+ARG NEXT_PUBLIC_MAPTILER_API_KEY=BcxILUtDMU5yrvpfcXrB
 ARG NEXT_PUBLIC_APP_NAME=DELA
 ARG NEXT_PUBLIC_APP_VERSION=1.0.0
+
+# Establecer las variables de entorno para el build
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_MAPTILER_API_KEY=$NEXT_PUBLIC_MAPTILER_API_KEY
 
 # Construimos la aplicación
 RUN npm run build
