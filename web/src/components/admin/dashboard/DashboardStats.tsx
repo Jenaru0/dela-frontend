@@ -1,30 +1,11 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Users, ShoppingBag, Package, MessageSquare } from 'lucide-react';
-import { usuariosService } from '@/services/usuarios.service';
-import { productosService } from '@/services/productos-admin.service';
-import { pedidosService } from '@/services/pedidos.service';
-import { reclamosService } from '@/services/reclamos.service';
-
-interface StatsData {
-  totalUsuarios: number;
-  usuariosClientes: number;
-  usuariosAdmin: number;
-  totalProductos: number;
-  totalPedidos: number;
-  totalReclamos: number;
-}
+import { Users, ShoppingBag, Package, MessageSquare, AlertTriangle, TrendingUp } from 'lucide-react';
+import { adminDashboardService, DashboardStats as StatsData } from '@/services/admin-dashboard.service';
 
 const DashboardStats: React.FC = () => {
-  const [stats, setStats] = useState<StatsData>({
-    totalUsuarios: 0,
-    usuariosClientes: 0,
-    usuariosAdmin: 0,
-    totalProductos: 0,
-    totalPedidos: 0,
-    totalReclamos: 0,
-  });
+  const [stats, setStats] = useState<StatsData | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -34,99 +15,26 @@ const DashboardStats: React.FC = () => {
   const loadStats = async () => {
     try {
       setLoading(true);
-
-      // Cargar estadísticas de usuarios
-      const usuariosResponse = await usuariosService.obtenerTodos();
-      const usuarios = usuariosResponse.data;
-
-      // Cargar estadísticas de productos
-      const productosResponse = await productosService.obtenerTodos();
-      const productos = productosResponse.data; // Cargar estadísticas de pedidos
-      let pedidos: unknown[] = [];
-      try {
-        const pedidosResponse = await pedidosService.obtenerTodosAdmin();
-        pedidos = pedidosResponse.data || [];
-      } catch (error) {
-        console.warn('Error al cargar pedidos:', error);
-      }
-
-      // Cargar estadísticas de reclamos
-      let reclamos: unknown[] = [];
-      try {
-        const reclamosResponse = await reclamosService.obtenerTodos();
-        reclamos = reclamosResponse.data || [];
-      } catch (error) {
-        console.warn('Error al cargar reclamos:', error);
-      }
-      setStats({
-        totalUsuarios: usuarios.length,
-        usuariosClientes: usuarios.filter((u) => u.tipoUsuario === 'CLIENTE')
-          .length,
-        usuariosAdmin: usuarios.filter((u) => u.tipoUsuario === 'ADMIN').length,
-        totalProductos: productos.length,
-        totalPedidos: pedidos.length,
-        totalReclamos: reclamos.length,
-      });
+      const response = await adminDashboardService.getDashboardStats();
+      setStats(response.data);
     } catch (error) {
       console.error('Error al cargar estadísticas:', error);
+      // Fallback a datos vacíos en caso de error
+      setStats({
+        usuarios: { total: 0, clientes: 0, admins: 0, nuevosHoy: 0, nuevosEstaSemana: 0 },
+        productos: { total: 0, activos: 0, agotados: 0, destacados: 0, sinStock: 0 },
+        pedidos: { total: 0, pendientes: 0, completados: 0, ventasHoy: 0, ventasEstaSemana: 0, ingresosTotales: 0 },
+        reclamos: { total: 0, pendientes: 0, resueltos: 0, nuevosHoy: 0 },
+      });
     } finally {
       setLoading(false);
     }
   };
-  const statsCards = [
-    {
-      title: 'Total Usuarios',
-      value: stats.totalUsuarios,
-      icon: Users,
-      color: 'from-blue-500 to-blue-600',
-      bgColor: 'bg-blue-50',
-      textColor: 'text-blue-600',
-    },
-    {
-      title: 'Clientes',
-      value: stats.usuariosClientes,
-      icon: Users,
-      color: 'from-green-500 to-green-600',
-      bgColor: 'bg-green-50',
-      textColor: 'text-green-600',
-    },
-    {
-      title: 'Administradores',
-      value: stats.usuariosAdmin,
-      icon: Users,
-      color: 'from-purple-500 to-purple-600',
-      bgColor: 'bg-purple-50',
-      textColor: 'text-purple-600',
-    },
-    {
-      title: 'Productos',
-      value: stats.totalProductos,
-      icon: ShoppingBag,
-      color: 'from-yellow-500 to-yellow-600',
-      bgColor: 'bg-yellow-50',
-      textColor: 'text-yellow-600',
-    },
-    {
-      title: 'Pedidos',
-      value: stats.totalPedidos,
-      icon: Package,
-      color: 'from-indigo-500 to-indigo-600',
-      bgColor: 'bg-indigo-50',
-      textColor: 'text-indigo-600',
-    },
-    {
-      title: 'Reclamos',
-      value: stats.totalReclamos,
-      icon: MessageSquare,
-      color: 'from-red-500 to-red-600',
-      bgColor: 'bg-red-50',
-      textColor: 'text-red-600',
-    },
-  ];
+
   if (loading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {[...Array(6)].map((_, i) => (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {[...Array(8)].map((_, i) => (
           <div
             key={i}
             className="bg-white rounded-xl p-6 shadow-sm border border-[#ecd8ab]/30 animate-pulse"
@@ -143,8 +51,86 @@ const DashboardStats: React.FC = () => {
       </div>
     );
   }
+
+  if (!stats) return null;
+
+  const statsCards = [
+    {
+      title: 'Total Usuarios',
+      value: stats.usuarios.total,
+      subtitle: `${stats.usuarios.nuevosHoy} nuevos hoy`,
+      icon: Users,
+      color: 'from-blue-500 to-blue-600',
+      bgColor: 'bg-blue-50',
+      textColor: 'text-blue-600',
+    },
+    {
+      title: 'Clientes',
+      value: stats.usuarios.clientes,
+      subtitle: `${stats.usuarios.nuevosEstaSemana} esta semana`,
+      icon: Users,
+      color: 'from-green-500 to-green-600',
+      bgColor: 'bg-green-50',
+      textColor: 'text-green-600',
+    },
+    {
+      title: 'Productos Activos',
+      value: stats.productos.activos,
+      subtitle: `${stats.productos.sinStock} sin stock`,
+      icon: ShoppingBag,
+      color: 'from-yellow-500 to-yellow-600',
+      bgColor: 'bg-yellow-50',
+      textColor: 'text-yellow-600',
+    },
+    {
+      title: 'Productos Total',
+      value: stats.productos.total,
+      subtitle: `${stats.productos.destacados} destacados`,
+      icon: Package,
+      color: 'from-purple-500 to-purple-600',
+      bgColor: 'bg-purple-50',
+      textColor: 'text-purple-600',
+    },
+    {
+      title: 'Pedidos Total',
+      value: stats.pedidos.total,
+      subtitle: `${stats.pedidos.ventasHoy} hoy`,
+      icon: Package,
+      color: 'from-indigo-500 to-indigo-600',
+      bgColor: 'bg-indigo-50',
+      textColor: 'text-indigo-600',
+    },
+    {
+      title: 'Pedidos Pendientes',
+      value: stats.pedidos.pendientes,
+      subtitle: 'Requieren atención',
+      icon: AlertTriangle,
+      color: 'from-orange-500 to-orange-600',
+      bgColor: 'bg-orange-50',
+      textColor: 'text-orange-600',
+    },
+    {
+      title: 'Ingresos Totales',
+      value: `S/ ${stats.pedidos.ingresosTotales.toLocaleString()}`,
+      subtitle: `${stats.pedidos.completados} completados`,
+      icon: TrendingUp,
+      color: 'from-emerald-500 to-emerald-600',
+      bgColor: 'bg-emerald-50',
+      textColor: 'text-emerald-600',
+    },
+    {
+      title: 'Reclamos',
+      value: stats.reclamos.total,
+      subtitle: `${stats.reclamos.pendientes} pendientes`,
+      icon: MessageSquare,
+      color: 'from-red-500 to-red-600',
+      bgColor: 'bg-red-50',
+      textColor: 'text-red-600',
+    },
+  ];
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
       {statsCards.map((card, index) => {
         const Icon = card.icon;
         return (
@@ -158,13 +144,18 @@ const DashboardStats: React.FC = () => {
               >
                 <Icon className={`w-6 h-6 ${card.textColor}`} />
               </div>
-              <div className="ml-4">
+              <div className="ml-4 flex-1">
                 <p className="text-sm font-medium text-[#9A8C61]">
                   {card.title}
                 </p>
                 <p className="text-2xl font-bold text-[#3A3A3A]">
-                  {card.value}
+                  {typeof card.value === 'string' ? card.value : card.value.toLocaleString()}
                 </p>
+                {card.subtitle && (
+                  <p className="text-xs text-[#9A8C61] mt-1">
+                    {card.subtitle}
+                  </p>
+                )}
               </div>
             </div>
           </div>

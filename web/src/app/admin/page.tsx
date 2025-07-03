@@ -4,6 +4,7 @@ import React from 'react';
 import DashboardStats from '@/components/admin/dashboard/DashboardStats';
 import RecentActivity from '@/components/admin/dashboard/RecentActivity';
 import QuickActions from '@/components/admin/dashboard/QuickActions';
+import CriticalAlerts from '@/components/admin/dashboard/CriticalAlerts';
 
 const AdminDashboard: React.FC = () => {
   return (
@@ -22,7 +23,7 @@ const AdminDashboard: React.FC = () => {
       <DashboardStats />
 
       {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Recent Activity - Takes 2 columns */}
         <div className="lg:col-span-2">
           <RecentActivity />
@@ -31,6 +32,11 @@ const AdminDashboard: React.FC = () => {
         {/* Quick Actions - Takes 1 column */}
         <div className="lg:col-span-1">
           <QuickActions />
+        </div>
+
+        {/* Critical Alerts - Takes 1 column */}
+        <div className="lg:col-span-1">
+          <CriticalAlerts />
         </div>
       </div>
     </div>

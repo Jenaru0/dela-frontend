@@ -1,71 +1,48 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Clock, User, ShoppingBag, AlertTriangle } from 'lucide-react';
-
-interface ActivityItem {
-  id: string;
-  type: 'user' | 'order' | 'product' | 'complaint';
-  title: string;
-  description: string;
-  timestamp: Date;
-  icon: React.ComponentType<{ className?: string }>;
-  color: string;
-}
+import { Clock, User, ShoppingBag, AlertTriangle, Package } from 'lucide-react';
+import { dashboardService, ActivityItem } from '@/services/dashboard.service';
 
 const RecentActivity: React.FC = () => {
   const [activities, setActivities] = useState<ActivityItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Simulamos actividad reciente por ahora
-    // TODO: Implementar cuando tengamos los servicios reales
-    const mockActivities: ActivityItem[] = [
-      {
-        id: '1',
-        type: 'user',
-        title: 'Nuevo usuario registrado',
-        description: 'Juan Pérez se registró en la plataforma',
-        timestamp: new Date(Date.now() - 30 * 60 * 1000), // 30 min ago
-        icon: User,
-        color: 'text-blue-600'
-      },
-      {
-        id: '2',
-        type: 'order',
-        title: 'Nuevo pedido realizado',
-        description: 'Pedido #1234 por S/ 150.00',
-        timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
-        icon: ShoppingBag,
-        color: 'text-green-600'
-      },
-      {
-        id: '3',
-        type: 'complaint',
-        title: 'Nuevo reclamo recibido',
-        description: 'Reclamo sobre producto defectuoso',
-        timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000), // 4 hours ago
-        icon: AlertTriangle,
-        color: 'text-red-600'
-      },
-      {
-        id: '4',
-        type: 'product',
-        title: 'Producto actualizado',
-        description: 'Aceite de oliva - Stock actualizado',
-        timestamp: new Date(Date.now() - 6 * 60 * 60 * 1000), // 6 hours ago
-        icon: ShoppingBag,
-        color: 'text-yellow-600'
-      }
-    ];
-
-    setTimeout(() => {
-      setActivities(mockActivities);
-      setLoading(false);
-    }, 1000);
+    loadRecentActivity();
   }, []);
 
-  const formatTimeAgo = (date: Date) => {
+  const loadRecentActivity = async () => {
+    try {
+      setLoading(true);
+      const response = await dashboardService.getRecentActivity();
+      setActivities(response.data);
+    } catch (error) {
+      console.error('Error al cargar actividad reciente:', error);
+      // Mantener datos vacíos en caso de error
+      setActivities([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getIconComponent = (iconName: string) => {
+    switch (iconName) {
+      case 'User':
+        return User;
+      case 'ShoppingBag':
+        return ShoppingBag;
+      case 'AlertTriangle':
+        return AlertTriangle;
+      case 'Package':
+        return Package;
+      default:
+        return Clock;
+    }
+  };
+
+  const formatTimeAgo = (dateString: string) => {
+    const date = new Date(dateString);
     const now = new Date();
     const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
     
@@ -112,7 +89,7 @@ const RecentActivity: React.FC = () => {
           <p className="text-[#9A8C61] text-center py-8">No hay actividad reciente</p>
         ) : (
           activities.map((activity) => {
-            const Icon = activity.icon;
+            const Icon = getIconComponent(activity.icon);
             return (
               <div key={activity.id} className="flex items-start space-x-3 p-3 rounded-lg hover:bg-[#F5E6C6]/20 transition-colors">
                 <div className="w-10 h-10 bg-[#F5E6C6]/30 rounded-full flex items-center justify-center flex-shrink-0">
@@ -137,8 +114,11 @@ const RecentActivity: React.FC = () => {
       
       {activities.length > 0 && (
         <div className="mt-4 pt-4 border-t border-[#ecd8ab]/30">
-          <button className="text-sm text-[#CC9F53] hover:text-[#b08a3c] font-medium transition-colors">
-            Ver todas las actividades →
+          <button 
+            onClick={loadRecentActivity}
+            className="text-sm text-[#CC9F53] hover:text-[#b08a3c] font-medium transition-colors"
+          >
+            Actualizar actividad →
           </button>
         </div>
       )}
