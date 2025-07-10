@@ -131,7 +131,9 @@ const Footer: React.FC = () => {
                 {productCategories.map((category) => (
                   <li key={category.name}>
                     <Link
-                      href={`/productos?search=${encodeURIComponent(category.search)}`}
+                      href={`/productos?search=${encodeURIComponent(
+                        category.search
+                      )}`}
                       className="text-gray-300 hover:text-[#CC9F53] transition-colors duration-200 text-sm"
                     >
                       {category.name}
@@ -184,7 +186,7 @@ const Footer: React.FC = () => {
               <h4 className="text-sm font-semibold !text-white mb-4">
                 Información Legal
               </h4>
-              <ul className="space-y-2">
+              <ul className="space-y-2 mb-8">
                 {legalLinks.map((link) => (
                   <li key={link.name}>
                     <Link
@@ -196,6 +198,26 @@ const Footer: React.FC = () => {
                   </li>
                 ))}
               </ul>
+
+              {/* Video Educativo */}
+              <h4 className="text-sm font-semibold !text-white mb-4">
+                Recursos Educativos
+              </h4>
+              <ul className="space-y-2">
+                <li>
+                  <button
+                    onClick={() =>
+                      window.open(
+                        'https://drive.google.com/file/d/1X8SNWNxkiIOqfV5B6AEQgVi0_69qbv_i/view?usp=drive_link',
+                        '_blank'
+                      )
+                    }
+                    className="text-gray-400 hover:text-[#CC9F53] transition-colors duration-200 text-xs text-left flex items-center space-x-2 group"
+                  >
+                    <span>Guía de Uso de la Plataforma</span>
+                  </button>
+                </li>
+              </ul>
             </div>
           </div>
         </div>
@@ -206,7 +228,8 @@ const Footer: React.FC = () => {
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
             <div className="text-sm text-gray-400">
-              © 2025 DELA Corp SAC. Todos los derechos reservados. RUC: 20000000001
+              © 2025 DELA Corp SAC. Todos los derechos reservados. RUC:
+              20000000001
             </div>
 
             {/* Payment Methods */}
@@ -214,7 +237,7 @@ const Footer: React.FC = () => {
               <span className="text-sm text-gray-400">Métodos de pago:</span>
               <div className="flex space-x-2">
                 <div className="bg-white rounded p-1 w-10 h-7 flex items-center justify-center">
-                  <div 
+                  <div
                     className="w-8 h-5 bg-contain bg-center bg-no-repeat"
                     style={{ backgroundImage: "url('/images/visa.svg')" }}
                     aria-label="Visa"
@@ -222,7 +245,7 @@ const Footer: React.FC = () => {
                   />
                 </div>
                 <div className="bg-white rounded p-1 w-10 h-7 flex items-center justify-center">
-                  <div 
+                  <div
                     className="w-8 h-5 bg-contain bg-center bg-no-repeat"
                     style={{ backgroundImage: "url('/images/mastercard.svg')" }}
                     aria-label="Mastercard"
@@ -230,7 +253,7 @@ const Footer: React.FC = () => {
                   />
                 </div>
                 <div className="bg-white rounded p-1 w-10 h-7 flex items-center justify-center">
-                  <div 
+                  <div
                     className="w-8 h-5 bg-contain bg-center bg-no-repeat"
                     style={{ backgroundImage: "url('/images/paypal.svg')" }}
                     aria-label="PayPal"
