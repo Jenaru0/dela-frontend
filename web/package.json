@@ -8,7 +8,10 @@
     "start": "next start",
     "lint": "next lint",
     "type-check": "tsc --noEmit",
-    "test": "echo \"No tests configured yet\" && exit 0"
+    "test": "echo \"No tests configured yet\" && exit 0",
+    "audit": "npm audit --audit-level=moderate",
+    "docker:lint": "docker run --rm -i -v \"${PWD}/..:/workspace\" hadolint/hadolint hadolint --config /workspace/.hadolint.yaml /workspace/Dockerfile",
+    "docker:lint:win": "powershell -ExecutionPolicy Bypass -File hadolint-check.ps1"
   },
   "dependencies": {
     "@maptiler/sdk": "^3.5.0",
